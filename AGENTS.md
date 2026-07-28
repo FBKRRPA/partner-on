@@ -61,23 +61,64 @@
 
 ---
 
-## 🛡️ 4. 백엔드 개발 규칙 (Backend Rules)
+## 🗄️ 4. 데이터베이스 스키마 & ORM 모델 (Database Schema)
+
+모든 데이터베이스 구조는 [backend/accounts/models.py](file:///d:/workspace/Partneron_v1/backend/accounts/models.py)에 정의되어 있습니다.
+
+```
++------------------+         1 : N         +------------------+
+|    Workplace     | --------------------- |       User       |
++------------------+                       +------------------+
+| id               |                       | id               |
+| name (unique)    |                       | email (unique)   |
+| address          |                       | name             |
+| enforce_2fa_owner|                       | role (OWNER/...) |
+| enforce_2fa_m... |                       | is_2fa_enabled   |
+| enforce_2fa_e... |                       | totp_secret      |
++------------------+                       | backup_codes     |
+                                           +------------------+
+                                                     | 1
+                                                     | : N
+                                           +------------------+
+                                           |      Device      |
+                                           +------------------+
+                                           | id               |
+                                           | device_uuid      |
+                                           | device_name      |
+                                           | ip_address       |
+                                           | status (PENDING..|
+                                           +------------------+
+```
+
+### 1) `Workplace` (사업장 모델)
+* **`name`**: `CharField(max_length=120, unique=True)` - 사업장 명칭
+* **`enforce_2fa_owner`**: `BooleanField(default=False)` - 대표 직급 2FA 필수 강제 여부
+* **`enforce_2fa_manager`**: `BooleanField(default=False)` - 매니저 직급 2FA 필수 강제 여부
+* **`enforce_2fa_employee`**: `BooleanField(default=False)` - 사원 직급 2FA 필수 강제 여부
+
+### 2) `User` (커스텀 사용자 모델 - AbstractUser 상속)
+* **`email`**: `EmailField(unique=True)` - 로그인 ID (USERNAME_FIELD)
+* **`role`**: `Role.choices` (`OWNER`: 대표, `MANAGER`: 매니저, `EMPLOYEE`: 사원)
+* **`workplace`**: `ForeignKey(Workplace, on_delete=models.PROTECT)` - 소속 사업장
+* **`is_2fa_enabled`**: `BooleanField(default=False)` - 유저 개인 2FA 활성화 여부
+* **`totp_secret`**: `CharField(max_length=64)` - pyotp TOTP 비밀키
+* **`otp_code` / `otp_created_at`**: 이메일 OTP 6자리 번호 및 발송 일시
+* **`backup_codes`**: `JSONField(default=list)` - 8자리 일회성 비상 복구 코드 10개
+* **`requires_2fa()` 메서드**: 개인 2FA 온/오프 + 사업장 역할별 강제 정책을 종합 평가하여 Boolean 리턴
+
+### 3) `Device` (접속 기기 승인 통제 모델)
+* **`user`**: `ForeignKey(User, on_delete=models.CASCADE)` - 대상 유저
+* **`device_uuid`**: `CharField(max_length=100)` - 브라우저/기기 고유 UUID
+* **`device_name`**: `CharField(max_length=150)` - 디바이스 및 OS/브라우저 명칭
+* **`ip_address`**: `GenericIPAddressField` - 접속 IP (Nginx 프록시 X-Forwarded-For 연동)
+* **`status`**: `Status.choices` (`PENDING`: 승인 대기, `APPROVED`: 승인됨, `REJECTED`: 거절됨)
+
+---
+
+## 🛡️ 5. 백엔드 개발 규칙 (Backend Rules)
 
 ### ① **2FA (Two-Factor Authentication) 검증 흐름**
 * 유저의 2FA 요구 여부는 반드시 `user.requires_2fa()` 메서드를 호출하여 판단합니다.
-  ```python
-  def requires_2fa(self) -> bool:
-      if self.is_2fa_enabled:
-          return True
-      if self.workplace:
-          if self.role == self.Role.OWNER and self.workplace.enforce_2fa_owner:
-              return True
-          if self.role == self.Role.MANAGER and self.workplace.enforce_2fa_manager:
-              return True
-          if self.role == self.Role.EMPLOYEE and self.workplace.enforce_2fa_employee:
-              return True
-      return False
-  ```
 * 2FA가 필요한 경우 `LoginView`는 JWT 대신 `require_2fa: True`와 `pre_token`, `otp_code`를 리턴하고, 프론트엔드의 2FA verification modal을 통해 `Verify2FAView`에서 최종 JWT를 발급합니다.
 
 ### ② **REST API URL 규격**
@@ -91,7 +132,7 @@
 
 ---
 
-## 🧪 5. 테스트 및 품질 검증 (Verification Standard)
+## 🧪 6. 테스트 및 품질 검증 (Verification Standard)
 
 코드 변경을 완료하기 전에 반드시 아래 **2가지 검증 스크립트**를 실행하고 100% 통과해야 합니다.
 
@@ -111,7 +152,7 @@
 
 ---
 
-## 📝 6. Git 커밋 컨벤션 (Git Commit Convention)
+## 📝 7. Git 커밋 컨벤션 (Git Commit Convention)
 
 모든 커밋 메시지는 **Conventional Commits** 형식을 따릅니다:
 
