@@ -29,7 +29,7 @@
 
 ---
 
-## 🎨 3. 프론트엔드 개발 규칙 (Frontend Rules)
+## 🎨 3. 프론트엔드 개발 규칙 & 디자인 시스템 (Design System & UI Guidelines)
 
 ### ① **API Base URL 동적 할당 (필수 준수)**
 * ❌ **금지**: `http://localhost:8000` 하드코딩 절대 금지 (IP 접속 시 `Failed to fetch` 오류 원인)
@@ -39,17 +39,25 @@
   const url = `${getApiBaseUrl()}/api/v1/auth/...`;
   ```
 
-### ② **디자인 시스템 & UI/UX 가이드 (Fujifilm Brand Identity)**
-* **메인 브랜드 컬러**: `#01916D` (Fujifilm Emerald Green)
-* **경고/에러 컬러**: `#E01E35`
-* **텍스트/배경 컬러**: `#333333` (주요 헤딩), `#FAFAFA` (기본 배경)
-* **디자인 요구사항**:
-  * 단순 Minimum Viable Product 형태를 지양하고 **Rich & Premium UI** (Glassmorphism, subtle micro-animations, rounded-2xl/3xl 모달 카드)를 적용합니다.
-  * 상단 헤더 브랜드 바에는 `fujifilm-gradation-bg` 클래스를 유지합니다.
+### ② **브랜드 컬러 토큰 (Fujifilm Brand Identity)**
+* **메인 브랜드 컬러**: `#01916D` (Fujifilm Emerald Green) - `bg-[#01916D]`, `text-[#01916D]`
+* **서브/호버 컬러**: `#006449` (Deep Emerald), `#01916D`/10 (투명 10% 탭 배경)
+* **경고/에러 컬러**: `#E01E35` (Accent Red) - `bg-[#E01E35]`, `text-[#E01E35]`
+* **텍스트/배경 컬러**: `#333333` (주요 헤딩), `#5C5C5C` (보조 텍스트), `#FAFAFA` (기본 배경)
+* **브랜드 그라데이션**: 헤더 상단 `fujifilm-gradation-bg` (`linear-gradient(90deg, #01916D, #80C342)`) 유지
 
-### ③ **메뉴 라우팅 컨벤션**
-* 메뉴 구조 변경 시 [AppHeader.tsx](file:///d:/workspace/Partneron_v1/frontend/components/layout/AppHeader.tsx)의 `menuTree` 데이터를 업데이트합니다.
-* 새로 추가되는 서브 라우트는 `MenuScaffoldPage` 컴포넌트를 활용하여 일관된 Breadcrumb과 대시보드 카드를 제공합니다.
+### ③ **UI/UX 디자인 패러다임 (Rich & Premium UI)**
+* **Glassmorphism**: 헤더 및 모달 패널에 `backdrop-blur-md`, `bg-white/95`, `border-slate-200/80` 적용.
+* **Rounded Card Aesthetic**: 모달 및 대시보드 카드 레이아웃은 `rounded-2xl` 또는 `rounded-3xl`의 부드러운 라운딩 적용.
+* **Micro-Animations**: 드롭다운 및 모달 팝업 시 `animate-in fade-in slide-in-from-top-2`, 버튼 및 링크 클릭 시 `transition-all duration-150` 유지.
+* **Status Badges 규격**:
+  * ✅ 승인 완료 / 활성: `bg-emerald-100 text-[#01916D]`
+  * ⏳ 승인 대기 / 2FA 필수: `bg-amber-100 text-amber-800`
+  * ❌ 승인 거절 / 위험: `bg-rose-100 text-[#E01E35]`
+
+### ④ **메뉴 라우터 & 레이아웃 컨벤션**
+* 상단 헤더 메뉴는 [AppHeader.tsx](file:///d:/workspace/Partneron_v1/frontend/components/layout/AppHeader.tsx)의 7대 대분류 + 25개 소분류 드롭다운 네비게이션을 유지합니다. (아이콘 없이 깔끔한 텍스트 렌더링)
+* 새로 추가되는 소분류 메뉴는 `MenuScaffoldPage` 컴포넌트를 활용하여 일관된 Breadcrumb (`카테고리 › 소분류`)과 모듈 카드 UI를 제공합니다.
 
 ---
 
