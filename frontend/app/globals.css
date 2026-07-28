@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .fujifilm-gradation-bg {
+    background: linear-gradient(90deg, #00D164 0%, #01916D 45%, #96FFFD 95%);
+  }
+}
+
+body {
+  background-color: #F8FAFC;
+  color: #333333;
+  min-height: 100vh;
+  font-family: "Clarimo UD", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
