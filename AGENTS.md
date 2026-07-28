@@ -168,7 +168,24 @@
 
 ---
 
-## 📝 7. Git 커밋 컨벤션 (Git Commit Convention)
+## 🌿 7. Git 브랜치 전략 & PR 규칙 (Branch & PR Strategy)
+
+1. **`main` 브랜치는 보호(Branch Protection)되어 있으므로 직접 Push가 금지됩니다.**
+2. **기능 추가 및 수정 시 반드시 작업 브랜치를 생성해야 합니다**:
+   - `feature/기능명` (예: `feature/crm-customer-ui`)
+   - `fix/버그명` (예: `fix/2fa-otp-timeout`)
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/new-crm-module
+   ```
+3. **코드 검증 통과 후 GitHub에 브랜치를 Push하고 PR(Pull Request)을 작성합니다**:
+   - 테스트(`python manage.py test`) 및 빌드(`npm run build`) 통과 필수.
+   - PR 생성 후 최소 1명 이상의 승인(Approval)을 받아야만 `main`으로 안전하게 병합(Merge)할 수 있습니다.
+
+---
+
+## 📝 8. Git 커밋 컨벤션 (Git Commit Convention)
 
 모든 커밋 메시지는 **Conventional Commits** 형식을 따릅니다:
 
