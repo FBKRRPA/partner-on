@@ -61,9 +61,9 @@
 
 ---
 
-## 🗄️ 4. 데이터베이스 스키마 & ORM 모델 (Database Schema)
+## 🗄️ 4. 데이터베이스 스키마 & ORM 모델 (Database Schema & Tables)
 
-모든 데이터베이스 구조는 [backend/accounts/models.py](file:///d:/workspace/Partneron_v1/backend/accounts/models.py)에 정의되어 있습니다.
+현재 데이터베이스에는 **총 11개 테이블**(비즈니스 모델 3개 + 다대다 M2M 관계 테이블 2개 + Django 프레임워크 시스템 테이블 6개)이 생성되어 운용되고 있습니다.
 
 ```
 +------------------+         1 : N         +------------------+
@@ -90,28 +90,43 @@
                                            +------------------+
 ```
 
-### 1) `Workplace` (사업장 모델)
-* **`name`**: `CharField(max_length=120, unique=True)` - 사업장 명칭
-* **`enforce_2fa_owner`**: `BooleanField(default=False)` - 대표 직급 2FA 필수 강제 여부
-* **`enforce_2fa_manager`**: `BooleanField(default=False)` - 매니저 직급 2FA 필수 강제 여부
-* **`enforce_2fa_employee`**: `BooleanField(default=False)` - 사원 직급 2FA 필수 강제 여부
+### 1) 비즈니스 핵심 모델 테이블 (Accounts App)
 
-### 2) `User` (커스텀 사용자 모델 - AbstractUser 상속)
-* **`email`**: `EmailField(unique=True)` - 로그인 ID (USERNAME_FIELD)
-* **`role`**: `Role.choices` (`OWNER`: 대표, `MANAGER`: 매니저, `EMPLOYEE`: 사원)
-* **`workplace`**: `ForeignKey(Workplace, on_delete=models.PROTECT)` - 소속 사업장
-* **`is_2fa_enabled`**: `BooleanField(default=False)` - 유저 개인 2FA 활성화 여부
-* **`totp_secret`**: `CharField(max_length=64)` - pyotp TOTP 비밀키
-* **`otp_code` / `otp_created_at`**: 이메일 OTP 6자리 번호 및 발송 일시
-* **`backup_codes`**: `JSONField(default=list)` - 8자리 일회성 비상 복구 코드 10개
-* **`requires_2fa()` 메서드**: 개인 2FA 온/오프 + 사업장 역할별 강제 정책을 종합 평가하여 Boolean 리턴
+* **`accounts_workplace` (Workplace 모델)**:
+  * `id`: Primary Key
+  * `name`: `CharField(max_length=120, unique=True)` - 사업장 명칭
+  * `address`: `CharField(max_length=255)` - 사업장 주소
+  * `enforce_2fa_owner`, `enforce_2fa_manager`, `enforce_2fa_employee`: 직급별 2FA 강제 정책 Boolean
+* **`accounts_user` (User 모델 - AbstractUser 상속)**:
+  * `id`: Primary Key
+  * `email`: `EmailField(unique=True)` - 로그인 ID (USERNAME_FIELD)
+  * `name`: `CharField(max_length=80)` - 유저 실명
+  * `role`: Enum (`OWNER`, `MANAGER`, `EMPLOYEE`) - 직급 권한
+  * `workplace_id`: ForeignKey (`Workplace` 참조)
+  * `is_2fa_enabled`: Boolean - 개인 2FA 활성화 여부
+  * `totp_secret`: `CharField(max_length=64)` - pyotp TOTP 비밀키
+  * `otp_code` / `otp_created_at`: 이메일 OTP 6자리 및 발송 시각
+  * `backup_codes`: `JSONField` - 8자리 일회성 비상 복구 코드 10개
+  * `requires_2fa()` 메서드: 유저 개인 설정 및 사업장 직급별 강제 정책 종합 평가 리턴
+* **`accounts_device` (Device 모델)**:
+  * `id`: Primary Key
+  * `user_id`: ForeignKey (`User` 참조)
+  * `device_uuid`: `CharField(max_length=100)` - 브라우저/기기 고유 UUID
+  * `device_name`: `CharField(max_length=150)` - 디바이스/OS 명칭
+  * `ip_address`: `GenericIPAddressField` - 접속 IP 주소 (Nginx 프록시 전달)
+  * `status`: Enum (`PENDING`, `APPROVED`, `REJECTED`) - 접속 승인 상태
 
-### 3) `Device` (접속 기기 승인 통제 모델)
-* **`user`**: `ForeignKey(User, on_delete=models.CASCADE)` - 대상 유저
-* **`device_uuid`**: `CharField(max_length=100)` - 브라우저/기기 고유 UUID
-* **`device_name`**: `CharField(max_length=150)` - 디바이스 및 OS/브라우저 명칭
-* **`ip_address`**: `GenericIPAddressField` - 접속 IP (Nginx 프록시 X-Forwarded-For 연동)
-* **`status`**: `Status.choices` (`PENDING`: 승인 대기, `APPROVED`: 승인됨, `REJECTED`: 거절됨)
+### 2) M2M (다대다) 권한 관계 테이블
+* **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블
+* **`accounts_user_user_permissions`**: 사용자 ➔ 개별 권한 매핑 테이블
+
+### 3) Django 프레임워크 내장 시스템 테이블 (System Tables)
+* **`auth_group`**: 권한 그룹 마스터 테이블
+* **`auth_group_permissions`**: 권한 그룹 ➔ 세부 권한 매핑 테이블
+* **`auth_permission`**: 개별 접근 권한 마스터 테이블
+* **`django_content_type`**: 프로젝트 모델 메타데이터 인덱스 테이블
+* **`django_session`**: 서버 사이드 세션 데이터 저장소
+* **`django_migrations`**: DB 마이그레이션 변경 이력 트래킹 테이블
 
 ---
 
