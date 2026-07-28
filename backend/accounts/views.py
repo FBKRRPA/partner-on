@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Device, Workplace
+from .models import User, Device, Workplace, RoleMenuPermission
 from .permissions import IsOwnerPermission
 from .serializers import (
     DeviceDtoSerializer,
@@ -22,6 +22,7 @@ from .serializers import (
     MemberUpdateSerializer,
     SignUpRequestSerializer,
     UserDtoSerializer,
+    RoleMenuPermissionSerializer,
 )
 
 
@@ -142,7 +143,7 @@ class Verify2FAView(APIView):
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "user": UserDtoSerializer(user).data,
-                "method": method_used,
+                "method_used": method_used,
             },
             status=status.HTTP_200_OK,
         )
@@ -150,64 +151,75 @@ class Verify2FAView(APIView):
 
 class SetupTOTPView(APIView):
     """
-    Setup TOTP (Authenticator App) & Generate Secret + QR Uri
+    Setup or regenerate TOTP secret & QR Code Image Data URI for Authenticator App
     """
     permission_classes = [IsAuthenticated]
 
-    def get(self, request) -> Response:
+    def post(self, request) -> Response:
         user = request.user
-        secret = user.totp_secret or pyotp.random_base32()
+        secret = pyotp.random_base32()
         user.totp_secret = secret
         user.save(update_fields=["totp_secret"])
 
         totp = pyotp.TOTP(secret)
-        provisioning_uri = totp.provisioning_uri(name=user.email, issuer_name="FUJIFILM PartnerOn")
+        provisioning_uri = totp.provisioning_uri(
+            name=user.email, issuer_name="PartnerOn"
+        )
 
-        # Generate Base64 PNG QR code image
-        qr_img = qrcode.make(provisioning_uri)
+        # Generate QR Code Base64 PNG Data URI
+        qr = qrcode.QRCode(version=1, box_size=6, border=2)
+        qr.add_data(provisioning_uri)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+
         buffer = BytesIO()
-        qr_img.save(buffer, format="PNG")
+        img.save(buffer, format="PNG")
         qr_code_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
         qr_code_url = f"data:image/png;base64,{qr_code_base64}"
 
         return Response(
             {
-                "secret": secret,
-                "otpauth_url": provisioning_uri,
+                "totp_secret": secret,
+                "provisioning_uri": provisioning_uri,
                 "qr_code_url": qr_code_url,
-                "is_enabled": user.is_2fa_enabled,
             },
             status=status.HTTP_200_OK,
         )
 
+
+class VerifyTOTPSetupView(APIView):
+    """
+    Verify initial TOTP code to confirm authenticator setup & enable 2FA
+    """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request) -> Response:
-        """Verify first TOTP 6-digit code to complete TOTP 2FA activation"""
         user = request.user
-        otp_code = request.data.get("otp_code", "").strip()
+        totp_code = request.data.get("totp_code", "").strip()
 
         if not user.totp_secret:
             return Response(
-                {"detail": "TOTP 설정 정보가 존재하지 않습니다."},
+                {"detail": "TOTP 시크릿이 발급되지 않았습니다. 먼저 OTP 설정을 진행해 주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         totp = pyotp.TOTP(user.totp_secret)
-        if not totp.verify(otp_code, valid_window=1):
+        if not totp.verify(totp_code, valid_window=1):
             return Response(
-                {"detail": "입력하신 6자리 TOTP 번호가 올바르지 않습니다."},
+                {"detail": "인증 앱 코드가 일치하지 않습니다. 다시 시도해 주세요."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Activate 2FA & Generate 10 Emergency Backup Codes
         user.is_2fa_enabled = True
-        backup_codes = generate_backup_codes()
-        user.backup_codes = backup_codes
+        if not user.backup_codes:
+            user.backup_codes = generate_backup_codes()
         user.save(update_fields=["is_2fa_enabled", "backup_codes"])
 
         return Response(
             {
-                "detail": "2차 인증 (TOTP) 설정이 성공적으로 활성화되었습니다.",
-                "backup_codes": backup_codes,
+                "detail": "TOTP 인증 앱이 성공적으로 등록되었습니다.",
+                "is_2fa_enabled": True,
+                "backup_codes": user.backup_codes,
             },
             status=status.HTTP_200_OK,
         )
@@ -215,7 +227,7 @@ class SetupTOTPView(APIView):
 
 class Toggle2FAView(APIView):
     """
-    Toggle 2FA On/Off for logged in user
+    Toggle 2FA (Enable / Disable) for personal user profile
     """
     permission_classes = [IsAuthenticated]
 
@@ -223,37 +235,24 @@ class Toggle2FAView(APIView):
         user = request.user
         enable = request.data.get("enable")
 
-        if enable is None:
-            enable = not user.is_2fa_enabled
-
-        # Check workplace policy enforcement
-        if not enable and user.workplace:
-            if user.role == User.Role.OWNER and user.workplace.enforce_2fa_owner:
-                return Response(
-                    {"detail": "사업장 보안 정책상 대표(OWNER) 계정은 2FA를 해제할 수 없습니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if user.role == User.Role.MANAGER and user.workplace.enforce_2fa_manager:
-                return Response(
-                    {"detail": "사업장 보안 정책상 매니저 계정은 2FA를 해제할 수 없습니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            if user.role == User.Role.EMPLOYEE and user.workplace.enforce_2fa_employee:
-                return Response(
-                    {"detail": "사업장 보안 정책상 사원 계정은 2FA를 해제할 수 없습니다."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        user.is_2fa_enabled = bool(enable)
-        if user.is_2fa_enabled and not user.backup_codes:
-            user.backup_codes = generate_backup_codes()
-        user.save(update_fields=["is_2fa_enabled", "backup_codes"])
+        if enable is True:
+            if not user.totp_secret:
+                user.totp_secret = pyotp.random_base32()
+            user.is_2fa_enabled = True
+            if not user.backup_codes:
+                user.backup_codes = generate_backup_codes()
+            user.save(update_fields=["totp_secret", "is_2fa_enabled", "backup_codes"])
+            msg = "2차 인증(2FA)이 활성화되었습니다."
+        else:
+            user.is_2fa_enabled = False
+            user.save(update_fields=["is_2fa_enabled"])
+            msg = "2차 인증(2FA)이 비활성화되었습니다."
 
         return Response(
             {
+                "detail": msg,
                 "is_2fa_enabled": user.is_2fa_enabled,
                 "backup_codes": user.backup_codes if user.is_2fa_enabled else [],
-                "detail": f"2차 인증(2FA)이 {'활성화' if user.is_2fa_enabled else '비활성화'}되었습니다.",
             },
             status=status.HTTP_200_OK,
         )
@@ -261,7 +260,7 @@ class Toggle2FAView(APIView):
 
 class Workplace2FAPolicyView(APIView):
     """
-    Manage Workplace Mandatory 2FA Policies by Role (Owner Only)
+    Workplace 2FA Policy View for Admin/Owner
     """
     permission_classes = [IsAuthenticated, IsOwnerPermission]
 
@@ -270,6 +269,9 @@ class Workplace2FAPolicyView(APIView):
         return Response(
             {
                 "enforce_2fa_owner": wp.enforce_2fa_owner,
+                "enforce_2fa_admin_staff": wp.enforce_2fa_admin_staff,
+                "enforce_2fa_sales": wp.enforce_2fa_sales,
+                "enforce_2fa_ce": wp.enforce_2fa_ce,
                 "enforce_2fa_manager": wp.enforce_2fa_manager,
                 "enforce_2fa_employee": wp.enforce_2fa_employee,
             },
@@ -280,6 +282,13 @@ class Workplace2FAPolicyView(APIView):
         wp: Workplace = request.user.workplace
         if "enforce_2fa_owner" in request.data:
             wp.enforce_2fa_owner = bool(request.data["enforce_2fa_owner"])
+        if "enforce_2fa_admin_staff" in request.data:
+            wp.enforce_2fa_admin_staff = bool(request.data["enforce_2fa_admin_staff"])
+        if "enforce_2fa_sales" in request.data:
+            wp.enforce_2fa_sales = bool(request.data["enforce_2fa_sales"])
+        if "enforce_2fa_ce" in request.data:
+            wp.enforce_2fa_ce = bool(request.data["enforce_2fa_ce"])
+
         if "enforce_2fa_manager" in request.data:
             wp.enforce_2fa_manager = bool(request.data["enforce_2fa_manager"])
         if "enforce_2fa_employee" in request.data:
@@ -290,9 +299,56 @@ class Workplace2FAPolicyView(APIView):
             {
                 "detail": "사업장 2FA 역할별 보안 정책이 업데이트되었습니다.",
                 "enforce_2fa_owner": wp.enforce_2fa_owner,
-                "enforce_2fa_manager": wp.enforce_2fa_manager,
-                "enforce_2fa_employee": wp.enforce_2fa_employee,
+                "enforce_2fa_admin_staff": wp.enforce_2fa_admin_staff,
+                "enforce_2fa_sales": wp.enforce_2fa_sales,
+                "enforce_2fa_ce": wp.enforce_2fa_ce,
             },
+            status=status.HTTP_200_OK,
+        )
+
+
+class RoleMenuPermissionView(APIView):
+    """
+    Role Menu Access Permission Matrix View for Admin/Owner
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"permissions": []}, status=status.HTTP_200_OK)
+
+        perms = RoleMenuPermission.objects.filter(workplace=workplace)
+        serializer = RoleMenuPermissionSerializer(perms, many=True)
+        return Response({"permissions": serializer.data}, status=status.HTTP_200_OK)
+
+    def post(self, request) -> Response:
+        if not request.user.is_admin():
+            raise PermissionDenied("관리자(대표) 또는 관리자(사무직원)만 권한을 변경할 수 있습니다.")
+
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속된 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        permissions_data = request.data.get("permissions", [])
+        updated_count = 0
+
+        for item in permissions_data:
+            role = item.get("role")
+            menu_key = item.get("menu_key")
+            is_allowed = item.get("is_allowed", True)
+
+            if role and menu_key:
+                RoleMenuPermission.objects.update_or_create(
+                    workplace=workplace,
+                    role=role,
+                    menu_key=menu_key,
+                    defaults={"is_allowed": is_allowed},
+                )
+                updated_count += 1
+
+        return Response(
+            {"detail": f"{updated_count}개의 메뉴 권한 설정이 성공적으로 업데이트되었습니다."},
             status=status.HTTP_200_OK,
         )
 
@@ -311,11 +367,6 @@ class SignUpView(APIView):
 
 
 class UserProfileView(APIView):
-    """
-    My Profile API:
-    - GET: Fetch logged-in user profile & my devices
-    - PATCH: Update name or password
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
@@ -396,7 +447,7 @@ class MemberDetailView(APIView):
         member = self._get_member(request, pk)
         if member.pk == request.user.pk:
             return Response(
-                {"detail": "자기 자신(대표) 계정은 삭제할 수 없습니다."},
+                {"detail": "자기 자신 계정은 삭제할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         member.delete()

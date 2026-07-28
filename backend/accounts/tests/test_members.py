@@ -14,11 +14,11 @@ class MemberApiTests(APITestCase):
             role=User.Role.OWNER,
             workplace=self.workplace,
         )
-        self.employee = User.objects.create_user(
-            email="employee@partneron.test",
+        self.ce = User.objects.create_user(
+            email="ce@partneron.test",
             password="safe-password-123",
-            name="김사원",
-            role=User.Role.EMPLOYEE,
+            name="김기사",
+            role=User.Role.CE,
             workplace=self.workplace,
         )
         self.url = reverse("member-list-create")
@@ -27,50 +27,50 @@ class MemberApiTests(APITestCase):
         refresh = RefreshToken.for_user(user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
-    def test_owner_can_create_manager_and_employee(self) -> None:
+    def test_owner_can_create_admin_staff_sales_and_ce(self) -> None:
         self._authenticate(self.owner)
 
-        # 1. 매니저 계정 생성
-        res_manager = self.client.post(
+        # 1. 관리자(사무직원) 계정 생성
+        res_admin = self.client.post(
             self.url,
             {
-                "name": "박매니저",
-                "email": "manager@partneron.test",
-                "password": "manager-password-123",
-                "role": "MANAGER",
+                "name": "박사무",
+                "email": "admin_staff@partneron.test",
+                "password": "admin-password-123",
+                "role": "ADMIN_STAFF",
             },
             format="json",
         )
-        self.assertEqual(res_manager.status_code, 201)
-        self.assertEqual(res_manager.data["member"]["role"], "MANAGER")
-        self.assertEqual(res_manager.data["member"]["name"], "박매니저")
+        self.assertEqual(res_admin.status_code, 201)
+        self.assertEqual(res_admin.data["member"]["role"], "ADMIN_STAFF")
+        self.assertEqual(res_admin.data["member"]["name"], "박사무")
         self.assertEqual(
-            res_manager.data["member"]["workplace"]["name"], "파트너온 본사"
+            res_admin.data["member"]["workplace"]["name"], "파트너온 본사"
         )
 
-        # 2. 사원 계정 생성
-        res_emp = self.client.post(
+        # 2. 영업 계정 생성
+        res_sales = self.client.post(
             self.url,
             {
-                "name": "이새사원",
-                "email": "newemp@partneron.test",
-                "password": "emp-password-123",
-                "role": "EMPLOYEE",
+                "name": "이영업",
+                "email": "sales@partneron.test",
+                "password": "sales-password-123",
+                "role": "SALES",
             },
             format="json",
         )
-        self.assertEqual(res_emp.status_code, 201)
-        self.assertEqual(res_emp.data["member"]["role"], "EMPLOYEE")
+        self.assertEqual(res_sales.status_code, 201)
+        self.assertEqual(res_sales.data["member"]["role"], "SALES")
 
-    def test_employee_cannot_create_member(self) -> None:
-        self._authenticate(self.employee)
+    def test_ce_cannot_create_member(self) -> None:
+        self._authenticate(self.ce)
         response = self.client.post(
             self.url,
             {
                 "name": "시도사원",
                 "email": "attempt@partneron.test",
                 "password": "some-password-123",
-                "role": "EMPLOYEE",
+                "role": "CE",
             },
             format="json",
         )
@@ -89,22 +89,22 @@ class MemberApiTests(APITestCase):
 
     def test_owner_can_update_member(self) -> None:
         self._authenticate(self.owner)
-        detail_url = reverse("member-detail", kwargs={"pk": self.employee.pk})
+        detail_url = reverse("member-detail", kwargs={"pk": self.ce.pk})
         response = self.client.patch(
             detail_url,
-            {"name": "김수정", "role": "MANAGER"},
+            {"name": "김수정", "role": "SALES"},
             format="json",
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["member"]["name"], "김수정")
-        self.assertEqual(response.data["member"]["role"], "MANAGER")
+        self.assertEqual(response.data["member"]["role"], "SALES")
 
     def test_owner_can_delete_member(self) -> None:
         self._authenticate(self.owner)
-        detail_url = reverse("member-detail", kwargs={"pk": self.employee.pk})
+        detail_url = reverse("member-detail", kwargs={"pk": self.ce.pk})
         response = self.client.delete(detail_url)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(User.objects.filter(pk=self.employee.pk).exists())
+        self.assertFalse(User.objects.filter(pk=self.ce.pk).exists())
 
     def test_owner_cannot_delete_self(self) -> None:
         self._authenticate(self.owner)
@@ -112,4 +112,3 @@ class MemberApiTests(APITestCase):
         response = self.client.delete(detail_url)
         self.assertEqual(response.status_code, 400)
         self.assertTrue(User.objects.filter(pk=self.owner.pk).exists())
-

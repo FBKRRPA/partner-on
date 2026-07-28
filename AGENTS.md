@@ -12,7 +12,7 @@
   * 대표 승인 기기 통제 시스템 (`Device` 승인 모듈)
   * Dynamic IP 자동 감지 (로컬, 내부망 IP, 실서버 도메인 무중단 지원)
   * PWA (Progressive Web App) 및 오프라인 폴백 지원
-  * 7대 대분류 25개 소분류 메가 드롭다운 네비게이션
+  * 7대 대분류 25개 소분류 메가 드롭다운 네비게이션 & 4단계 직급별 메뉴 권한 관리 (RBAC)
 
 ---
 
@@ -56,14 +56,14 @@
   * ❌ 승인 거절 / 위험: `bg-rose-100 text-[#E01E35]`
 
 ### ④ **메뉴 라우터 & 레이아웃 컨벤션**
-* 상단 헤더 메뉴는 [AppHeader.tsx](file:///d:/workspace/Partneron_v1/frontend/components/layout/AppHeader.tsx)의 7대 대분류 + 25개 소분류 드롭다운 네비게이션을 유지합니다. (아이콘 없이 깔끔한 텍스트 렌더링)
+* 상단 헤더 메뉴는 [AppHeader.tsx](file:///d:/workspace/Partneron_v1/frontend/components/layout/AppHeader.tsx)의 7대 대분류 + 25개 소분류 드롭다운 네비게이션을 유지합니다.
 * 새로 추가되는 소분류 메뉴는 `MenuScaffoldPage` 컴포넌트를 활용하여 일관된 Breadcrumb (`카테고리 › 소분류`)과 모듈 카드 UI를 제공합니다.
 
 ---
 
 ## 🗄️ 4. 데이터베이스 스키마 & ORM 모델 (Database Schema & Tables)
 
-현재 데이터베이스에는 **총 11개 테이블**(비즈니스 모델 3개 + 다대다 M2M 관계 테이블 2개 + Django 프레임워크 시스템 테이블 6개)이 생성되어 운용되고 있습니다.
+현재 데이터베이스에는 **총 12개 테이블**(비즈니스 모델 4개 + 다대다 M2M 관계 테이블 2개 + Django 프레임워크 시스템 테이블 6개)이 생성되어 운용되고 있습니다.
 
 ```
 +------------------+         1 : N         +------------------+
@@ -73,20 +73,20 @@
 | name (unique)    |                       | email (unique)   |
 | address          |                       | name             |
 | enforce_2fa_owner|                       | role (OWNER/...) |
-| enforce_2fa_m... |                       | is_2fa_enabled   |
-| enforce_2fa_e... |                       | totp_secret      |
-+------------------+                       | backup_codes     |
-                                           +------------------+
-                                                     | 1
-                                                     | : N
-                                           +------------------+
-                                           |      Device      |
-                                           +------------------+
-                                           | id               |
-                                           | device_uuid      |
-                                           | device_name      |
-                                           | ip_address       |
-                                           | status (PENDING..|
+| enforce_2fa_a... |                       | is_2fa_enabled   |
+| enforce_2fa_s... |                       | totp_secret      |
+| enforce_2fa_ce   |                       | backup_codes     |
++------------------+                       +------------------+
+        | 1                                         | 1
+        | : N                                       | : N
++------------------+                       +------------------+
+|RoleMenuPermission|                       |      Device      |
++------------------+                       +------------------+
+| id               |                       | id               |
+| role             |                       | device_uuid      |
+| menu_key         |                       | device_name      |
+| is_allowed       |                       | ip_address       |
++------------------+                       | status (PENDING..|
                                            +------------------+
 ```
 
@@ -96,18 +96,25 @@
   * `id`: Primary Key
   * `name`: `CharField(max_length=120, unique=True)` - 사업장 명칭
   * `address`: `CharField(max_length=255)` - 사업장 주소
-  * `enforce_2fa_owner`, `enforce_2fa_manager`, `enforce_2fa_employee`: 직급별 2FA 강제 정책 Boolean
+  * `enforce_2fa_owner`, `enforce_2fa_admin_staff`, `enforce_2fa_sales`, `enforce_2fa_ce`: 4개 직급별 2FA 강제 정책 Boolean
 * **`accounts_user` (User 모델 - AbstractUser 상속)**:
   * `id`: Primary Key
   * `email`: `EmailField(unique=True)` - 로그인 ID (USERNAME_FIELD)
   * `name`: `CharField(max_length=80)` - 유저 실명
-  * `role`: Enum (`OWNER`, `MANAGER`, `EMPLOYEE`) - 직급 권한
+  * `role`: 4단계 Enum (`OWNER`: 관리자(대표), `ADMIN_STAFF`: 관리자(사무직원), `SALES`: 영업, `CE`: CE)
   * `workplace_id`: ForeignKey (`Workplace` 참조)
   * `is_2fa_enabled`: Boolean - 개인 2FA 활성화 여부
   * `totp_secret`: `CharField(max_length=64)` - pyotp TOTP 비밀키
   * `otp_code` / `otp_created_at`: 이메일 OTP 6자리 및 발송 시각
   * `backup_codes`: `JSONField` - 8자리 일회성 비상 복구 코드 10개
+  * `is_admin()` 메서드: `OWNER` 또는 `ADMIN_STAFF` 관리자 권한 리턴
   * `requires_2fa()` 메서드: 유저 개인 설정 및 사업장 직급별 강제 정책 종합 평가 리턴
+* **`accounts_rolemenupermission` (RoleMenuPermission 모델)**:
+  * `id`: Primary Key
+  * `workplace_id`: ForeignKey (`Workplace` 참조)
+  * `role`: Enum (`ADMIN_STAFF`, `SALES`, `CE`)
+  * `menu_key`: CharField (`crm_customers`, `assets_devices` 등 25개 키)
+  * `is_allowed`: Boolean (기본값 True)
 * **`accounts_device` (Device 모델)**:
   * `id`: Primary Key
   * `user_id`: ForeignKey (`User` 참조)
@@ -139,6 +146,7 @@
 ### ② **REST API URL 규격**
 * 인증/계정 관련 API: `/api/v1/auth/...`
 * 사업장/보안정책 관련 API: `/api/v1/workplace/...`
+* 메뉴 접근 권한 관련 API: `/api/v1/workplace/permissions/`
 * 모든 뷰 클래스는 DRF `APIView` 또는 `TokenObtainPairView`를 상속받아 명확한 HTTP Status Code(200 OK, 400 Bad Request, 403 Forbidden)를 반환합니다.
 
 ### ③ **Django ORM 및 데이터베이스 무결성 & AGENTS.md 동기화 (필수 지침)**
@@ -164,7 +172,7 @@
    cd frontend
    npm run build
    ```
-   *(모든 정적 페이지(34/34) 및 PWA 컴파일이 오류 없이 성공해야 함)*
+   *(모든 정적 페이지(35/35) 및 PWA 컴파일이 오류 없이 성공해야 함)*
 
 ---
 

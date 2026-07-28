@@ -46,7 +46,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
       ],
     },
     {
-      name: "운영관리 · 기초정보",
+      name: "기초정보",
       children: [
         { name: "대시보드", href: "/operations/basic/dashboard" },
         { name: "관리 사업자", href: "/operations/basic/workplaces" },
@@ -54,10 +54,11 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "사용자 정의 모델", href: "/operations/basic/models" },
         { name: "부소모품 코드", href: "/operations/basic/consumable-codes" },
         { name: "계약", href: "/operations/basic/contracts" },
+        { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용" },
       ],
     },
     {
-      name: "운영관리 · 자산/수집",
+      name: "자산/수집",
       children: [
         { name: "장비현황", href: "/operations/assets/devices" },
         { name: "부소모품 입출고", href: "/operations/assets/in-out" },
@@ -67,7 +68,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
       ],
     },
     {
-      name: "운영관리 · 모니터링/AS",
+      name: "모니터링/AS",
       children: [
         { name: "사용량", href: "/operations/monitoring/usage" },
         { name: "소모품", href: "/operations/monitoring/supplies" },
@@ -78,7 +79,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
       ],
     },
     {
-      name: "운영관리 · 계약",
+      name: "계약",
       children: [
         { name: "미계약 장비", href: "/operations/contracts/uncontracted" },
         { name: "계약 목록", href: "/operations/contracts/list" },
@@ -190,7 +191,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                         onMouseLeave={handleMouseLeave}
                       >
                         <div className="px-4 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                          <span>{item.name} 메뉴</span>
+                          <span>{item.name} </span>
                         </div>
                         {item.children?.map((child) => {
                           const isChildActive = pathname === child.href;

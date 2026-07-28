@@ -2,19 +2,27 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import User, Workplace, Device
+from .models import User, Workplace, Device, RoleMenuPermission
 
 
 class WorkplaceDtoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workplace
-        fields = ("id", "name", "enforce_2fa_owner", "enforce_2fa_manager", "enforce_2fa_employee")
+        fields = (
+            "id",
+            "name",
+            "enforce_2fa_owner",
+            "enforce_2fa_admin_staff",
+            "enforce_2fa_sales",
+            "enforce_2fa_ce",
+        )
 
 
 class UserDtoSerializer(serializers.ModelSerializer):
     workplace = WorkplaceDtoSerializer(read_only=True)
     workplace_name = serializers.CharField(source="workplace.name", read_only=True, default="")
     requires_2fa = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -25,12 +33,16 @@ class UserDtoSerializer(serializers.ModelSerializer):
             "role",
             "is_2fa_enabled",
             "requires_2fa",
+            "is_admin",
             "workplace",
             "workplace_name",
         )
 
     def get_requires_2fa(self, obj: User) -> bool:
         return obj.requires_2fa()
+
+    def get_is_admin(self, obj: User) -> bool:
+        return obj.is_admin()
 
 
 class DeviceDtoSerializer(serializers.ModelSerializer):
@@ -67,15 +79,15 @@ class LoginRequestSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         user: User = self.user
 
-        # Device approval check logic
+        # Device approval check logic (OWNER and ADMIN_STAFF auto approve)
         if device_uuid:
             device, created = Device.objects.get_or_create(
                 user=user,
                 device_uuid=device_uuid,
                 defaults={
                     "device_name": device_name,
-                    "status": Device.Status.APPROVED if user.role == User.Role.OWNER else Device.Status.PENDING,
-                    "approved_at": timezone.now() if user.role == User.Role.OWNER else None,
+                    "status": Device.Status.APPROVED if user.is_admin() else Device.Status.PENDING,
+                    "approved_at": timezone.now() if user.is_admin() else None,
                 },
             )
 
@@ -86,11 +98,11 @@ class LoginRequestSerializer(TokenObtainPairSerializer):
             # Check approval status
             if device.status == Device.Status.PENDING:
                 raise PermissionDenied(
-                    "승인되지 않은 기기입니다. 사업장 대표(OWNER)에게 승인을 요청했습니다. 승인 후 로그인 가능합니다."
+                    "승인되지 않은 기기입니다. 사업장 관리자에게 승인을 요청했습니다. 승인 후 로그인 가능합니다."
                 )
             elif device.status == Device.Status.REJECTED:
                 raise PermissionDenied(
-                    "승인이 거절된 기기입니다. 사업장 대표에게 문의하세요."
+                    "승인이 거절된 기기입니다. 사업장 관리자에게 문의하세요."
                 )
 
         data["user"] = UserDtoSerializer(user).data
@@ -127,8 +139,8 @@ class MemberCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, max_length=128, write_only=True)
     role = serializers.ChoiceField(
-        choices=[User.Role.MANAGER, User.Role.EMPLOYEE],
-        default=User.Role.EMPLOYEE,
+        choices=[User.Role.ADMIN_STAFF, User.Role.SALES, User.Role.CE],
+        default=User.Role.CE,
     )
 
     def validate_email(self, value: str) -> str:
@@ -144,7 +156,7 @@ class MemberUpdateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=80, required=False)
     email = serializers.EmailField(required=False)
     role = serializers.ChoiceField(
-        choices=[User.Role.MANAGER, User.Role.EMPLOYEE],
+        choices=[User.Role.OWNER, User.Role.ADMIN_STAFF, User.Role.SALES, User.Role.CE],
         required=False,
     )
     password = serializers.CharField(
@@ -170,3 +182,9 @@ class MemberUpdateSerializer(serializers.Serializer):
 
         instance.save()
         return instance
+
+
+class RoleMenuPermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleMenuPermission
+        fields = ("id", "role", "menu_key", "is_allowed", "updated_at")

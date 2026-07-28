@@ -5,6 +5,7 @@ from .views import (
     LoginView,
     MemberDetailView,
     MemberListCreateView,
+    RoleMenuPermissionView,
     SetupTOTPView,
     SignUpView,
     Toggle2FAView,
@@ -25,4 +26,5 @@ urlpatterns = [
     path("workplace/devices/", DeviceListApprovalView.as_view(), name="device-list"),
     path("workplace/devices/<int:pk>/<str:action>/", DeviceActionView.as_view(), name="device-action"),
     path("workplace/2fa-policy/", Workplace2FAPolicyView.as_view(), name="2fa-policy"),
+    path("workplace/permissions/", RoleMenuPermissionView.as_view(), name="menu-permissions"),
 ]

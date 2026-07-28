@@ -1,5 +1,7 @@
 import { getOrCreateDeviceId, getDeviceName } from "./device";
 
+export type RoleType = "OWNER" | "ADMIN_STAFF" | "SALES" | "CE";
+
 export type LoginRequest = {
   email: string;
   password: string;
@@ -18,15 +20,17 @@ export type LoginResponse = {
     id: number;
     email: string;
     name: string;
-    role: "OWNER" | "MANAGER" | "EMPLOYEE";
+    role: RoleType;
     is_2fa_enabled?: boolean;
     requires_2fa?: boolean;
+    is_admin?: boolean;
     workplace: {
       id: number;
       name: string;
       enforce_2fa_owner?: boolean;
-      enforce_2fa_manager?: boolean;
-      enforce_2fa_employee?: boolean;
+      enforce_2fa_admin_staff?: boolean;
+      enforce_2fa_sales?: boolean;
+      enforce_2fa_ce?: boolean;
     } | null;
   };
 };
@@ -42,15 +46,17 @@ export type MemberDto = {
   id: number;
   email: string;
   name: string;
-  role: "OWNER" | "MANAGER" | "EMPLOYEE";
+  role: RoleType;
   is_2fa_enabled?: boolean;
   requires_2fa?: boolean;
+  is_admin?: boolean;
   workplace: {
     id: number;
     name: string;
     enforce_2fa_owner?: boolean;
-    enforce_2fa_manager?: boolean;
-    enforce_2fa_employee?: boolean;
+    enforce_2fa_admin_staff?: boolean;
+    enforce_2fa_sales?: boolean;
+    enforce_2fa_ce?: boolean;
   } | null;
 };
 
@@ -72,24 +78,35 @@ export type CreateMemberRequest = {
   name: string;
   email: string;
   password: string;
-  role: "MANAGER" | "EMPLOYEE";
+  role: RoleType;
 };
 
 export type UpdateMemberRequest = {
   name?: string;
   email?: string;
-  role?: "MANAGER" | "EMPLOYEE";
+  role?: RoleType;
   password?: string;
 };
 
 export type TwoFAPolicyDto = {
   enforce_2fa_owner: boolean;
-  enforce_2fa_manager: boolean;
-  enforce_2fa_employee: boolean;
+  enforce_2fa_admin_staff?: boolean;
+  enforce_2fa_sales?: boolean;
+  enforce_2fa_ce?: boolean;
+  enforce_2fa_manager?: boolean;
+  enforce_2fa_employee?: boolean;
+};
+
+export type RoleMenuPermissionDto = {
+  id?: number;
+  role: RoleType;
+  menu_key: string;
+  is_allowed: boolean;
+  updated_at?: string;
 };
 
 // Dynamic API Base URL resolution for both localhost & IP access
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_BASE_URL) {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
@@ -116,6 +133,23 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
   return body as LoginResponse;
 }
 
+export async function signUp(request: SignUpRequest): Promise<{ user: MemberDto }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/signup/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(
+      body?.email?.[0] ??
+        body?.workplace_name?.[0] ??
+        parseErrorMessage(body, "회원가입 처리 중 오류가 발생했습니다."),
+    );
+  }
+  return body as { user: MemberDto };
+}
+
 export async function verify2FA(email: string, otpCode: string): Promise<LoginResponse> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/verify-2fa/`, {
     method: "POST",
@@ -140,21 +174,21 @@ export async function setupTOTP(token: string): Promise<{ secret: string; otpaut
   return body as { secret: string; otpauth_url: string; qr_code_url?: string; is_enabled: boolean };
 }
 
-export async function verifySetupTOTP(token: string, otpCode: string): Promise<{ detail: string; backup_codes: string[] }> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/2fa/setup-totp/`, {
+export async function verifySetupTOTP(token: string, totpCode: string): Promise<{ detail: string; is_2fa_enabled: boolean; backup_codes: string[] }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/2fa/verify-totp-setup/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ otp_code: otpCode }),
+    body: JSON.stringify({ totp_code: totpCode }),
   });
   const body = await readJsonResponse(response);
-  if (!response.ok) throw new Error(parseErrorMessage(body, "TOTP 핀 코드 검증에 실패했습니다."));
-  return body as { detail: string; backup_codes: string[] };
+  if (!response.ok) throw new Error(parseErrorMessage(body, "TOTP 인증 번호 확인에 실패했습니다."));
+  return body as { detail: string; is_2fa_enabled: boolean; backup_codes: string[] };
 }
 
-export async function toggle2FA(token: string, enable?: boolean): Promise<{ is_2fa_enabled: boolean; backup_codes: string[]; detail: string }> {
+export async function toggle2FA(token: string, enable: boolean): Promise<{ detail: string; is_2fa_enabled: boolean; backup_codes: string[] }> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/2fa/toggle/`, {
     method: "POST",
     headers: {
@@ -164,8 +198,52 @@ export async function toggle2FA(token: string, enable?: boolean): Promise<{ is_2
     body: JSON.stringify({ enable }),
   });
   const body = await readJsonResponse(response);
-  if (!response.ok) throw new Error(parseErrorMessage(body, "2FA 설정 변경 실패"));
-  return body as { is_2fa_enabled: boolean; backup_codes: string[]; detail: string };
+  if (!response.ok) throw new Error(parseErrorMessage(body, "2FA 설정 변경에 실패했습니다."));
+  return body as { detail: string; is_2fa_enabled: boolean; backup_codes: string[] };
+}
+
+export async function getMyProfile(token: string): Promise<{
+  user: MemberDto;
+  is_2fa_enabled: boolean;
+  requires_2fa: boolean;
+  has_totp: boolean;
+  backup_codes_count: number;
+  my_devices: DeviceDto[];
+}> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/profile/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) throw new Error(parseErrorMessage(body, "프로필 정보를 불러오지 못했습니다."));
+  return body as {
+    user: MemberDto;
+    is_2fa_enabled: boolean;
+    requires_2fa: boolean;
+    has_totp: boolean;
+    backup_codes_count: number;
+    my_devices: DeviceDto[];
+  };
+}
+
+export async function updateMyProfile(
+  token: string,
+  payload: { name?: string; password?: string },
+): Promise<{ detail: string; user: MemberDto }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/profile/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) throw new Error(parseErrorMessage(body, "프로필 수정에 실패했습니다."));
+  return body as { detail: string; user: MemberDto };
 }
 
 export async function get2FAPolicy(token: string): Promise<TwoFAPolicyDto> {
@@ -177,63 +255,13 @@ export async function get2FAPolicy(token: string): Promise<TwoFAPolicyDto> {
     },
   });
   const body = await readJsonResponse(response);
-  if (!response.ok) throw new Error(parseErrorMessage(body, "2FA 정책을 불러오지 못했습니다."));
+  if (!response.ok) throw new Error(parseErrorMessage(body, "사업장 보안 정책을 불러오지 못했습니다."));
   return body as TwoFAPolicyDto;
 }
 
-export async function update2FAPolicy(token: string, policy: Partial<TwoFAPolicyDto>): Promise<TwoFAPolicyDto & { detail: string }> {
+export async function update2FAPolicy(token: string, payload: Partial<TwoFAPolicyDto>): Promise<TwoFAPolicyDto & { detail: string }> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/2fa-policy/`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(policy),
-  });
-  const body = await readJsonResponse(response);
-  if (!response.ok) throw new Error(parseErrorMessage(body, "2FA 정책 수정 실패"));
-  return body as TwoFAPolicyDto & { detail: string };
-}
-
-export async function signUp(request: SignUpRequest): Promise<void> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/signup/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-  if (response.ok) return;
-  const body = await readJsonResponse(response);
-  throw new Error(
-    body?.email?.[0] ??
-      body?.workplace_name?.[0] ??
-      body?.password?.[0] ??
-      body?.detail ??
-      `회원가입에 실패했습니다. (HTTP ${response.status})`,
-  );
-}
-
-// My Profile Functions
-export async function getMyProfile(token: string): Promise<{ user: MemberDto; my_devices: DeviceDto[]; is_2fa_enabled: boolean; requires_2fa: boolean; has_totp: boolean; backup_codes_count: number }> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/profile/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const body = await readJsonResponse(response);
-  if (!response.ok) {
-    throw new Error(parseErrorMessage(body, "내 프로필 정보를 불러오지 못했습니다."));
-  }
-  return body as any;
-}
-
-export async function updateMyProfile(
-  token: string,
-  payload: { name?: string; password?: string }
-): Promise<{ detail: string; user: MemberDto }> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/profile/`, {
-    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
@@ -241,10 +269,35 @@ export async function updateMyProfile(
     body: JSON.stringify(payload),
   });
   const body = await readJsonResponse(response);
-  if (!response.ok) {
-    throw new Error(parseErrorMessage(body, "프로필 수정에 실패했습니다."));
-  }
-  return body as { detail: string; user: MemberDto };
+  if (!response.ok) throw new Error(parseErrorMessage(body, "사업장 보안 정책 변경에 실패했습니다."));
+  return body as TwoFAPolicyDto & { detail: string };
+}
+
+export async function getMenuPermissions(token: string): Promise<RoleMenuPermissionDto[]> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/permissions/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) throw new Error(parseErrorMessage(body, "메뉴 권한 정보를 불러오지 못했습니다."));
+  return body?.permissions as RoleMenuPermissionDto[];
+}
+
+export async function updateMenuPermissions(token: string, permissions: RoleMenuPermissionDto[]): Promise<{ detail: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/permissions/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ permissions }),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) throw new Error(parseErrorMessage(body, "메뉴 권한 저장에 실패했습니다."));
+  return body as { detail: string };
 }
 
 export async function getMembers(token: string): Promise<MemberDto[]> {
@@ -262,24 +315,21 @@ export async function getMembers(token: string): Promise<MemberDto[]> {
   return body?.members as MemberDto[];
 }
 
-export async function createMember(
-  token: string,
-  request: CreateMemberRequest,
-): Promise<MemberDto> {
+export async function createMember(token: string, payload: CreateMemberRequest): Promise<MemberDto> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(payload),
   });
   const body = await readJsonResponse(response);
   if (!response.ok) {
     throw new Error(
       body?.email?.[0] ??
         body?.non_field_errors?.[0] ??
-        parseErrorMessage(body, "구성원 생성에 실패했습니다."),
+        parseErrorMessage(body, "구성원 등록에 실패했습니다."),
     );
   }
   return body?.member as MemberDto;
@@ -288,7 +338,7 @@ export async function createMember(
 export async function updateMember(
   token: string,
   memberId: number,
-  request: UpdateMemberRequest,
+  payload: UpdateMemberRequest,
 ): Promise<MemberDto> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/${memberId}/`, {
     method: "PATCH",
@@ -296,7 +346,7 @@ export async function updateMember(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(payload),
   });
   const body = await readJsonResponse(response);
   if (!response.ok) {
@@ -322,7 +372,6 @@ export async function deleteMember(token: string, memberId: number): Promise<voi
   throw new Error(parseErrorMessage(body, "구성원 삭제에 실패했습니다."));
 }
 
-// Device Management Functions
 export async function getDevices(token: string): Promise<DeviceDto[]> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/devices/`, {
     method: "GET",

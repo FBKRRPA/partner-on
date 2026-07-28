@@ -11,6 +11,7 @@ import {
   getMembers,
   MemberDto,
   rejectDevice,
+  RoleType,
   TwoFAPolicyDto,
   update2FAPolicy,
   updateMember,
@@ -35,8 +36,9 @@ export function MemberManagement({ accessToken }: Props) {
   // 2FA Policy state
   const [policy, setPolicy] = useState<TwoFAPolicyDto>({
     enforce_2fa_owner: false,
-    enforce_2fa_manager: false,
-    enforce_2fa_employee: false,
+    enforce_2fa_admin_staff: false,
+    enforce_2fa_sales: false,
+    enforce_2fa_ce: false,
   });
   const [policyFetching, setPolicyFetching] = useState(false);
 
@@ -95,9 +97,10 @@ export function MemberManagement({ accessToken }: Props) {
       const updatedValue = !policy[field];
       const res = await update2FAPolicy(accessToken, { [field]: updatedValue });
       setPolicy({
-        enforce_2fa_owner: res.enforce_2fa_owner,
-        enforce_2fa_manager: res.enforce_2fa_manager,
-        enforce_2fa_employee: res.enforce_2fa_employee,
+        enforce_2fa_owner: !!res.enforce_2fa_owner,
+        enforce_2fa_admin_staff: !!res.enforce_2fa_admin_staff,
+        enforce_2fa_sales: !!res.enforce_2fa_sales,
+        enforce_2fa_ce: !!res.enforce_2fa_ce,
       });
       setMessage(res.detail);
       setIsError(false);
@@ -141,59 +144,51 @@ export function MemberManagement({ accessToken }: Props) {
     }
   }
 
-  async function onCreateSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formElement = event.currentTarget;
-    setLoading(true);
-    setMessage("");
-    setIsError(false);
-
-    const form = new FormData(formElement);
-    const name = String(form.get("name"));
-    const email = String(form.get("email"));
-    const password = String(form.get("password"));
-    const role = form.get("role") as "MANAGER" | "EMPLOYEE";
+  async function handleCreateMemberSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const role = formData.get("role") as RoleType;
 
     try {
+      setLoading(true);
       await createMember(accessToken, { name, email, password, role });
-      setMessage(`'${name}' 구성원 계정이 등록되었습니다.`);
-      formElement.reset();
+      setMessage(`'${name}' 구성원이 성공적으로 생성되었습니다.`);
+      setIsError(false);
       await loadMembers();
-      setTimeout(() => {
-        setViewMode("LIST");
-        setMessage("");
-      }, 1500);
+      setViewMode("LIST");
+      setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "구성원 등록에 실패했습니다.");
+      setMessage(err instanceof Error ? err.message : "구성원 생성에 실패했습니다.");
       setIsError(true);
     } finally {
       setLoading(false);
     }
   }
 
-  async function onEditSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleEditMemberSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     if (!selectedMember) return;
 
-    setLoading(true);
-    setMessage("");
-    setIsError(false);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const role = formData.get("role") as RoleType;
+    const password = formData.get("password") as string;
 
-    const form = new FormData(event.currentTarget);
-    const name = String(form.get("name"));
-    const email = String(form.get("email"));
-    const role = form.get("role") as "MANAGER" | "EMPLOYEE";
-    const password = String(form.get("password"));
-
-    const payload: { name?: string; email?: string; role?: "MANAGER" | "EMPLOYEE"; password?: string } = {};
-    if (name !== selectedMember.name) payload.name = name;
-    if (email !== selectedMember.email) payload.email = email;
-    if (role !== selectedMember.role) payload.role = role;
-    if (password.trim() !== "") payload.password = password;
+    const payload: { name?: string; email?: string; role?: RoleType; password?: string } = {};
+    if (name) payload.name = name;
+    if (email) payload.email = email;
+    if (role) payload.role = role;
+    if (password) payload.password = password;
 
     try {
+      setLoading(true);
       await updateMember(accessToken, selectedMember.id, payload);
-      setMessage(`'${name}' 구성원 정보가 수정되었습니다.`);
+      setMessage(`'${selectedMember.name}' 정보가 업데이트되었습니다.`);
+      setIsError(false);
       await loadMembers();
       setTimeout(() => {
         setViewMode("LIST");
@@ -210,7 +205,7 @@ export function MemberManagement({ accessToken }: Props) {
 
   async function handleDelete(member: MemberDto) {
     if (member.role === "OWNER") {
-      alert("대표 계정은 삭제할 수 없습니다.");
+      alert("관리자(대표) 계정은 삭제할 수 없습니다.");
       return;
     }
     if (!confirm(`정말로 '${member.name}' 구성원을 삭제하시겠습니까?`)) return;
@@ -229,6 +224,21 @@ export function MemberManagement({ accessToken }: Props) {
       setLoading(false);
     }
   }
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "OWNER":
+        return <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-purple-100 text-purple-700">관리자(대표)</span>;
+      case "ADMIN_STAFF":
+        return <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-indigo-100 text-indigo-700">관리자(사무직원)</span>;
+      case "SALES":
+        return <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-700">영업</span>;
+      case "CE":
+        return <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-[#01916D]">CE</span>;
+      default:
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{role}</span>;
+    }
+  };
 
   const pendingDevices = devices.filter((d) => d.status === "PENDING");
 
@@ -301,23 +311,21 @@ export function MemberManagement({ accessToken }: Props) {
           {viewMode === "LIST" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#5C5C5C] uppercase tracking-wider">
-                  사업장 구성원 목록
-                </span>
+                <h3 className="text-lg font-bold text-[#333333]">소속 구성원 목록</h3>
                 <button
                   onClick={() => {
                     setViewMode("CREATE");
                     setMessage("");
                   }}
-                  className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                  className="px-4 py-2 text-xs font-bold text-white bg-[#01916D] hover:bg-[#006449] rounded-xl shadow-xs transition-all cursor-pointer"
                 >
-                  + 새 구성원 추가
+                  + 새 구성원 등록
                 </button>
               </div>
 
               {fetching ? (
                 <div className="py-12 text-center text-slate-400 text-sm">
-                  구성원 목록을 불러오는 중...
+                  구성원 정보를 불러오는 중...
                 </div>
               ) : members.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
@@ -330,8 +338,8 @@ export function MemberManagement({ accessToken }: Props) {
                       <tr>
                         <th className="py-3.5 px-4">이름</th>
                         <th className="py-3.5 px-4">이메일</th>
-                        <th className="py-3.5 px-4">직책 권한</th>
-                        <th className="py-3.5 px-4">2FA 상태</th>
+                        <th className="py-3.5 px-4">직급 (Role)</th>
+                        <th className="py-3.5 px-4">2FA 활성화</th>
                         <th className="py-3.5 px-4 text-right">관리</th>
                       </tr>
                     </thead>
@@ -340,19 +348,7 @@ export function MemberManagement({ accessToken }: Props) {
                         <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3.5 px-4 font-bold text-[#333333]">{m.name}</td>
                           <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">{m.email}</td>
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                                m.role === "OWNER"
-                                  ? "bg-emerald-100 text-[#01916D]"
-                                  : m.role === "MANAGER"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-slate-100 text-slate-600"
-                              }`}
-                            >
-                              {m.role === "OWNER" ? "대표" : m.role === "MANAGER" ? "매니저" : "사원"}
-                            </span>
-                          </td>
+                          <td className="py-3.5 px-4">{getRoleBadge(m.role)}</td>
                           <td className="py-3.5 px-4">
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -361,7 +357,7 @@ export function MemberManagement({ accessToken }: Props) {
                                   : "bg-slate-100 text-slate-500"
                               }`}
                             >
-                              {m.requires_2fa ? "🔒 2FA 적용 중" : "🔓 2FA 미적용"}
+                              {m.requires_2fa ? "🔒 2FA 적용" : "🔓 미적용"}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right space-x-2">
@@ -394,138 +390,167 @@ export function MemberManagement({ accessToken }: Props) {
             </div>
           )}
 
-          {/* CREATE MODE */}
+          {/* CREATE MEMBER FORM */}
           {viewMode === "CREATE" && (
-            <form onSubmit={onCreateSubmit} className="space-y-4 max-w-lg">
-              <h3 className="text-lg font-bold text-[#333333]">새 구성원 추가</h3>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">이름</label>
-                <input
-                  name="name"
-                  type="text"
-                  required
-                  placeholder="홍길동"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">이메일</label>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="user@company.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">초기 비밀번호</label>
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  placeholder="8자 이상 입력"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">직책 권한</label>
-                <select
-                  name="role"
-                  defaultValue="EMPLOYEE"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                >
-                  <option value="EMPLOYEE">사원</option>
-                  <option value="MANAGER">매니저</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-2">
+            <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 className="text-base font-bold text-[#333333]">➕ 새 구성원 추가</h3>
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-                >
-                  {loading ? "등록 중..." : "구성원 등록"}
-                </button>
-                <button
-                  type="button"
                   onClick={() => setViewMode("LIST")}
-                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
-                  취소
+                  ✕ 취소
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleCreateMemberSubmit} className="space-y-4 text-xs sm:text-sm">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">성명</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="홍길동"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">이메일 (로그인 ID)</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="user@partneron.co.kr"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">비밀번호</label>
+                  <input
+                    type="password"
+                    name="password"
+                    required
+                    minLength={8}
+                    placeholder="8자 이상 입력"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
+                  <select
+                    name="role"
+                    defaultValue="CE"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-semibold"
+                  >
+                    <option value="ADMIN_STAFF">관리자(사무직원)</option>
+                    <option value="SALES">영업</option>
+                    <option value="CE">CE (엔지니어)</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("LIST")}
+                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    {loading ? "등록 중..." : "등록하기"}
+                  </button>
+                </div>
+              </form>
+            </div>
           )}
 
-          {/* EDIT MODE */}
+          {/* EDIT MEMBER FORM */}
           {viewMode === "EDIT" && selectedMember && (
-            <form onSubmit={onEditSubmit} className="space-y-4 max-w-lg">
-              <h3 className="text-lg font-bold text-[#333333]">구성원 정보 수정</h3>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">이름</label>
-                <input
-                  name="name"
-                  type="text"
-                  defaultValue={selectedMember.name}
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">이메일</label>
-                <input
-                  name="email"
-                  type="email"
-                  defaultValue={selectedMember.email}
-                  required
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  새 비밀번호 (변경 시에만 입력)
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="변경할 비밀번호 (미입력 시 기존 유구)"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">직책 권한</label>
-                <select
-                  name="role"
-                  defaultValue={selectedMember.role}
-                  disabled={selectedMember.role === "OWNER"}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-[#01916D] text-slate-900"
-                >
-                  <option value="OWNER">대표 (변경 불가)</option>
-                  <option value="MANAGER">매니저</option>
-                  <option value="EMPLOYEE">사원</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-2">
+            <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <h3 className="text-base font-bold text-[#333333]">✏️ 구성원 정보 수정</h3>
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-                >
-                  {loading ? "저장 중..." : "수정 완료"}
-                </button>
-                <button
-                  type="button"
                   onClick={() => {
                     setViewMode("LIST");
                     setSelectedMember(null);
                   }}
-                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
-                  취소
+                  ✕ 취소
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleEditMemberSubmit} className="space-y-4 text-xs sm:text-sm">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">성명</label>
+                  <input
+                    type="text"
+                    name="name"
+                    defaultValue={selectedMember.name}
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">이메일</label>
+                  <input
+                    type="email"
+                    name="email"
+                    defaultValue={selectedMember.email}
+                    required
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
+                  <select
+                    name="role"
+                    defaultValue={selectedMember.role}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-semibold"
+                  >
+                    <option value="OWNER">관리자(대표)</option>
+                    <option value="ADMIN_STAFF">관리자(사무직원)</option>
+                    <option value="SALES">영업</option>
+                    <option value="CE">CE (엔지니어)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    새 비밀번호 (변경시에만 입력)
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder="비밀번호 변경 시 8자 이상 입력"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewMode("LIST");
+                      setSelectedMember(null);
+                    }}
+                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    {loading ? "저장 중..." : "저장하기"}
+                  </button>
+                </div>
+              </form>
+            </div>
           )}
         </>
       )}
@@ -534,15 +559,12 @@ export function MemberManagement({ accessToken }: Props) {
       {activeTab === "DEVICES" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#5C5C5C] uppercase tracking-wider">
-              로그인 허용 기기 관리 목록
-            </span>
-            <button
-              onClick={loadDevices}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
-            >
-              🔄 새로고침
-            </button>
+            <div>
+              <h3 className="text-lg font-bold text-[#333333]">📱 접속 승인 기기 모듈</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                사원 및 외부 접속 기기(브라우저)의 승인 대기 상태를 검토 및 허용합니다.
+              </p>
+            </div>
           </div>
 
           {deviceFetching ? (
@@ -630,7 +652,7 @@ export function MemberManagement({ accessToken }: Props) {
           <div>
             <h3 className="text-lg font-bold text-[#333333]">🛡️ 사업장 2FA 역할별 필수 정책 설정</h3>
             <p className="text-xs text-slate-500 mt-1">
-              특정 역할(대표, 매니저, 사원)에 대해 2차 인증(2FA) 사용을 강제(Mandatory)하도록 지정할 수 있습니다.
+              특정 직급(관리자 대표, 관리자 사무직원, 영업, CE)에 대해 2차 인증(2FA) 사용을 강제하도록 지정할 수 있습니다.
             </p>
           </div>
 
@@ -641,7 +663,7 @@ export function MemberManagement({ accessToken }: Props) {
               {/* OWNER Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">👑 대표 (OWNER) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">👑 관리자(대표) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     대표 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
@@ -661,47 +683,70 @@ export function MemberManagement({ accessToken }: Props) {
                 </button>
               </div>
 
-              {/* MANAGER Enforcement */}
+              {/* ADMIN_STAFF Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">👔 매니저 (MANAGER) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">💼 관리자(사무직원) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    매니저 권한 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                    관리자 사무직원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
                 </div>
                 <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_manager")}
+                  onClick={() => handleTogglePolicyField("enforce_2fa_admin_staff")}
                   disabled={loading}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_manager ? "bg-[#01916D]" : "bg-slate-300"
+                    policy.enforce_2fa_admin_staff ? "bg-[#01916D]" : "bg-slate-300"
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_manager ? "translate-x-6" : "translate-x-1"
+                      policy.enforce_2fa_admin_staff ? "translate-x-6" : "translate-x-1"
                     }`}
                   />
                 </button>
               </div>
 
-              {/* EMPLOYEE Enforcement */}
+              {/* SALES Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">👤 사원 (EMPLOYEE) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">📈 영업 (SALES) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
-                    일반 사원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                    영업 담당 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
                 </div>
                 <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_employee")}
+                  onClick={() => handleTogglePolicyField("enforce_2fa_sales")}
                   disabled={loading}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_employee ? "bg-[#01916D]" : "bg-slate-300"
+                    policy.enforce_2fa_sales ? "bg-[#01916D]" : "bg-slate-300"
                   }`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_employee ? "translate-x-6" : "translate-x-1"
+                      policy.enforce_2fa_sales ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* CE Enforcement */}
+              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                <div>
+                  <div className="font-bold text-slate-800 text-sm">🔧 CE (엔지니어) 2FA 필수화</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    CE 엔지니어 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleTogglePolicyField("enforce_2fa_ce")}
+                  disabled={loading}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    policy.enforce_2fa_ce ? "bg-[#01916D]" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      policy.enforce_2fa_ce ? "translate-x-6" : "translate-x-1"
                     }`}
                   />
                 </button>

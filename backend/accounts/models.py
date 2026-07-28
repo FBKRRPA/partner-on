@@ -30,8 +30,13 @@ class Workplace(models.Model):
     address = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # 2FA Policy Enforcements by Role (Default: Opt-in, configurable by OWNER)
+    # 2FA Policy Enforcements by 4 Roles
     enforce_2fa_owner = models.BooleanField(default=False)
+    enforce_2fa_admin_staff = models.BooleanField(default=False)
+    enforce_2fa_sales = models.BooleanField(default=False)
+    enforce_2fa_ce = models.BooleanField(default=False)
+
+    # Backward Compatibility
     enforce_2fa_manager = models.BooleanField(default=False)
     enforce_2fa_employee = models.BooleanField(default=False)
 
@@ -44,14 +49,15 @@ class Workplace(models.Model):
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        OWNER = "OWNER", "대표"
-        MANAGER = "MANAGER", "매니저"
-        EMPLOYEE = "EMPLOYEE", "사원"
+        OWNER = "OWNER", "관리자(대표)"
+        ADMIN_STAFF = "ADMIN_STAFF", "관리자(사무직원)"
+        SALES = "SALES", "영업"
+        CE = "CE", "CE"
 
     username = None
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=80)
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.EMPLOYEE)
+    role = models.CharField(max_length=15, choices=Role.choices, default=Role.CE)
     workplace = models.ForeignKey(
         Workplace, on_delete=models.PROTECT, null=True, blank=True, related_name="users"
     )
@@ -67,6 +73,10 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
+    def is_admin(self) -> bool:
+        """Check if user has full admin access (관리자 대표 or 관리자 사무직원)"""
+        return self.role in [self.Role.OWNER, self.Role.ADMIN_STAFF] or self.is_superuser
+
     def requires_2fa(self) -> bool:
         """Check if 2FA is required either by user setting or workplace role enforcement"""
         if self.is_2fa_enabled:
@@ -74,11 +84,31 @@ class User(AbstractUser):
         if self.workplace:
             if self.role == self.Role.OWNER and self.workplace.enforce_2fa_owner:
                 return True
-            if self.role == self.Role.MANAGER and self.workplace.enforce_2fa_manager:
+            if self.role == self.Role.ADMIN_STAFF and self.workplace.enforce_2fa_admin_staff:
                 return True
-            if self.role == self.Role.EMPLOYEE and self.workplace.enforce_2fa_employee:
+            if self.role == self.Role.SALES and self.workplace.enforce_2fa_sales:
                 return True
+            if self.role == self.Role.CE and self.workplace.enforce_2fa_ce:
+                return True
+            # Legacy checks
+            if self.workplace.enforce_2fa_manager or self.workplace.enforce_2fa_employee:
+                if self.role not in [self.Role.OWNER, self.Role.ADMIN_STAFF]:
+                    return True
         return False
+
+
+class RoleMenuPermission(models.Model):
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="menu_permissions")
+    role = models.CharField(max_length=15, choices=User.Role.choices)
+    menu_key = models.CharField(max_length=100)
+    is_allowed = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("workplace", "role", "menu_key")
+
+    def __str__(self) -> str:
+        return f"[{self.workplace.name}] {self.role} -> {self.menu_key}: {self.is_allowed}"
 
 
 class Device(models.Model):

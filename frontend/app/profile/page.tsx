@@ -239,7 +239,13 @@ export default function ProfilePage() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">직책 권한:</span>
                     <span className="font-bold text-[#01916D]">
-                      {user.role === "OWNER" ? "대표 (OWNER)" : user.role === "MANAGER" ? "매니저" : "사원"}
+                      {user.role === "OWNER"
+                        ? "관리자(대표)"
+                        : user.role === "ADMIN_STAFF"
+                        ? "관리자(사무직원)"
+                        : user.role === "SALES"
+                        ? "영업"
+                        : "CE"}
                     </span>
                   </div>
                 </div>
