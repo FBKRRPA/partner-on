@@ -141,9 +141,10 @@
 * 사업장/보안정책 관련 API: `/api/v1/workplace/...`
 * 모든 뷰 클래스는 DRF `APIView` 또는 `TokenObtainPairView`를 상속받아 명확한 HTTP Status Code(200 OK, 400 Bad Request, 403 Forbidden)를 반환합니다.
 
-### ③ **Django ORM 및 데이터베이스 무결성**
-* 모델 변경 시 반드시 `python manage.py makemigrations` 및 `python manage.py migrate`를 수행합니다.
-* 기존 comments 및 docstring을 훼손하지 않고 유지합니다.
+### ③ **Django ORM 및 데이터베이스 무결성 & AGENTS.md 동기화 (필수 지침)**
+* ⚠️ **[중요] 모델/테이블 추가 및 필드 수정 시 필수 절차**:
+  1. `models.py` 수정 후 `python manage.py makemigrations` 및 `python manage.py migrate` 수행.
+  2. **새로운 모델/테이블이 생성되거나 필드가 변경된 경우, LLM 코딩 에이전트는 반드시 `AGENTS.md` 파일의 `4. 데이터베이스 스키마 & ORM 모델` 섹션에 해당 테이블 및 필드 설명을 업데이트해야 합니다.**
 
 ---
 
