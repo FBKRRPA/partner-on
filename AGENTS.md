@@ -61,7 +61,42 @@
 
 ---
 
-## 🗄️ 4. 데이터베이스 스키마 & ORM 모델 (Database Schema & Tables)
+## 🔒 4. 시큐어 코딩 & 웹 보안 취약점 방지 수칙 (Web Vulnerability Prevention)
+
+주요 웹 보안 진단/진단도구(KISA 가이드, OWASP Top 10) 시 취약점이 지적되지 않도록 아래 시큐어 코딩 수칙을 엄격히 준수해야 합니다.
+
+### ① **SQL Injection 방지**
+* ❌ **금지**: `cursor.execute("SELECT ... WHERE email = '%s'" % user_input)` 파이썬 포맷팅 직접 쿼리 절대 금지.
+* ✅ **원칙**: 반드시 Django ORM 메서드 (`User.objects.filter(...)`) 및 Parameterized Query를 활용합니다.
+
+### ② **XSS (Cross-Site Scripting) 방지**
+* ❌ **금지**: React/Next.js에서 `dangerouslySetInnerHTML` 속성 사용을 엄격히 금지합니다.
+* ✅ **원칙**: 모든 클라이언트 출력 텍스트는 React 기본 JSX 자동 이스케이핑을 거쳐 안전하게 렌더링되도록 작성합니다.
+
+### ③ **Broken Access Control & BOLA (타인 데이터 무단 접근) 방지**
+* ❌ **금지**: URL 파라미터 `pk`만으로 객체를 바로 조회(`User.objects.get(pk=pk)`)하여 타 사업장 데이터에 접근할 수 있게 방치하는 행위 금지.
+* ✅ **원칙**: 모든 데이터 조회의 최상위 조건에는 로그인된 유저의 소속 사업장 조건(`workplace=request.user.workplace`)을 반드시 결합하여 검증합니다.
+  ```python
+  member = User.objects.filter(pk=pk, workplace=request.user.workplace).first()
+  ```
+
+### ④ **민감 정보 노출 (Sensitive Data Exposure) 방지**
+* ❌ **금지**: 비밀번호, TOTP Secret, 이메일 OTP 코드가 REST API DTO 응답(JSON)에 포함되지 않도록 합니다.
+* ✅ **원칙**:
+  * 비밀번호는 반드시 `user.set_password()`를 거쳐 PBKDF2 단방향 솔티드 해시로 암호화 저장합니다.
+  * API Serializer의 `fields`에서 `password`, `totp_secret`, `otp_code`를 제외하거나 `write_only=True`를 명시합니다.
+  * DB 암호, SECRET_KEY, API 키 등은 소스코드에 하드코딩하지 않고 환경 변수(`.env`)로 처리합니다.
+
+### ⑤ **Brute-Force (무차별 대입 공격) & 세션 관리**
+* 로그인 API에는 `throttle_scope = "login"`을 적용하여 초당 요청 건수를 제한합니다.
+* 이메일 OTP 인증 코드는 발송 후 5분이 지나면 자동 만료(`timedelta(minutes=5)`)되도록 처리하며, 1회 검증 시 즉시 소멸(`user.otp_code = None`)시킵니다.
+
+### ⑥ **시스템 상세 정보 노출 방지 (Information Disclosure)**
+* API 예외 처리 시 서버 내부 딥 스택트레이스(StackTrace)나 DB 에러 원문을 클라이언트에 직접 렌더링하지 않고, 정제된 메시지(`{"detail": "..."}`) 형태로 반환합니다.
+
+---
+
+## 🗄️ 5. 데이터베이스 스키마 & ORM 모델 (Database Schema & Tables)
 
 현재 데이터베이스에는 **총 12개 테이블**(비즈니스 모델 4개 + 다대다 M2M 관계 테이블 2개 + Django 프레임워크 시스템 테이블 6개)이 생성되어 운용되고 있습니다.
 
@@ -137,7 +172,7 @@
 
 ---
 
-## 🛡️ 5. 백엔드 개발 규칙 (Backend Rules)
+## 🛡️ 6. 백엔드 개발 규칙 (Backend Rules)
 
 ### ① **2FA (Two-Factor Authentication) 검증 흐름**
 * 유저의 2FA 요구 여부는 반드시 `user.requires_2fa()` 메서드를 호출하여 판단합니다.
@@ -156,7 +191,7 @@
 
 ---
 
-## 🧪 6. 테스트 및 품질 검증 (Verification Standard)
+## 🧪 7. 테스트 및 품질 검증 (Verification Standard)
 
 코드 변경을 완료하기 전에 반드시 아래 **2가지 검증 스크립트**를 실행하고 100% 통과해야 합니다.
 
@@ -176,7 +211,7 @@
 
 ---
 
-## 🌿 7. Git 브랜치 전략 & PR 규칙 (Branch & PR Strategy)
+## 🌿 8. Git 브랜치 전략 & PR 규칙 (Branch & PR Strategy)
 
 1. **`main` 브랜치는 보호(Branch Protection)되어 있으므로 직접 Push가 금지됩니다.**
 2. **기능 추가 및 수정 시 반드시 작업 브랜치를 생성해야 합니다**:
@@ -193,7 +228,7 @@
 
 ---
 
-## 📝 8. Git 커밋 컨벤션 (Git Commit Convention)
+## 📝 9. Git 커밋 컨벤션 (Git Commit Convention)
 
 모든 커밋 메시지는 **Conventional Commits** 형식을 따릅니다:
 
