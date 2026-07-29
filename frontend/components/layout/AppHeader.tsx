@@ -53,7 +53,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "창고", href: "/operations/basic/warehouses" },
         { name: "사용자 정의 모델", href: "/operations/basic/models" },
         { name: "부소모품 코드", href: "/operations/basic/consumable-codes" },
-        { name: "계약", href: "/operations/basic/contracts" },
+        { name: "고객(계약후)", href: "/operations/basic/contracts" },
         { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용" },
       ],
     },
@@ -81,7 +81,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
     {
       name: "계약",
       children: [
-        { name: "미계약 장비", href: "/operations/contracts/uncontracted" },
+        { name: "계약 등록", href: "/operations/contracts/uncontracted" },
         { name: "계약 목록", href: "/operations/contracts/list" },
         { name: "명세서 발행/완료", href: "/operations/contracts/invoices" },
         { name: "판매 등록/완료", href: "/operations/contracts/sales" },
