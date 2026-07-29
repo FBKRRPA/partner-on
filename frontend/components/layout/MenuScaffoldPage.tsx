@@ -1,15 +1,45 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
+import { RoleMenuPermissionDto } from "../../lib/auth-api";
 
 type MenuScaffoldPageProps = {
   category: string;
   title: string;
   description: string;
   icon?: string;
+};
+
+const PATH_TO_KEY_MAP: Record<string, string> = {
+  "/profile": "profile",
+  "/crm/customers": "crm_customers",
+  "/crm/sales": "crm_sales",
+  "/crm/members": "crm_members",
+  "/operations/basic/dashboard": "basic_dashboard",
+  "/operations/basic/workplaces": "basic_workplaces",
+  "/operations/basic/warehouses": "basic_warehouses",
+  "/operations/basic/models": "basic_models",
+  "/operations/basic/consumable-codes": "basic_consumable_codes",
+  "/operations/basic/contracts": "basic_contracts",
+  "/operations/basic/permissions": "basic_permissions",
+  "/operations/assets/devices": "assets_devices",
+  "/operations/assets/in-out": "assets_in_out",
+  "/operations/assets/inventory": "assets_inventory",
+  "/operations/assets/collectors": "assets_collectors",
+  "/operations/assets/email-collectors": "assets_email_collectors",
+  "/operations/monitoring/usage": "monitoring_usage",
+  "/operations/monitoring/supplies": "monitoring_supplies",
+  "/operations/monitoring/customers": "monitoring_customers",
+  "/operations/monitoring/as/today": "monitoring_as_today",
+  "/operations/monitoring/as/tickets": "monitoring_as_tickets",
+  "/operations/monitoring/consumables-usage": "monitoring_consumables_usage",
+  "/operations/contracts/uncontracted": "contracts_uncontracted",
+  "/operations/contracts/list": "contracts_list",
+  "/operations/contracts/invoices": "contracts_invoices",
+  "/operations/contracts/sales": "contracts_sales",
 };
 
 export function MenuScaffoldPage({
@@ -19,24 +49,46 @@ export function MenuScaffoldPage({
   icon = "📌",
 }: MenuScaffoldPageProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [workplaceName, setWorkplaceName] = useState("");
+  const [authorized, setAuthorized] = useState(true);
 
   useEffect(() => {
     const rawUser = sessionStorage.getItem("user") || sessionStorage.getItem("partneron.user");
+    const rawPerms = sessionStorage.getItem("partneron.permissions");
+
     if (rawUser) {
       try {
         const u = JSON.parse(rawUser);
         if (u.workplace?.name) setWorkplaceName(u.workplace.name);
+
+        const userRole = u.role;
+        const currentMenuKey = PATH_TO_KEY_MAP[pathname];
+
+        // OWNER is always authorized
+        if (userRole !== "OWNER" && currentMenuKey && rawPerms) {
+          const perms: RoleMenuPermissionDto[] = JSON.parse(rawPerms);
+          const match = perms.find((p) => p.role === userRole && p.menu_key === currentMenuKey);
+          if (match && match.is_allowed === false) {
+            setAuthorized(false);
+            router.replace("/dashboard");
+            return;
+          }
+        }
       } catch (e) {
         console.error(e);
       }
     }
-  }, []);
+  }, [pathname, router]);
 
   const handleLogout = () => {
     sessionStorage.clear();
     router.push("/login");
   };
+
+  if (!authorized) {
+    return null; // Don't render content if unauthorized
+  }
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans flex flex-col justify-between">
@@ -84,7 +136,7 @@ export function MenuScaffoldPage({
               </div>
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
                 <div className="text-[11px] font-bold text-slate-400">보안 관리 수준</div>
-                <div className="text-sm font-bold text-slate-800">최상 (2FA 암호화)</div>
+                <div className="text-sm font-bold text-[#01916D]">최상 (RBAC 통제)</div>
               </div>
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
                 <div className="text-[11px] font-bold text-slate-400">권한 세션</div>

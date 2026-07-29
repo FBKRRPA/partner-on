@@ -5,17 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HeaderLogo } from "./HeaderLogo";
 import { PwaInstallPrompt } from "./PwaInstallPrompt";
+import { getMenuPermissions, RoleMenuPermissionDto } from "../../lib/auth-api";
 
 type SubMenuItem = {
   name: string;
   href: string;
   badge?: string;
+  key?: string;
 };
 
 type MenuItem = {
   name: string;
   href?: string;
-  icon?: string;
+  key?: string;
   children?: SubMenuItem[];
 };
 
@@ -25,6 +27,35 @@ type AppHeaderProps = {
   isLanding?: boolean;
 };
 
+const PATH_TO_KEY_MAP: Record<string, string> = {
+  "/profile": "profile",
+  "/crm/customers": "crm_customers",
+  "/crm/sales": "crm_sales",
+  "/crm/members": "crm_members",
+  "/operations/basic/dashboard": "basic_dashboard",
+  "/operations/basic/workplaces": "basic_workplaces",
+  "/operations/basic/warehouses": "basic_warehouses",
+  "/operations/basic/models": "basic_models",
+  "/operations/basic/consumable-codes": "basic_consumable_codes",
+  "/operations/basic/contracts": "basic_contracts",
+  "/operations/basic/permissions": "basic_permissions",
+  "/operations/assets/devices": "assets_devices",
+  "/operations/assets/in-out": "assets_in_out",
+  "/operations/assets/inventory": "assets_inventory",
+  "/operations/assets/collectors": "assets_collectors",
+  "/operations/assets/email-collectors": "assets_email_collectors",
+  "/operations/monitoring/usage": "monitoring_usage",
+  "/operations/monitoring/supplies": "monitoring_supplies",
+  "/operations/monitoring/customers": "monitoring_customers",
+  "/operations/monitoring/as/today": "monitoring_as_today",
+  "/operations/monitoring/as/tickets": "monitoring_as_tickets",
+  "/operations/monitoring/consumables-usage": "monitoring_consumables_usage",
+  "/operations/contracts/uncontracted": "contracts_uncontracted",
+  "/operations/contracts/list": "contracts_list",
+  "/operations/contracts/invoices": "contracts_invoices",
+  "/operations/contracts/sales": "contracts_sales",
+};
+
 export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,66 +63,128 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const menuTree: MenuItem[] = [
+  const [userRole, setUserRole] = useState<string>("");
+  const [permissions, setPermissions] = useState<RoleMenuPermissionDto[]>([]);
+
+  useEffect(() => {
+    const rawUser = sessionStorage.getItem("user");
+    const token = sessionStorage.getItem("accessToken") || "";
+    if (rawUser) {
+      try {
+        const u = JSON.parse(rawUser);
+        if (u.role) setUserRole(u.role);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    if (token) {
+      getMenuPermissions(token)
+        .then((perms) => {
+          setPermissions(perms || []);
+          sessionStorage.setItem("partneron.permissions", JSON.stringify(perms || []));
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  const masterMenuTree: MenuItem[] = [
     {
       name: "홈",
       href: "/dashboard",
+      key: "dashboard",
     },
     {
       name: "CRM",
       children: [
-        { name: "고객관리", href: "/crm/customers" },
-        { name: "영업관리", href: "/crm/sales" },
-        { name: "구성원관리", href: "/crm/members", badge: "보안강화" },
+        { name: "고객관리", href: "/crm/customers", key: "crm_customers" },
+        { name: "영업관리", href: "/crm/sales", key: "crm_sales" },
+        { name: "구성원관리", href: "/crm/members", badge: "보안강화", key: "crm_members" },
       ],
     },
     {
       name: "기초정보",
       children: [
-        { name: "대시보드", href: "/operations/basic/dashboard" },
-        { name: "관리 사업자", href: "/operations/basic/workplaces" },
-        { name: "창고", href: "/operations/basic/warehouses" },
-        { name: "사용자 정의 모델", href: "/operations/basic/models" },
-        { name: "부소모품 코드", href: "/operations/basic/consumable-codes" },
-        { name: "고객(계약후)", href: "/operations/basic/contracts" },
-        { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용" },
+        { name: "대시보드", href: "/operations/basic/dashboard", key: "basic_dashboard" },
+        { name: "관리 사업자", href: "/operations/basic/workplaces", key: "basic_workplaces" },
+        { name: "창고", href: "/operations/basic/warehouses", key: "basic_warehouses" },
+        { name: "사용자 정의 모델", href: "/operations/basic/models", key: "basic_models" },
+        { name: "부소모품 코드", href: "/operations/basic/consumable-codes", key: "basic_consumable_codes" },
+        { name: "고객(계약후)", href: "/operations/basic/contracts", key: "basic_contracts" },
+        { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용", key: "basic_permissions" },
       ],
     },
     {
       name: "자산/수집",
       children: [
-        { name: "장비현황", href: "/operations/assets/devices" },
-        { name: "부소모품 입출고", href: "/operations/assets/in-out" },
-        { name: "부소모품 재고", href: "/operations/assets/inventory" },
-        { name: "장비관리 (수집장비)", href: "/operations/assets/collectors" },
-        { name: "메일수집 장비등록", href: "/operations/assets/email-collectors" },
+        { name: "장비현황", href: "/operations/assets/devices", key: "assets_devices" },
+        { name: "부소모품 입출고", href: "/operations/assets/in-out", key: "assets_in_out" },
+        { name: "부소모품 재고", href: "/operations/assets/inventory", key: "assets_inventory" },
+        { name: "장비관리 (수집장비)", href: "/operations/assets/collectors", key: "assets_collectors" },
+        { name: "메일수집 장비등록", href: "/operations/assets/email-collectors", key: "assets_email_collectors" },
       ],
     },
     {
       name: "모니터링/AS",
       children: [
-        { name: "사용량", href: "/operations/monitoring/usage" },
-        { name: "소모품", href: "/operations/monitoring/supplies" },
-        { name: "고객현황", href: "/operations/monitoring/customers" },
-        { name: "오늘의 A/S (모바일용)", href: "/operations/monitoring/as/today", badge: "Mobile" },
-        { name: "A/S 접수 · 진행 · 완료", href: "/operations/monitoring/as/tickets" },
-        { name: "부소모품 사용 현황", href: "/operations/monitoring/consumables-usage" },
+        { name: "사용량", href: "/operations/monitoring/usage", key: "monitoring_usage" },
+        { name: "소모품", href: "/operations/monitoring/supplies", key: "monitoring_supplies" },
+        { name: "고객현황", href: "/operations/monitoring/customers", key: "monitoring_customers" },
+        { name: "오늘의 A/S (모바일용)", href: "/operations/monitoring/as/today", badge: "Mobile", key: "monitoring_as_today" },
+        { name: "A/S 접수 · 진행 · 완료", href: "/operations/monitoring/as/tickets", key: "monitoring_as_tickets" },
+        { name: "부소모품 사용 현황", href: "/operations/monitoring/consumables-usage", key: "monitoring_consumables_usage" },
       ],
     },
     {
       name: "계약",
       children: [
-        { name: "계약 등록", href: "/operations/contracts/uncontracted" },
-        { name: "계약 목록", href: "/operations/contracts/list" },
-        { name: "명세서 발행/완료", href: "/operations/contracts/invoices" },
-        { name: "판매 등록/완료", href: "/operations/contracts/sales" },
+        { name: "계약 등록", href: "/operations/contracts/uncontracted", key: "contracts_uncontracted" },
+        { name: "계약 목록", href: "/operations/contracts/list", key: "contracts_list" },
+        { name: "명세서 발행/완료", href: "/operations/contracts/invoices", key: "contracts_invoices" },
+        { name: "판매 등록/완료", href: "/operations/contracts/sales", key: "contracts_sales" },
       ],
     },
     {
       name: "프로필",
-      href: "/profile"
+      href: "/profile",
+      key: "profile",
     },
   ];
+
+  // Helper to check if a specific menu key is allowed for current user role
+  const isMenuKeyAllowed = (menuKey?: string) => {
+    if (!menuKey || menuKey === "dashboard") return True;
+    if (userRole === "OWNER") return True; // OWNER is always allowed
+    if (menuKey === "basic_permissions" && userRole !== "ADMIN_STAFF") return False;
+
+    // Check DB permissions for ADMIN_STAFF, SALES, CE
+    const match = permissions.find((p) => p.role === userRole && p.menu_key === menuKey);
+    return match ? match.is_allowed : True; // Default allowed if not explicitly disabled
+  };
+
+  function True(): boolean { return true; }
+  function False(): boolean { return false; }
+
+  // Filter out disallowed submenus and categories entirely
+  const filteredNavItems = isLanding
+    ? []
+    : masterMenuTree
+        .map((category) => {
+          if (!category.children) {
+            // Single menu (e.g. Home, Profile)
+            return isMenuKeyAllowed(category.key) ? category : null;
+          }
+
+          // Filter children submenus
+          const allowedChildren = category.children.filter((child) => isMenuKeyAllowed(child.key));
+
+          if (allowedChildren.length === 0) return null; // Hide category if no allowed children
+
+          return {
+            ...category,
+            children: allowedChildren,
+          };
+        })
+        .filter(Boolean) as MenuItem[];
 
   const handleMouseEnter = (menuName: string) => {
     if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
@@ -113,7 +206,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const navItems = isLanding ? [] : menuTree;
+  const navItems = filteredNavItems;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#FAFAFA]/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
@@ -127,7 +220,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
             <HeaderLogo />
           </Link>
 
-          {/* Desktop Top Dropdown Navigation Bar */}
+          {/* Desktop Top Dropdown Navigation Bar (Disallowed menus hidden) */}
           {navItems.length > 0 && (
             <nav className="hidden lg:flex items-center gap-1 xl:gap-2 relative">
               {navItems.map((item) => {
@@ -148,7 +241,6 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                           : "text-[#333333] hover:text-[#01916D] hover:bg-slate-100/80"
                       }`}
                     >
-                      <span>{item.icon}</span>
                       <span>{item.name}</span>
                     </Link>
                   );
@@ -169,7 +261,6 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                           : "text-[#333333] hover:text-[#01916D] hover:bg-slate-100/80"
                       }`}
                     >
-                      <span>{item.icon}</span>
                       <span>{item.name}</span>
                       <svg
                         className={`w-3.5 h-3.5 transition-transform duration-200 ${
@@ -191,7 +282,8 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                         onMouseLeave={handleMouseLeave}
                       >
                         <div className="px-4 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
-                          <span>{item.name} </span>
+                          <span>{item.name} 메뉴</span>
+                          <span>{item.children?.length}개 항목</span>
                         </div>
                         {item.children?.map((child) => {
                           const isChildActive = pathname === child.href;
@@ -229,7 +321,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
 
             {workplaceName && (
               <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-[#5C5C5C] border border-slate-200">
-                {workplaceName}
+                🏢 {workplaceName}
               </span>
             )}
 
@@ -261,7 +353,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                     {mobileMenuOpen ? (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 18h16M4 18h16" />
                     )}
                   </svg>
                 </button>
@@ -271,7 +363,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         </div>
       </div>
 
-      {/* Mobile Drawer Accordion Menu */}
+      {/* Mobile Drawer Accordion Menu (Disallowed menus hidden) */}
       {mobileMenuOpen && navItems.length > 0 && (
         <div className="lg:hidden border-t border-slate-200 bg-white/98 backdrop-blur-md px-4 pt-3 pb-6 space-y-2 shadow-xl max-h-[80vh] overflow-y-auto">
           {navItems.map((item) => {
@@ -290,7 +382,6 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                       : "text-slate-800 hover:bg-slate-50"
                   }`}
                 >
-                  <span>{item.icon}</span>
                   <span>{item.name}</span>
                 </Link>
               );
@@ -302,10 +393,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
                   onClick={() => toggleMobileAccordion(item.name)}
                   className="w-full flex items-center justify-between px-4 py-3 bg-slate-50/80 text-sm font-bold text-slate-800 hover:bg-slate-100 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span>{item.icon}</span>
-                    <span>{item.name}</span>
-                  </div>
+                  <span>{item.name}</span>
                   <svg
                     className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                     fill="none"
