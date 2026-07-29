@@ -333,7 +333,7 @@ export default function ProfilePage() {
                 }`}
               >
                 {workplaceEnforced
-                  ? "🔒 회사 정책 강제 적용 중"
+                  ? "🔒 회사 정책 적용 중"
                   : requires2FA
                   ? "🔒 2FA 필수 적용 중"
                   : "🔓 2FA 선택 사용 중"}
@@ -367,7 +367,7 @@ export default function ProfilePage() {
                   <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                     {workplaceEnforced ? (
                       <span className="text-[#01916D] font-bold">
-                        🔒 사업장 보안 정책에 의해 {user.role === "OWNER" ? "관리자(대표)" : user.role === "ADMIN_STAFF" ? "관리자(사무직원)" : user.role === "SALES" ? "영업" : "CE"} 직급은 2FA 사용이 강제 적용되어 해제할 수 없습니다.
+                        🔒 사업장 보안 정책에 의해 {user.role === "OWNER" ? "관리자(대표)" : user.role === "ADMIN_STAFF" ? "관리자(사무직원)" : user.role === "SALES" ? "영업" : "CE"} 직급은 2FA 사용이 적용되어 해제할 수 없습니다.
                       </span>
                     ) : (
                       "계정 로그인 시 OTP 번호로 본인 확인을 거쳐 무단 접속을 강력히 통제합니다."
