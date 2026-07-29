@@ -63,7 +63,7 @@ export function MenuScaffoldPage({
         if (u.workplace?.name) setWorkplaceName(u.workplace.name);
 
         const userRole = u.role;
-        const currentMenuKey = PATH_TO_KEY_MAP[pathname];
+        const currentMenuKey = pathname ? PATH_TO_KEY_MAP[pathname] : undefined;
 
         // OWNER is always authorized
         if (userRole !== "OWNER" && currentMenuKey && rawPerms) {
