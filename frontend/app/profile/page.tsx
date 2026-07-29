@@ -1,44 +1,41 @@
 "use client";
 
-import React, { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "../../components/layout/AppHeader";
 import { AppFooter } from "../../components/layout/AppFooter";
 import {
-  getMyProfile,
-  updateMyProfile,
-  setupTOTP,
-  verifySetupTOTP,
-  toggle2FA,
   DeviceDto,
+  getMyProfile,
   MemberDto,
+  setupTOTP,
+  toggle2FA,
+  updateMyProfile,
+  verifySetupTOTP,
 } from "../../lib/auth-api";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const [token, setToken] = useState("");
   const [user, setUser] = useState<MemberDto | null>(null);
-  const [myDevices, setMyDevices] = useState<DeviceDto[]>([]);
-  const [token, setToken] = useState<string>("");
-
-  // 2FA state
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [requires2FA, setRequires2FA] = useState(false);
-  const [backupCodesCount, setBackupCodesCount] = useState(0);
-
-  // TOTP setup modal state
-  const [showTOTPModal, setShowTOTPModal] = useState(false);
-  const [totpSecret, setTotpSecret] = useState("");
-  const [otpAuthUrl, setOtpAuthUrl] = useState("");
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [totpInputCode, setTotpInputCode] = useState("");
-  const [totpModalMsg, setTotpModalMsg] = useState("");
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
-  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [devices, setDevices] = useState<DeviceDto[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+
+  // TOTP Modal State
+  const [showTOTPModal, setShowTOTPModal] = useState(false);
+  const [totpSecret, setTotpSecret] = useState("");
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [totpCodeInput, setTotpCodeInput] = useState("");
+  const [totpError, setTotpError] = useState("");
+  const [totpLoading, setTotpLoading] = useState(false);
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
 
   useEffect(() => {
     const accessToken = sessionStorage.getItem("accessToken") || sessionStorage.getItem("partneron.accessToken");
@@ -53,39 +50,53 @@ export default function ProfilePage() {
   async function loadProfile(authToken: string) {
     try {
       setFetching(true);
-      const res = await getMyProfile(authToken);
-      setUser(res.user);
-      setMyDevices(res.my_devices);
-      setIs2FAEnabled(res.is_2fa_enabled);
-      setRequires2FA(res.requires_2fa);
-      setBackupCodesCount(res.backup_codes_count);
-      sessionStorage.setItem("user", JSON.stringify(res.user));
+      const data = await getMyProfile(authToken);
+      setUser(data.user);
+      setIs2FAEnabled(data.is_2fa_enabled);
+      setRequires2FA(data.requires_2fa);
+      setDevices(data.my_devices || []);
     } catch (err) {
       console.error(err);
-      setMessage(err instanceof Error ? err.message : "프로필 정보를 불러오지 못했습니다.");
+      setMessage("프로필 정보를 불러오는 데 실패했습니다.");
       setIsError(true);
     } finally {
       setFetching(false);
     }
   }
 
+  // Check if 2FA is mandatory by workplace policy for current user role
+  const isEnforcedByWorkplace = () => {
+    if (!user || !user.workplace) return false;
+    const wp = user.workplace;
+    if (user.role === "OWNER" && wp.enforce_2fa_owner) return true;
+    if (user.role === "ADMIN_STAFF" && wp.enforce_2fa_admin_staff) return true;
+    if (user.role === "SALES" && wp.enforce_2fa_sales) return true;
+    if (user.role === "CE" && wp.enforce_2fa_ce) return true;
+    return false;
+  };
+
+  const workplaceEnforced = isEnforcedByWorkplace();
+  const effective2FAEnabled = workplaceEnforced || is2FAEnabled;
+
   async function handleToggle2FA() {
-    if (!token) return;
+    if (workplaceEnforced) {
+      alert("사업장 보안 정책에 의해 해당 직급은 2FA 사용이 강제 적용 중입니다 (개인 해제 불가).");
+      return;
+    }
+
     try {
       setLoading(true);
-      setMessage("");
-      setIsError(false);
-
-      const res = await toggle2FA(token, !is2FAEnabled);
+      const nextState = !is2FAEnabled;
+      const res = await toggle2FA(token, nextState);
       setIs2FAEnabled(res.is_2fa_enabled);
       setMessage(res.detail);
+      setIsError(false);
       if (res.backup_codes && res.backup_codes.length > 0) {
         setBackupCodes(res.backup_codes);
-        setShowBackupModal(true);
+        setShowBackupCodes(true);
       }
-      await loadProfile(token);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "2FA 설정 변경 중 오류 발생");
+      setMessage(err instanceof Error ? err.message : "2FA 설정 변경 실패");
       setIsError(true);
     } finally {
       setLoading(false);
@@ -93,50 +104,44 @@ export default function ProfilePage() {
   }
 
   async function handleOpenTOTPSetup() {
-    if (!token) return;
     try {
       setLoading(true);
+      setTotpError("");
       const res = await setupTOTP(token);
       setTotpSecret(res.secret);
-      setOtpAuthUrl(res.otpauth_url);
       setQrCodeUrl(res.qr_code_url || "");
-      setTotpInputCode("");
-      setTotpModalMsg("");
       setShowTOTPModal(true);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "TOTP 설정 조회 실패");
+      setMessage(err instanceof Error ? err.message : "TOTP 생성 중 오류 발생");
       setIsError(true);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleVerifyTOTP(e: FormEvent) {
+  async function handleVerifyTOTP(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token || !totpInputCode) return;
     try {
-      setLoading(true);
-      setTotpModalMsg("");
-      const res = await verifySetupTOTP(token, totpInputCode);
+      setTotpLoading(true);
+      setTotpError("");
+      const res = await verifySetupTOTP(token, totpCodeInput);
+      setIs2FAEnabled(res.is_2fa_enabled);
       setShowTOTPModal(false);
-      setIs2FAEnabled(true);
-      setMessage(res.detail);
-      if (res.backup_codes) {
+      setMessage(res.detail || "TOTP 2차 인증이 정상적으로 설정되었습니다.");
+      setIsError(false);
+      if (res.backup_codes && res.backup_codes.length > 0) {
         setBackupCodes(res.backup_codes);
-        setShowBackupModal(true);
+        setShowBackupCodes(true);
       }
-      await loadProfile(token);
     } catch (err) {
-      setTotpModalMsg(err instanceof Error ? err.message : "검증 실패");
+      setTotpError(err instanceof Error ? err.message : "인증 번호가 올바르지 않습니다.");
     } finally {
-      setLoading(false);
+      setTotpLoading(false);
     }
   }
 
-  async function handleProfileSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleUpdateProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!token) return;
-
     setLoading(true);
     setMessage("");
     setIsError(false);
@@ -192,11 +197,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans flex flex-col justify-between">
       <div>
-        {/* Header Component */}
         <AppHeader workplaceName={workplaceName} onLogout={handleLogout} />
 
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          {/* Header Title */}
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#333333] tracking-tight">
               내 프로필 설정
@@ -206,7 +209,6 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          {/* Alert Message */}
           {message && (
             <div
               className={`p-4 rounded-xl text-sm font-semibold border ${
@@ -219,9 +221,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* User Information Card & Edit Form Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left: Account Summary Badge */}
             <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="w-16 h-16 rounded-2xl bg-[#01916D]/10 border border-[#01916D]/30 flex items-center justify-center text-2xl font-black text-[#01916D]">
@@ -229,9 +229,10 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-[#333333]">{user.name}</h2>
-                  <p className="text-xs font-mono text-slate-500 mt-0.5">{user.email}</p>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">{user.email}</p>
                 </div>
-                <div className="pt-2 space-y-2 border-t border-slate-100 text-xs text-slate-600">
+
+                <div className="pt-4 border-t border-slate-100 space-y-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-slate-400">소속 사업장:</span>
                     <span className="font-semibold text-slate-800">{workplaceName}</span>
@@ -256,27 +257,28 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Right: Update Form */}
             <div className="lg:col-span-8 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
               <h3 className="text-lg font-bold text-[#333333] border-b border-slate-100 pb-3">
-                프로필 정보 수정
+                ✏️ 계정 기본 정보 수정
               </h3>
 
-              <form onSubmit={handleProfileSubmit} className="space-y-5">
+              <form onSubmit={handleUpdateProfileSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">이메일 주소</label>
+                  <label htmlFor="email" className="block text-xs font-semibold text-slate-500 mb-1">
+                    이메일 (아이디) - 변경 불가
+                  </label>
                   <input
+                    id="email"
                     type="email"
                     value={user.email}
                     disabled
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm bg-slate-100 text-slate-500 cursor-not-allowed font-mono"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-sm font-mono cursor-not-allowed"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">이메일 주소는 보안상 변경이 불가합니다.</p>
                 </div>
 
                 <div>
                   <label htmlFor="name" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    이름
+                    성명 (이름)
                   </label>
                   <input
                     id="name"
@@ -325,37 +327,51 @@ export default function ProfilePage() {
               </div>
               <span
                 className={`text-xs font-extrabold px-3 py-1 rounded-full ${
-                  requires2FA
+                  workplaceEnforced || requires2FA
                     ? "bg-emerald-100 text-[#01916D]"
                     : "bg-slate-100 text-slate-600"
                 }`}
               >
-                {requires2FA ? "🔒 2FA 필수 적용 중" : "🔓 2FA 선택 사용 중"}
+                {workplaceEnforced
+                  ? "🔒 회사 정책 강제 적용 중"
+                  : requires2FA
+                  ? "🔒 2FA 필수 적용 중"
+                  : "🔓 2FA 선택 사용 중"}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 2FA Toggle */}
+              {/* 2FA Toggle (Disabled when Workplace Policy is Enforced) */}
               <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-800 text-sm">2FA 2차 인증 활성화</span>
                     <button
                       onClick={handleToggle2FA}
-                      disabled={loading}
+                      disabled={loading || workplaceEnforced}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        is2FAEnabled ? "bg-[#01916D]" : "bg-slate-300"
+                        workplaceEnforced
+                          ? "bg-[#01916D] opacity-75 cursor-not-allowed"
+                          : is2FAEnabled
+                          ? "bg-[#01916D] cursor-pointer"
+                          : "bg-slate-300 cursor-pointer"
                       }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          is2FAEnabled ? "translate-x-6" : "translate-x-1"
+                          effective2FAEnabled ? "translate-x-6" : "translate-x-1"
                         }`}
                       />
                     </button>
                   </div>
                   <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                    계정 로그인 시 OTP 번호로 본인 확인을 거쳐 무단 접속을 강력히 통제합니다.
+                    {workplaceEnforced ? (
+                      <span className="text-[#01916D] font-bold">
+                        🔒 사업장 보안 정책에 의해 {user.role === "OWNER" ? "관리자(대표)" : user.role === "ADMIN_STAFF" ? "관리자(사무직원)" : user.role === "SALES" ? "영업" : "CE"} 직급은 2FA 사용이 강제 적용되어 해제할 수 없습니다.
+                      </span>
+                    ) : (
+                      "계정 로그인 시 OTP 번호로 본인 확인을 거쳐 무단 접속을 강력히 통제합니다."
+                    )}
                   </p>
                 </div>
               </div>
@@ -381,64 +397,61 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* My Registered / Approved Devices */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-[#333333]">내 접속 등록 기기</h3>
-                <p className="text-xs text-slate-500 mt-0.5">내가 승인받았거나 접속 요청한 기기 목록입니다.</p>
+          {/* Backup Recovery Codes Modal */}
+          {showBackupCodes && (
+            <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-amber-900 text-sm">⚠️ 일회성 비상 복구 코드 (Backup Codes)</h4>
+                <button
+                  onClick={() => setShowBackupCodes(false)}
+                  className="text-xs text-amber-700 hover:text-amber-950 font-bold"
+                >
+                  ✕ 닫기
+                </button>
               </div>
-              <span className="text-xs font-bold text-[#01916D] bg-[#01916D]/10 px-3 py-1 rounded-full">
-                총 {myDevices.length}대 기기
-              </span>
+              <p className="text-xs text-amber-800">
+                인증 앱을 사용할 수 없을 때 계정을 복구할 수 있는 일회성 번호 10개입니다. 안전한 곳에 보관하세요.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
+                {backupCodes.map((code, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded-lg font-mono text-center text-xs font-bold text-slate-800 border border-amber-200">
+                    {code}
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
 
-            {myDevices.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          {/* Registered Devices List Card */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+            <h3 className="text-lg font-bold text-[#333333] border-b border-slate-100 pb-3">
+              📱 내 접속 등록 기기 목록 ({devices.length})
+            </h3>
+            {devices.length === 0 ? (
+              <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl">
                 등록된 접속 기기가 없습니다.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full text-left text-sm text-slate-700">
-                  <thead className="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
-                    <tr>
-                      <th className="py-3 px-4">기기 명칭</th>
-                      <th className="py-3 px-4">승인 상태</th>
-                      <th className="py-3 px-4">최초 요청 일시</th>
-                      <th className="py-3 px-4">최종 승인 일시</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {myDevices.map((d) => (
-                      <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-4 font-bold text-slate-800">{d.device_name}</td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                              d.status === "APPROVED"
-                                ? "bg-emerald-100 text-[#01916D]"
-                                : d.status === "PENDING"
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-rose-100 text-[#E01E35]"
-                            }`}
-                          >
-                            {d.status === "APPROVED"
-                              ? "✅ 승인 완료"
-                              : d.status === "PENDING"
-                              ? "⏳ 승인 대기"
-                              : "❌ 승인 거절"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-xs font-mono text-slate-500">
-                          {new Date(d.requested_at).toLocaleString("ko-KR")}
-                        </td>
-                        <td className="py-3 px-4 text-xs font-mono text-slate-500">
-                          {d.approved_at ? new Date(d.approved_at).toLocaleString("ko-KR") : "-"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="divide-y divide-slate-100">
+                {devices.map((d) => (
+                  <div key={d.id} className="py-3 flex items-center justify-between text-xs sm:text-sm">
+                    <div>
+                      <div className="font-bold text-slate-800">{d.device_name}</div>
+                      <div className="text-xs text-slate-400 font-mono mt-0.5">UUID: {d.device_uuid}</div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        d.status === "APPROVED"
+                          ? "bg-emerald-100 text-[#01916D]"
+                          : d.status === "PENDING"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-rose-100 text-[#E01E35]"
+                      }`}
+                    >
+                      {d.status === "APPROVED" ? "✅ 승인됨" : d.status === "PENDING" ? "⏳ 대기중" : "❌ 거절됨"}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -447,75 +460,67 @@ export default function ProfilePage() {
 
       {/* TOTP Setup Modal */}
       {showTOTPModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="text-center space-y-1">
-              <h3 className="text-xl font-bold text-slate-800">📲 TOTP 인증 앱 설정</h3>
-              <p className="text-xs text-slate-500">
-                인증 앱(Google Authenticator, Authy 등)으로 아래 QR코드를 스캔해 주세요.
-              </p>
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full p-6 sm:p-8 rounded-3xl shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-[#333333]">📲 Google TOTP 인증 앱 스캔</h3>
+              <button
+                onClick={() => setShowTOTPModal(false)}
+                className="text-xs text-slate-400 hover:text-slate-700 font-bold"
+              >
+                ✕ 닫기
+              </button>
             </div>
 
-            {/* QR Code Display Section */}
-            <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
-              <span className="text-xs font-bold text-slate-600">📷 카메라로 QR 코드 스캔</span>
-              {qrCodeUrl ? (
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrCodeUrl} alt="TOTP QR Code" className="w-48 h-48 object-contain" />
-                </div>
-              ) : (
-                <div className="w-48 h-48 bg-slate-200 animate-pulse rounded-2xl flex items-center justify-center text-xs text-slate-400">
-                  QR 코드 로딩 중...
+            <div className="text-center space-y-3">
+              <p className="text-xs text-slate-600">
+                Google Authenticator 앱을 실행하여 아래 QR 코드를 스캔하세요.
+              </p>
+
+              {qrCodeUrl && (
+                <div className="inline-block p-3 bg-white border border-slate-200 rounded-2xl shadow-xs">
+                  <img src={qrCodeUrl} alt="TOTP QR Code" className="w-48 h-48 mx-auto" />
                 </div>
               )}
-              <p className="text-[11px] text-slate-400 text-center">
-                스캔이 불가능한 경우 아래 Secret Key를 직접 입력해 주세요.
-              </p>
-            </div>
 
-            <div className="p-3 bg-slate-100 rounded-xl space-y-1 text-center">
-              <span className="text-[11px] font-bold text-slate-500 uppercase">보안 Secret Key (수동 등록용)</span>
-              <div className="font-mono text-sm font-bold text-[#01916D] tracking-widest select-all">
-                {totpSecret}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <div className="text-[11px] text-slate-400">수동 입력 시크릿 키</div>
+                <div className="font-mono font-bold text-xs text-[#01916D] select-all">{totpSecret}</div>
               </div>
             </div>
 
-            <form onSubmit={handleVerifyTOTP} className="space-y-4">
+            <form onSubmit={handleVerifyTOTP} className="space-y-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  앱에 표시된 6자리 핀 코드 입력
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  인증 앱에 표시된 6자리 코드 입력
                 </label>
                 <input
                   type="text"
-                  value={totpInputCode}
-                  onChange={(e) => setTotpInputCode(e.target.value)}
-                  placeholder="예: 582910"
+                  maxLength={6}
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 font-mono text-center font-bold text-lg tracking-widest focus:outline-none focus:border-[#01916D]"
+                  value={totpCodeInput}
+                  onChange={(e) => setTotpCodeInput(e.target.value)}
+                  placeholder="123456"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-center font-mono text-lg font-bold focus:outline-none focus:border-[#01916D]"
                 />
               </div>
 
-              {totpModalMsg && (
-                <div className="p-3 bg-rose-50 text-[#E01E35] text-xs font-bold rounded-xl text-center">
-                  {totpModalMsg}
-                </div>
-              )}
+              {totpError && <div className="text-xs font-bold text-[#E01E35] text-center">{totpError}</div>}
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-3 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-                >
-                  확인 및 2FA 활성화
-                </button>
+              <div className="flex gap-2 justify-end">
                 <button
                   type="button"
                   onClick={() => setShowTOTPModal(false)}
-                  className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
                 >
                   취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={totpLoading}
+                  className="px-4 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white text-xs font-bold rounded-xl shadow-xs"
+                >
+                  {totpLoading ? "검증 중..." : "등록 완료"}
                 </button>
               </div>
             </form>
@@ -523,39 +528,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Emergency Backup Codes Modal */}
-      {showBackupModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
-            <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto text-2xl font-bold border border-amber-200">
-                🔑
-              </div>
-              <h3 className="text-xl font-bold text-slate-800">비상 복구 코드 (10개)</h3>
-              <p className="text-xs text-slate-500">
-                인증 앱이나 이메일을 사용할 수 없을 때 비상 접속에 사용되는 일회용 복구 코드입니다. 안전한 곳에 보관하세요!
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-2 gap-2 font-mono text-xs font-bold text-slate-800 text-center select-all">
-              {backupCodes.map((code, idx) => (
-                <div key={idx} className="p-2 bg-white rounded-lg border border-slate-200">
-                  {code}
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setShowBackupModal(false)}
-              className="w-full py-3 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-            >
-              복구 코드를 안전하게 보관했습니다
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Common Footer */}
       <AppFooter />
     </div>
   );
