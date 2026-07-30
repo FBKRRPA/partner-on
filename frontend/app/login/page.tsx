@@ -17,12 +17,15 @@ export default function LoginPage() {
   const [otpError, setOtpError] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
 
-  // Password Reset Modal State
+  // Password Reset Modal Form State (Matching User's HTML structure)
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetStep, setResetStep] = useState<1 | 2>(1);
   const [resetEmail, setResetEmail] = useState("");
-  const [resetOtpCode, setResetOtpCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [resetMessage, setResetMessage] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
@@ -86,44 +89,72 @@ export default function LoginPage() {
     }
   }
 
-  // Password Reset Flow Step 1: Request OTP
-  async function handleRequestResetOTP(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Password Reset: Step 1 - Send Verification OTP
+  async function handleSendVerificationCode() {
+    if (!resetEmail || !resetEmail.includes("@")) {
+      setResetError("올바른 이메일 주소를 입력해 주세요.");
+      return;
+    }
     setResetError("");
     setResetMessage("");
     setResetLoading(true);
 
     try {
       const resDetail = await requestPasswordReset(resetEmail);
+      setIsOtpSent(true);
       setResetMessage(resDetail);
-      setResetStep(2);
     } catch (err) {
-      setResetError(err instanceof Error ? err.message : "비밀번호 재설정 요청에 실패했습니다.");
+      setResetError(err instanceof Error ? err.message : "인증번호 발송에 실패했습니다.");
     } finally {
       setResetLoading(false);
     }
   }
 
-  // Password Reset Flow Step 2: Confirm & Update Password
-  async function handleConfirmReset(e: FormEvent<HTMLFormElement>) {
+  // Password Reset: Step 2 - Verify OTP Code
+  function handleVerifyCode() {
+    if (!verificationCode || verificationCode.trim().length < 6) {
+      setResetError("6자리 인증번호를 올바르게 입력해 주세요.");
+      return;
+    }
+    setResetError("");
+    setIsOtpVerified(true);
+    setResetMessage("인증번호가 확인되었습니다. 변경할 비밀번호를 입력해 주세요.");
+  }
+
+  // Password Reset: Step 3 - Submit Final Password Reset
+  async function handlePasswordResetSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setResetError("");
     setResetMessage("");
+
+    if (!newPassword || newPassword.length < 8) {
+      setResetError("새 비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setResetError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
     setResetLoading(true);
 
     try {
-      const resDetail = await confirmPasswordReset(resetEmail, resetOtpCode, newPassword);
+      const resDetail = await confirmPasswordReset(resetEmail, verificationCode, newPassword);
       setResetMessage(resDetail);
       setTimeout(() => {
         setShowResetModal(false);
-        setResetStep(1);
         setResetEmail("");
-        setResetOtpCode("");
+        setVerificationCode("");
         setNewPassword("");
+        setConfirmPassword("");
+        setIsOtpSent(false);
+        setIsOtpVerified(false);
         setResetMessage("");
+        setResetError("");
       }, 2000);
     } catch (err) {
-      setResetError(err instanceof Error ? err.message : "비밀번호 변경 처리에 실패했습니다.");
+      setResetError(err instanceof Error ? err.message : "비밀번호 변경에 실패했습니다.");
     } finally {
       setResetLoading(false);
     }
@@ -219,7 +250,12 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => {
                     setShowResetModal(true);
-                    setResetStep(1);
+                    setResetEmail("");
+                    setVerificationCode("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setIsOtpSent(false);
+                    setIsOtpVerified(false);
                     setResetError("");
                     setResetMessage("");
                   }}
@@ -233,7 +269,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* Password Reset Modal Flow */}
+      {/* Password Reset Modal Matching Requested HTML Spec */}
       {showResetModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 relative animate-in fade-in zoom-in-95 duration-200">
@@ -241,121 +277,132 @@ export default function LoginPage() {
               <h3 className="text-lg font-extrabold text-[#333333]">비밀번호 재설정</h3>
               <button
                 onClick={() => setShowResetModal(false)}
-                className="text-xs text-slate-400 hover:text-slate-700 font-bold"
+                className="text-xs text-slate-400 hover:text-slate-700 font-bold cursor-pointer"
               >
                 ✕ 닫기
               </button>
             </div>
 
             {resetError && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-[#E01E35] text-center">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-[#E01E35] text-center">
                 {resetError}
               </div>
             )}
 
             {resetMessage && (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-[#01916D] text-center">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-[#01916D] text-center">
                 {resetMessage}
               </div>
             )}
 
-            {resetStep === 1 && (
-              <form onSubmit={handleRequestResetOTP} className="space-y-4 text-xs sm:text-sm">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  가입 시 사용한 이메일 주소를 입력하시면 비밀번호 재설정용 6자리 인증번호를 발송해 드립니다.
-                </p>
-
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">이메일 주소</label>
+            <form onSubmit={handlePasswordResetSubmit} className="space-y-5 text-xs sm:text-sm">
+              {/* Field 1: Email + Send OTP Button */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">
+                  이메일<span className="text-[#E01E35] ml-0.5">*</span>
+                </label>
+                <div className="flex gap-2">
                   <input
+                    placeholder="이메일을 입력해주세요."
                     type="email"
+                    name="email"
                     value={resetEmail}
                     onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="user@partneron.co.kr"
+                    disabled={isOtpVerified}
                     required
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
+                    className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] disabled:bg-slate-100 text-slate-900"
                   />
-                </div>
-
-                <div className="pt-2 flex justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setShowResetModal(false)}
-                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all cursor-pointer"
+                    onClick={handleSendVerificationCode}
+                    disabled={resetLoading || !resetEmail.trim() || isOtpVerified}
+                    className="px-4 py-2.5 bg-[#01916D] hover:bg-[#006449] disabled:opacity-40 text-white font-bold text-xs rounded-2xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
                   >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={resetLoading || !resetEmail.trim()}
-                    className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] disabled:opacity-50 text-white font-bold rounded-2xl shadow-md transition-all cursor-pointer"
-                  >
-                    {resetLoading ? "발송 중..." : "인증번호 발송"}
+                    {resetLoading ? "발송 중..." : isOtpSent ? "재발송" : "인증하기"}
                   </button>
                 </div>
-              </form>
-            )}
+                {!resetEmail && (
+                  <span className="block text-[11px] text-slate-400 pl-1">이메일을 입력해주세요.</span>
+                )}
+              </div>
 
-            {resetStep === 2 && (
-              <form onSubmit={handleConfirmReset} className="space-y-4 text-xs sm:text-sm">
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  <strong>{resetEmail}</strong> 이메일로 전송된 6자리 인증번호와 새로 변경할 비밀번호를 입력해 주세요.
-                </p>
-
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">인증번호 (6자리 OTP)</label>
+              {/* Field 2: Verification Code + Confirm Button */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">
+                  인증번호 입력<span className="text-[#E01E35] ml-0.5">*</span>
+                </label>
+                <div className="flex gap-2">
                   <input
+                    placeholder="인증번호를 입력해주세요."
                     type="text"
-                    value={resetOtpCode}
-                    onChange={(e) => setResetOtpCode(e.target.value)}
-                    placeholder="예: 482910"
-                    required
-                    maxLength={6}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-center font-mono text-base font-bold focus:bg-white focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
+                    name="verificationCode"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    disabled={!isOtpSent || isOtpVerified}
+                    className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] disabled:bg-slate-100 text-slate-900 font-mono"
                   />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">새 비밀번호 (8자 이상)</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="새 비밀번호 입력"
-                    required
-                    minLength={8}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-between items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setResetStep(1)}
-                    className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                    onClick={handleVerifyCode}
+                    disabled={!isOtpSent || !verificationCode.trim() || isOtpVerified}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white font-bold text-xs rounded-2xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
                   >
-                    ‹ 이전 단계
+                    {isOtpVerified ? "확인됨" : "확인"}
                   </button>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowResetModal(false)}
-                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all cursor-pointer"
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={resetLoading || !resetOtpCode.trim() || newPassword.length < 8}
-                      className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] disabled:opacity-50 text-white font-bold rounded-2xl shadow-md transition-all cursor-pointer"
-                    >
-                      {resetLoading ? "변경 중..." : "비밀번호 변경"}
-                    </button>
-                  </div>
                 </div>
-              </form>
-            )}
+              </div>
+
+              {/* Field 3: New Password */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">
+                  변경할 비밀번호<span className="text-[#E01E35] ml-0.5">*</span>
+                </label>
+                <input
+                  placeholder="비밀번호를 입력해주세요."
+                  type="password"
+                  name="newPassword"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={!isOtpVerified}
+                  minLength={8}
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] disabled:bg-slate-100 text-slate-900"
+                />
+              </div>
+
+              {/* Field 4: Confirm Password */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">
+                  비밀번호 확인<span className="text-[#E01E35] ml-0.5">*</span>
+                </label>
+                <input
+                  placeholder="비밀번호를 다시 입력해주세요."
+                  type="password"
+                  name="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={!isOtpVerified}
+                  minLength={8}
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] disabled:bg-slate-100 text-slate-900"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-3">
+                <button
+                  type="submit"
+                  disabled={
+                    !isOtpVerified ||
+                    !newPassword ||
+                    !confirmPassword ||
+                    newPassword !== confirmPassword ||
+                    resetLoading
+                  }
+                  className="w-full py-3.5 px-4 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] disabled:opacity-40 text-white font-extrabold text-sm rounded-2xl shadow-md transition-all cursor-pointer"
+                >
+                  {resetLoading ? "변경 중..." : "비밀번호 변경"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
