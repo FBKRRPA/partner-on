@@ -6,6 +6,8 @@ from .views import (
     LoginView,
     MemberDetailView,
     MemberListCreateView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
     RoleMenuPermissionView,
     SetupTOTPView,
     SignUpView,
@@ -18,6 +20,8 @@ from .views import (
 urlpatterns = [
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/signup/", SignUpView.as_view(), name="signup"),
+    path("auth/password-reset/request/", PasswordResetRequestView.as_view(), name="password-reset-request"),
+    path("auth/password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
     path("auth/profile/", UserProfileView.as_view(), name="profile"),
     path("auth/verify-2fa/", Verify2FAView.as_view(), name="verify-2fa"),
     path("auth/2fa/setup-totp/", SetupTOTPView.as_view(), name="setup-totp"),

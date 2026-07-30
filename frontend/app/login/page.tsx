@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, verify2FA } from "../../lib/auth-api";
+import { confirmPasswordReset, login, requestPasswordReset, verify2FA } from "../../lib/auth-api";
 import { AppFooter } from "../../components/layout/AppFooter";
 
 export default function LoginPage() {
@@ -16,6 +16,16 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState("");
   const [otpError, setOtpError] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
+
+  // Password Reset Modal State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetStep, setResetStep] = useState<1 | 2>(1);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOtpCode, setResetOtpCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,6 +83,49 @@ export default function LoginPage() {
       setOtpError(caught instanceof Error ? caught.message : "2차 인증 검증에 실패했습니다.");
     } finally {
       setOtpLoading(false);
+    }
+  }
+
+  // Password Reset Flow Step 1: Request OTP
+  async function handleRequestResetOTP(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setResetError("");
+    setResetMessage("");
+    setResetLoading(true);
+
+    try {
+      const resDetail = await requestPasswordReset(resetEmail);
+      setResetMessage(resDetail);
+      setResetStep(2);
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : "비밀번호 재설정 요청에 실패했습니다.");
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
+  // Password Reset Flow Step 2: Confirm & Update Password
+  async function handleConfirmReset(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setResetError("");
+    setResetMessage("");
+    setResetLoading(true);
+
+    try {
+      const resDetail = await confirmPasswordReset(resetEmail, resetOtpCode, newPassword);
+      setResetMessage(resDetail);
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetStep(1);
+        setResetEmail("");
+        setResetOtpCode("");
+        setNewPassword("");
+        setResetMessage("");
+      }, 2000);
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : "비밀번호 변경 처리에 실패했습니다.");
+    } finally {
+      setResetLoading(false);
     }
   }
 
@@ -164,7 +217,12 @@ export default function LoginPage() {
                 <span className="text-slate-300">|</span>
                 <button
                   type="button"
-                  onClick={() => alert("관리자에게 비밀번호 재설정을 요청해 주세요.")}
+                  onClick={() => {
+                    setShowResetModal(true);
+                    setResetStep(1);
+                    setResetError("");
+                    setResetMessage("");
+                  }}
                   className="hover:text-[#01916D] transition-colors cursor-pointer"
                 >
                   비밀번호 찾기
@@ -175,14 +233,138 @@ export default function LoginPage() {
         </div>
       </main>
 
+      {/* Password Reset Modal Flow */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-lg font-extrabold text-[#333333]">비밀번호 재설정</h3>
+              <button
+                onClick={() => setShowResetModal(false)}
+                className="text-xs text-slate-400 hover:text-slate-700 font-bold"
+              >
+                ✕ 닫기
+              </button>
+            </div>
+
+            {resetError && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-[#E01E35] text-center">
+                {resetError}
+              </div>
+            )}
+
+            {resetMessage && (
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-bold text-[#01916D] text-center">
+                {resetMessage}
+              </div>
+            )}
+
+            {resetStep === 1 && (
+              <form onSubmit={handleRequestResetOTP} className="space-y-4 text-xs sm:text-sm">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  가입 시 사용한 이메일 주소를 입력하시면 비밀번호 재설정용 6자리 인증번호를 발송해 드립니다.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label className="block font-bold text-slate-700">이메일 주소</label>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="user@partneron.co.kr"
+                    required
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetModal(false)}
+                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading || !resetEmail.trim()}
+                    className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] disabled:opacity-50 text-white font-bold rounded-2xl shadow-md transition-all cursor-pointer"
+                  >
+                    {resetLoading ? "발송 중..." : "인증번호 발송"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {resetStep === 2 && (
+              <form onSubmit={handleConfirmReset} className="space-y-4 text-xs sm:text-sm">
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  <strong>{resetEmail}</strong> 이메일로 전송된 6자리 인증번호와 새로 변경할 비밀번호를 입력해 주세요.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label className="block font-bold text-slate-700">인증번호 (6자리 OTP)</label>
+                  <input
+                    type="text"
+                    value={resetOtpCode}
+                    onChange={(e) => setResetOtpCode(e.target.value)}
+                    placeholder="예: 482910"
+                    required
+                    maxLength={6}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-center font-mono text-base font-bold focus:bg-white focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block font-bold text-slate-700">새 비밀번호 (8자 이상)</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="새 비밀번호 입력"
+                    required
+                    minLength={8}
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 text-slate-900"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-between items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setResetStep(1)}
+                    className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
+                  >
+                    ‹ 이전 단계
+                  </button>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowResetModal(false)}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl transition-all cursor-pointer"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={resetLoading || !resetOtpCode.trim() || newPassword.length < 8}
+                      className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] disabled:opacity-50 text-white font-bold rounded-2xl shadow-md transition-all cursor-pointer"
+                    >
+                      {resetLoading ? "변경 중..." : "비밀번호 변경"}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 2FA Verification Modal */}
       {show2FAModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 relative animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-[#01916D]/10 border border-[#01916D]/30 flex items-center justify-center mx-auto text-2xl">
-                🔐
-              </div>
               <h3 className="text-xl font-extrabold text-[#333333]">2차 인증 (2FA) 확인</h3>
               <p className="text-xs text-slate-500">
                 보안 강화를 위해 Google OTP 인증 앱의 6자리 코드 또는 이메일로 전송된 핀 코드/비상 복구 코드를 입력해 주세요.

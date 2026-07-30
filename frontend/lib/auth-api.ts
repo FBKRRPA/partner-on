@@ -443,6 +443,32 @@ export async function deleteDevice(token: string, deviceId: number): Promise<str
   return body?.detail ?? "기기가 삭제되었습니다.";
 }
 
+export async function requestPasswordReset(email: string): Promise<string> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/password-reset/request/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(body?.detail ?? parseErrorMessage(body, "비밀번호 재설정 요청에 실패했습니다."));
+  }
+  return body?.detail ?? "인증번호가 이메일로 발송되었습니다.";
+}
+
+export async function confirmPasswordReset(email: string, otpCode: string, newPassword: string): Promise<string> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/password-reset/confirm/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp_code: otpCode, new_password: newPassword }),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(body?.detail ?? parseErrorMessage(body, "비밀번호 변경에 실패했습니다."));
+  }
+  return body?.detail ?? "비밀번호가 변경되었습니다.";
+}
+
 function parseErrorMessage(body: Record<string, any> | null, defaultMsg: string): string {
   const detail = body?.detail ?? "";
   if (

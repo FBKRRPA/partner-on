@@ -495,3 +495,95 @@ class DeviceDetailView(APIView):
         device.delete()
         return Response({"detail": f"[{device_name}] 기기가 삭제되었습니다."}, status=status.HTTP_200_OK)
 
+
+class PasswordResetRequestView(APIView):
+    """
+    Request 6-digit OTP code for Password Reset
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        email = request.data.get("email", "").strip()
+        if not email:
+            return Response({"detail": "이메일을 입력해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response(
+                {"detail": "등록된 이메일을 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Generate 6-digit OTP for password reset
+        otp = f"{random.randint(100000, 999999)}"
+        user.otp_code = otp
+        user.otp_created_at = timezone.now()
+        user.save(update_fields=["otp_code", "otp_created_at"])
+
+        return Response(
+            {
+                "detail": f"인증번호가 {email} 이메일로 발송되었습니다.",
+                "email": email,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    """
+    Verify OTP code and update user password
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        email = request.data.get("email", "").strip()
+        otp_code = request.data.get("otp_code", "").strip()
+        new_password = request.data.get("new_password", "").strip()
+
+        if not email or not otp_code or not new_password:
+            return Response(
+                {"detail": "이메일, 인증번호 및 새 비밀번호를 모두 입력해 주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "새 비밀번호는 8자 이상이어야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email=email).first()
+        if not user or not user.otp_code:
+            return Response(
+                {"detail": "유효한 비밀번호 재설정 요청이 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # OTP Expiration check (5 minutes)
+        if user.otp_created_at and timezone.now() - user.otp_created_at > timedelta(minutes=5):
+            user.otp_code = None
+            user.save(update_fields=["otp_code"])
+            return Response(
+                {"detail": "인증번호가 만료되었습니다. 다시 재설정 요청을 진행해 주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if user.otp_code != otp_code:
+            return Response(
+                {"detail": "인증번호가 올바르지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Update password & clear OTP code
+        user.set_password(new_password)
+        user.otp_code = None
+        user.save(update_fields=["password", "otp_code"])
+
+        return Response(
+            {"detail": "비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해 주세요."},
+            status=status.HTTP_200_OK,
+        )
+
+
