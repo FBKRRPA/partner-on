@@ -21,9 +21,9 @@ function SignUpFormContent() {
   const [memberSuccess, setMemberSuccess] = useState(false);
 
   useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    const codeParam = searchParams.get("code");
-    const emailParam = searchParams.get("email");
+    const tabParam = searchParams?.get("tab");
+    const codeParam = searchParams?.get("code");
+    const emailParam = searchParams?.get("email");
 
     if (tabParam === "invite" || codeParam) {
       setTab("MEMBER");
