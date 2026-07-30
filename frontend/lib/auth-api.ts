@@ -111,7 +111,9 @@ export function getApiBaseUrl(): string {
     return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
   if (typeof window !== "undefined" && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:8000`;
+    const host = window.location.hostname;
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}:8000`;
   }
   return "http://localhost:8000";
 }
@@ -123,14 +125,22 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
     device_name: request.device_name || getDeviceName(),
   };
 
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/login/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const body = await readJsonResponse(response);
-  if (!response.ok) throw new Error(body?.detail ?? "이메일 또는 비밀번호를 확인해 주세요.");
-  return body as LoginResponse;
+  const url = `${getApiBaseUrl()}/api/v1/auth/login/`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await readJsonResponse(response);
+    if (!response.ok) throw new Error(body?.detail ?? "이메일 또는 비밀번호를 확인해 주세요.");
+    return body as LoginResponse;
+  } catch (err: any) {
+    if (err.name === "TypeError" && err.message.includes("fetch")) {
+      throw new Error(`백엔드 서버(${getApiBaseUrl()}) 통신에 실패했습니다. CORS 또는 서버 연결을 확인하세요.`);
+    }
+    throw err;
+  }
 }
 
 export async function signUp(request: SignUpRequest): Promise<{ user: MemberDto }> {

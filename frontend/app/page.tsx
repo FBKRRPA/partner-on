@@ -12,7 +12,7 @@ export default function HomePage() {
         <AppHeader isLanding={true} />
 
         {/* 2. Hero Section (Frame 21) */}
-        <section className="relative w-full h-[640px] lg:h-[760px] flex items-center overflow-hidden bg-slate-900">
+        <section className="relative w-full h-[360px] lg:h-[420px] flex items-center overflow-hidden bg-slate-900">
           {/* Background Image Overlay with Dark Gradients */}
           <div className="absolute inset-0 z-0">
             <div
@@ -30,7 +30,7 @@ export default function HomePage() {
           {/* Content Container */}
           <div className="relative z-10 max-w-[1440px] mx-auto px-6 w-full text-white">
             <div className="max-w-3xl space-y-6">
-              <h1 className="text-6xl sm:text-7xl lg:text-9xl font-black tracking-wider leading-none drop-shadow-lg font-['Paperlogy',sans-serif]">
+              <h1 className="text-6xl sm:text-5xl lg:text-7xl font-black tracking-wider leading-none drop-shadow-lg font-['Paperlogy',sans-serif]">
                 DX for Everyone
               </h1>
 
@@ -48,6 +48,7 @@ export default function HomePage() {
 
         {/* 3. FB On Customer Portal Banner */}
         <section className="max-w-[1440px] mx-auto px-6 py-12 sm:py-16 relative z-10 my-6">
+          <a href="https://portal-fbkr.fujifilm.com/">
           <div className="rounded-[24px] shadow-2xl min-h-[380px] sm:min-h-[490px] text-white relative overflow-hidden border border-slate-200/20">
             {/* FB On_section.jpg 이미지 */}
             <img
@@ -59,17 +60,8 @@ export default function HomePage() {
                 e.currentTarget.style.display = "none";
               }}
             />
-
-            {/* 이미지 속 버튼 위치에 맞춘 'FB On 바로가기' 버튼 */}
-            <div className="absolute left-[7%] bottom-[12%] sm:bottom-[17.4%] z-10">
-              <a
-                href="/login"
-                className="inline-flex items-center justify-center px-8 py-3.5 sm:px-10 sm:py-4 rounded-full text-white bg-[#01916D] hover:bg-[#006449] font-extrabold text-base sm:text-xl tracking-tight transition-all duration-300 shadow-2xl border border-white/30 transform hover:scale-105 cursor-pointer"
-              >
-                FB On 바로가기
-              </a>
-            </div>
           </div>
+          </a>
         </section>
 
         {/* 4. 4대 서비스 스마트 카드 그리드 (2x2 Grid) */}
