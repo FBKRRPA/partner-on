@@ -50,6 +50,8 @@ export type MemberDto = {
   is_2fa_enabled?: boolean;
   requires_2fa?: boolean;
   is_admin?: boolean;
+  invite_code?: string;
+  is_invite_accepted?: boolean;
   workplace: {
     id: number;
     name: string;
@@ -467,6 +469,42 @@ export async function confirmPasswordReset(email: string, otpCode: string, newPa
     throw new Error(body?.detail ?? parseErrorMessage(body, "비밀번호 변경에 실패했습니다."));
   }
   return body?.detail ?? "비밀번호가 변경되었습니다.";
+}
+
+export async function inviteMember(
+  token: string,
+  payload: { name: string; email: string; role: RoleType }
+): Promise<{ detail: string; invite_code: string; user: MemberDto }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/invite/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "구성원 초대 발송에 실패했습니다."));
+  }
+  return body;
+}
+
+export async function signUpWithInvite(payload: {
+  email: string;
+  invite_code: string;
+  password: string;
+}): Promise<LoginResult> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/signup-with-invite/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(body?.detail ?? parseErrorMessage(body, "초대 코드를 이용한 가입에 실패했습니다."));
+  }
+  return body;
 }
 
 function parseErrorMessage(body: Record<string, any> | null, defaultMsg: string): string {

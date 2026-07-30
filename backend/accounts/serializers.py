@@ -34,6 +34,8 @@ class UserDtoSerializer(serializers.ModelSerializer):
             "is_2fa_enabled",
             "requires_2fa",
             "is_admin",
+            "invite_code",
+            "is_invite_accepted",
             "workplace",
             "workplace_name",
         )
@@ -188,3 +190,21 @@ class RoleMenuPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoleMenuPermission
         fields = ("id", "role", "menu_key", "is_allowed", "updated_at")
+
+
+class MemberInviteSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=80)
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=User.Role.choices)
+
+    def validate_email(self, value: str) -> str:
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("이미 가입되거나 초대된 이메일입니다.")
+        return value
+
+
+class SignUpWithInviteSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    invite_code = serializers.CharField(max_length=32)
+    password = serializers.CharField(min_length=8, write_only=True)
+

@@ -19,10 +19,12 @@ from .serializers import (
     DeviceDtoSerializer,
     LoginRequestSerializer,
     MemberCreateSerializer,
+    MemberInviteSerializer,
     MemberUpdateSerializer,
-    SignUpRequestSerializer,
-    UserDtoSerializer,
     RoleMenuPermissionSerializer,
+    SignUpRequestSerializer,
+    SignUpWithInviteSerializer,
+    UserDtoSerializer,
 )
 
 
@@ -585,5 +587,84 @@ class PasswordResetConfirmView(APIView):
             {"detail": "비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해 주세요."},
             status=status.HTTP_200_OK,
         )
+
+
+class MemberInviteView(APIView):
+    """
+    Admin/Owner invites a new member with Name, Email, Role and generates 8-digit invite code
+    """
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
+
+    def post(self, request) -> Response:
+        serializer = MemberInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = serializer.validated_data
+
+        # Generate 8-digit uppercase random invite code (e.g. INV-8A9F2K)
+        code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        invite_code = f"INV-{code}"
+
+        # Random unusable temporary password
+        temp_pwd = "".join(random.choices(string.ascii_letters + string.digits, k=20))
+
+        user = User.objects.create_user(
+            email=validated["email"],
+            password=temp_pwd,
+            name=validated["name"],
+            role=validated["role"],
+            workplace=request.user.workplace,
+            invite_code=invite_code,
+            is_invite_accepted=False,
+        )
+
+        return Response(
+            {
+                "detail": f"'{user.name}' 구성원에게 초대 코드 [{invite_code}]가 발송되었습니다.",
+                "user": UserDtoSerializer(user).data,
+                "invite_code": invite_code,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class SignUpWithInviteView(APIView):
+    """
+    Invited Employee signs up using Email + 8-digit Invite Code + Password
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        serializer = SignUpWithInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"].strip()
+        invite_code = serializer.validated_data["invite_code"].strip()
+        password = serializer.validated_data["password"].strip()
+
+        user = User.objects.filter(email=email, invite_code=invite_code, is_invite_accepted=False).first()
+        if not user:
+            return Response(
+                {"detail": "유효하지 않은 이메일 또는 초대 코드입니다. 대표자에게 다시 초대를 요청해 주세요."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Set user's password and accept invitation
+        user.set_password(password)
+        user.is_invite_accepted = True
+        user.save(update_fields=["password", "is_invite_accepted"])
+
+        # Generate JWT Tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response(
+            {
+                "detail": f"[{user.workplace.name if user.workplace else 'PartnerOn'}] 사업장에 정상적으로 가입되었습니다.",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": UserDtoSerializer(user).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 

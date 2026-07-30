@@ -69,6 +69,10 @@ class User(AbstractUser):
     otp_created_at = models.DateTimeField(blank=True, null=True)
     backup_codes = models.JSONField(default=list, blank=True)
 
+    # Invitation Flow fields
+    invite_code = models.CharField(max_length=32, blank=True, null=True, unique=True)
+    is_invite_accepted = models.BooleanField(default=True)
+
     objects = PartneronUserManager()
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

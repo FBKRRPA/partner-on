@@ -3,13 +3,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
   approveDevice,
-  createMember,
   deleteDevice,
   deleteMember,
   DeviceDto,
   get2FAPolicy,
   getDevices,
   getMembers,
+  inviteMember,
   MemberDto,
   rejectDevice,
   RoleType,
@@ -163,24 +163,24 @@ export function MemberManagement({ accessToken }: Props) {
     }
   }
 
-  async function handleCreateMemberSubmit(e: FormEvent<HTMLFormElement>) {
+  // Invite Member Flow (No password input required)
+  async function handleInviteMemberSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
     const role = formData.get("role") as RoleType;
 
     try {
       setLoading(true);
-      await createMember(accessToken, { name, email, password, role });
-      setMessage(`'${name}' 구성원이 성공적으로 생성되었습니다.`);
+      const res = await inviteMember(accessToken, { name, email, role });
+      setMessage(`'${name}' 구성원에게 초대 코드 [${res.invite_code}]가 생성 및 발송되었습니다.`);
       setIsError(false);
       await loadMembers();
       setViewMode("LIST");
-      setTimeout(() => setMessage(""), 3000);
+      setTimeout(() => setMessage(""), 5000);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "구성원 생성에 실패했습니다.");
+      setMessage(err instanceof Error ? err.message : "구성원 초대 발송에 실패했습니다.");
       setIsError(true);
     } finally {
       setLoading(false);
@@ -242,6 +242,11 @@ export function MemberManagement({ accessToken }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleCopyInviteCode(code: string) {
+    navigator.clipboard.writeText(code);
+    alert(`초대 코드 [${code}]가 클립보드에 복사되었습니다.\n사원에게 메신저나 이메일로 전해 주시면 가입이 가능합니다.`);
   }
 
   const getRoleBadge = (role: string) => {
@@ -349,7 +354,7 @@ export function MemberManagement({ accessToken }: Props) {
                   }}
                   className="px-4 py-2 text-xs font-bold text-white bg-[#01916D] hover:bg-[#006449] rounded-xl shadow-xs transition-all cursor-pointer"
                 >
-                  + 새 구성원 등록
+                  + 새 구성원 초대 (초대코드 발송)
                 </button>
               </div>
 
@@ -369,7 +374,8 @@ export function MemberManagement({ accessToken }: Props) {
                         <th className="py-3.5 px-4">이름</th>
                         <th className="py-3.5 px-4">이메일</th>
                         <th className="py-3.5 px-4">직급 (Role)</th>
-                        <th className="py-3.5 px-4">2FA 활성화</th>
+                        <th className="py-3.5 px-4">초대 코드</th>
+                        <th className="py-3.5 px-4">가입 상태</th>
                         <th className="py-3.5 px-4 text-right">관리</th>
                       </tr>
                     </thead>
@@ -380,14 +386,30 @@ export function MemberManagement({ accessToken }: Props) {
                           <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">{m.email}</td>
                           <td className="py-3.5 px-4">{getRoleBadge(m.role)}</td>
                           <td className="py-3.5 px-4">
+                            {m.invite_code ? (
+                              <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-800">
+                                <span>{m.invite_code}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyInviteCode(m.invite_code!)}
+                                  className="px-1.5 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded cursor-pointer"
+                                >
+                                  복사
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 text-xs">-</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                m.requires_2fa
+                                m.is_invite_accepted
                                   ? "bg-emerald-100 text-[#01916D]"
-                                  : "bg-slate-100 text-slate-500"
+                                  : "bg-amber-100 text-amber-800"
                               }`}
                             >
-                              {m.requires_2fa ? "2FA 적용" : "미적용"}
+                              {m.is_invite_accepted ? "가입 완료" : "초대 대기"}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right space-x-2">
@@ -420,11 +442,16 @@ export function MemberManagement({ accessToken }: Props) {
             </div>
           )}
 
-          {/* CREATE MEMBER FORM */}
+          {/* CREATE MEMBER / INVITE FORM */}
           {viewMode === "CREATE" && (
             <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-base font-bold text-[#333333]">새 구성원 추가</h3>
+                <div>
+                  <h3 className="text-base font-bold text-[#333333]">새 구성원 초대 (초대코드 발송)</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    성명, 이메일, 직급을 선택하시면 8자리 가입 초대코드가 생성 및 발송됩니다.
+                  </p>
+                </div>
                 <button
                   onClick={() => setViewMode("LIST")}
                   className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
@@ -433,7 +460,7 @@ export function MemberManagement({ accessToken }: Props) {
                 </button>
               </div>
 
-              <form onSubmit={handleCreateMemberSubmit} className="space-y-4 text-xs sm:text-sm">
+              <form onSubmit={handleInviteMemberSubmit} className="space-y-4 text-xs sm:text-sm">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">성명</label>
                   <input
@@ -445,23 +472,12 @@ export function MemberManagement({ accessToken }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">이메일 (로그인 ID)</label>
+                  <label className="block font-bold text-slate-700 mb-1">이메일 주소</label>
                   <input
                     type="email"
                     name="email"
                     required
                     placeholder="user@partneron.co.kr"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">비밀번호</label>
-                  <input
-                    type="password"
-                    name="password"
-                    required
-                    minLength={8}
-                    placeholder="8자 이상 입력"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
                   />
                 </div>
@@ -489,9 +505,9 @@ export function MemberManagement({ accessToken }: Props) {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer"
+                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer shadow-xs"
                   >
-                    {loading ? "등록 중..." : "등록하기"}
+                    {loading ? "발송 중..." : "초대코드 발송"}
                   </button>
                 </div>
               </form>

@@ -146,6 +146,8 @@
   * `totp_secret`: `CharField(max_length=64)` - pyotp TOTP 비밀키
   * `otp_code` / `otp_created_at`: 이메일 OTP 6자리 및 발송 시각
   * `backup_codes`: `JSONField` - 8자리 일회성 비상 복구 코드 10개
+  * `invite_code`: `CharField(max_length=32, unique=True)` - 8자리 고유 구성원 초대 코드 (예: `INV-8A9F2K`)
+  * `is_invite_accepted`: Boolean - 구성원의 초대 승인/회원가입 완료 여부
   * `is_admin()` 메서드: `OWNER` 또는 `ADMIN_STAFF` 관리자 권한 리턴
   * `requires_2fa()` 메서드: 유저 개인 설정 및 사업장 직급별 강제 정책 종합 평가 리턴
 * **`accounts_rolemenupermission` (RoleMenuPermission 모델)**:
