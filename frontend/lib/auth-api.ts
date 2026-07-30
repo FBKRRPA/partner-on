@@ -487,7 +487,7 @@ export async function inviteMember(
   if (!response.ok) {
     throw new Error(parseErrorMessage(body, "구성원 초대 발송에 실패했습니다."));
   }
-  return body;
+  return body as { detail: string; invite_code: string; user: MemberDto };
 }
 
 export async function signUpWithInvite(payload: {
