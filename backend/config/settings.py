@@ -2,6 +2,20 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+# Fix Python 3.14 template context copy compatibility with Django 5.1
+import django.template.context
+
+def _fixed_context_copy(self):
+    duplicate = object.__new__(self.__class__)
+    duplicate.dicts = self.dicts[:]
+    for attr in ("autoescape", "use_l10n", "use_tz", "template", "render_context"):
+        if hasattr(self, attr):
+            setattr(duplicate, attr, getattr(self, attr))
+    return duplicate
+
+django.template.context.BaseContext.__copy__ = _fixed_context_copy
+django.template.context.Context.__copy__ = _fixed_context_copy
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security: Secret Key configuration with fallback for dev
