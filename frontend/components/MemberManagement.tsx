@@ -11,6 +11,7 @@ import {
   getMembers,
   inviteMember,
   MemberDto,
+  reinviteMember,
   rejectDevice,
   RoleType,
   TwoFAPolicyDto,
@@ -244,6 +245,23 @@ export function MemberManagement({ accessToken }: Props) {
     }
   }
 
+  async function handleReinvite(member: MemberDto) {
+    if (!confirm(`'${member.name}' 구성원에게 새로운 24시간 초대 코드를 재발송하시겠습니까?`)) return;
+    try {
+      setLoading(true);
+      const res = await reinviteMember(accessToken, member.id);
+      setMessage(`'${member.name}' 구성원에게 초대 코드 [${res.invite_code}]가 성공적으로 재발송되었습니다. (24시간 유효)`);
+      setIsError(false);
+      await loadMembers();
+      setTimeout(() => setMessage(""), 5000);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "초대 재발송에 실패했습니다.");
+      setIsError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleCopyInviteCode(code: string) {
     navigator.clipboard.writeText(code);
     alert(`초대 코드 [${code}]가 클립보드에 복사되었습니다.\n사원에게 메신저나 이메일로 전해 주시면 가입이 가능합니다.`);
@@ -413,6 +431,15 @@ export function MemberManagement({ accessToken }: Props) {
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right space-x-2">
+                            {!m.is_invite_accepted && (
+                              <button
+                                onClick={() => handleReinvite(m)}
+                                disabled={loading}
+                                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                              >
+                                초대 재발송
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 setSelectedMember(m);

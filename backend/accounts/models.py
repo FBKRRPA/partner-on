@@ -71,6 +71,7 @@ class User(AbstractUser):
 
     # Invitation Flow fields
     invite_code = models.CharField(max_length=32, blank=True, null=True, unique=True)
+    invite_created_at = models.DateTimeField(blank=True, null=True)
     is_invite_accepted = models.BooleanField(default=True)
 
     objects = PartneronUserManager()

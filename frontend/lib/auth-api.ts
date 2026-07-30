@@ -491,6 +491,24 @@ export async function inviteMember(
   return body as { detail: string; invite_code: string; user: MemberDto };
 }
 
+export async function reinviteMember(
+  token: string,
+  memberId: number
+): Promise<{ detail: string; invite_code: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/${memberId}/reinvite/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "초대 코드 재발송에 실패했습니다."));
+  }
+  return body as { detail: string; invite_code: string };
+}
+
 export async function signUpWithInvite(payload: {
   email: string;
   invite_code: string;
