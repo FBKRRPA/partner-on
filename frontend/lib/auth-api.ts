@@ -505,7 +505,7 @@ export async function signUpWithInvite(payload: {
   if (!response.ok) {
     throw new Error(body?.detail ?? parseErrorMessage(body, "초대 코드를 이용한 가입에 실패했습니다."));
   }
-  return body;
+  return body as LoginResponse;
 }
 
 function parseErrorMessage(body: Record<string, any> | null, defaultMsg: string): string {
