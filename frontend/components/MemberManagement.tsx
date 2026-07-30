@@ -32,6 +32,8 @@ export function MemberManagement({ accessToken }: Props) {
   // Device state
   const [devices, setDevices] = useState<DeviceDto[]>([]);
   const [deviceFetching, setDeviceFetching] = useState(false);
+  const [deviceSearchQuery, setDeviceSearchQuery] = useState("");
+  const [deviceStatusFilter, setDeviceStatusFilter] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("ALL");
 
   // 2FA Policy state
   const [policy, setPolicy] = useState<TwoFAPolicyDto>({
@@ -241,6 +243,17 @@ export function MemberManagement({ accessToken }: Props) {
   };
 
   const pendingDevices = devices.filter((d) => d.status === "PENDING");
+
+  const filteredDevices = devices.filter((d) => {
+    const matchesStatus = deviceStatusFilter === "ALL" || d.status === deviceStatusFilter;
+    const query = deviceSearchQuery.toLowerCase().trim();
+    const matchesQuery =
+      !query ||
+      d.user_name.toLowerCase().includes(query) ||
+      d.user_email.toLowerCase().includes(query) ||
+      d.device_name.toLowerCase().includes(query);
+    return matchesStatus && matchesQuery;
+  });
 
   return (
     <div className="space-y-6 font-sans">
@@ -558,12 +571,37 @@ export function MemberManagement({ accessToken }: Props) {
       {/* TAB 2: 기기 승인 관리 */}
       {activeTab === "DEVICES" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-[#333333]">📱 접속 승인 기기 모듈</h3>
               <p className="text-xs text-slate-500 mt-0.5">
                 사원 및 외부 접속 기기(브라우저)의 승인 대기 상태를 검토 및 허용합니다.
               </p>
+            </div>
+
+            {/* Filter Toolbar: User Search & Status Filter */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="사용자명, 이메일, 기기 검색..."
+                  value={deviceSearchQuery}
+                  onChange={(e) => setDeviceSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] w-48 sm:w-64"
+                />
+                <span className="absolute left-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
+              </div>
+
+              <select
+                value={deviceStatusFilter}
+                onChange={(e) => setDeviceStatusFilter(e.target.value as any)}
+                className="px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] cursor-pointer"
+              >
+                <option value="ALL">전체 상태 ({devices.length})</option>
+                <option value="PENDING">⏳ 승인 대기 ({pendingDevices.length})</option>
+                <option value="APPROVED">✅ 승인 완료</option>
+                <option value="REJECTED">❌ 승인 거절</option>
+              </select>
             </div>
           </div>
 
@@ -571,9 +609,11 @@ export function MemberManagement({ accessToken }: Props) {
             <div className="py-12 text-center text-slate-400 text-sm">
               기기 목록을 불러오는 중...
             </div>
-          ) : devices.length === 0 ? (
+          ) : filteredDevices.length === 0 ? (
             <div className="py-12 text-center text-slate-400 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              등록된 기기가 없습니다.
+              {deviceSearchQuery || deviceStatusFilter !== "ALL"
+                ? "검색 조건에 해당되는 기기 내역이 없습니다."
+                : "등록된 기기가 없습니다."}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-slate-200">
@@ -588,7 +628,7 @@ export function MemberManagement({ accessToken }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {devices.map((d) => (
+                  {filteredDevices.map((d) => (
                     <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-[#333333]">{d.user_name}</div>
