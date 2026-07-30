@@ -20,11 +20,12 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("email", "name", "role", "password1", "password2"),
+            "fields": ("email", "name", "role"),
         }),
     )
     search_fields = ("email", "name")
     ordering = ("email",)
+    filter_horizontal = ("groups", "user_permissions")
 
 @admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
