@@ -428,6 +428,21 @@ export async function rejectDevice(token: string, deviceId: number): Promise<str
   return body?.detail ?? "기기가 거절되었습니다.";
 }
 
+export async function deleteDevice(token: string, deviceId: number): Promise<string> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/devices/${deviceId}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "기기 삭제 처리에 실패했습니다."));
+  }
+  return body?.detail ?? "기기가 삭제되었습니다.";
+}
+
 function parseErrorMessage(body: Record<string, any> | null, defaultMsg: string): string {
   const detail = body?.detail ?? "";
   if (

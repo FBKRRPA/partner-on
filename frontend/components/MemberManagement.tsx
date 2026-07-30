@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   approveDevice,
   createMember,
+  deleteDevice,
   deleteMember,
   DeviceDto,
   get2FAPolicy,
@@ -140,6 +141,22 @@ export function MemberManagement({ accessToken }: Props) {
       await loadDevices();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "거절 처리 중 오류 발생");
+      setIsError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteDevice(deviceId: number, deviceName: string) {
+    if (!confirm(`정말로 [${deviceName}] 접속 기기를 목록에서 완전히 삭제하시겠습니까?`)) return;
+    try {
+      setLoading(true);
+      const resMsg = await deleteDevice(accessToken, deviceId);
+      setMessage(resMsg);
+      setIsError(false);
+      await loadDevices();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "기기 삭제 중 오류 발생");
       setIsError(true);
     } finally {
       setLoading(false);
@@ -575,7 +592,7 @@ export function MemberManagement({ accessToken }: Props) {
             <div>
               <h3 className="text-lg font-bold text-[#333333]">📱 접속 승인 기기 모듈</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                사원 및 외부 접속 기기(브라우저)의 승인 대기 상태를 검토 및 허용합니다.
+                사원 및 외부 접속 기기(브라우저)의 승인 대기 상태를 검토, 허용 및 관리합니다.
               </p>
             </div>
 
@@ -624,7 +641,7 @@ export function MemberManagement({ accessToken }: Props) {
                     <th className="py-3.5 px-4">기기 이름</th>
                     <th className="py-3.5 px-4">상태</th>
                     <th className="py-3.5 px-4">요청 일시</th>
-                    <th className="py-3.5 px-4 text-right">승인 조작</th>
+                    <th className="py-3.5 px-4 text-right">관리 / 승인 조작</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -676,6 +693,13 @@ export function MemberManagement({ accessToken }: Props) {
                             거절
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeleteDevice(d.id, d.device_name)}
+                          disabled={loading}
+                          className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                        >
+                          삭제
+                        </button>
                       </td>
                     </tr>
                   ))}

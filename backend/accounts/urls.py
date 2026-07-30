@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     DeviceActionView,
+    DeviceDetailView,
     DeviceListApprovalView,
     LoginView,
     MemberDetailView,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("workplace/members/", MemberListCreateView.as_view(), name="member-list-create"),
     path("workplace/members/<int:pk>/", MemberDetailView.as_view(), name="member-detail"),
     path("workplace/devices/", DeviceListApprovalView.as_view(), name="device-list"),
+    path("workplace/devices/<int:pk>/", DeviceDetailView.as_view(), name="device-detail"),
     path("workplace/devices/<int:pk>/<str:action>/", DeviceActionView.as_view(), name="device-action"),
     path("workplace/2fa-policy/", Workplace2FAPolicyView.as_view(), name="2fa-policy"),
     path("workplace/permissions/", RoleMenuPermissionView.as_view(), name="menu-permissions"),

@@ -479,6 +479,19 @@ class DeviceActionView(APIView):
         elif action == "reject":
             device.status = Device.Status.REJECTED
             device.save()
-            return Response({"detail": f"[{device.device_name}] 기기가 거절되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"detail": f"[{device.device_name}] 기기가 거절되었습니다."}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"detail": "올바르지 않은 작업입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeviceDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
+
+    def delete(self, request, pk: int) -> Response:
+        device = Device.objects.filter(pk=pk, user__workplace=request.user.workplace).first()
+        if not device:
+            raise NotFound("존재하지 않거나 권한이 없는 기기입니다.")
+        device_name = device.device_name
+        device.delete()
+        return Response({"detail": f"[{device_name}] 기기가 삭제되었습니다."}, status=status.HTTP_200_OK)
+
