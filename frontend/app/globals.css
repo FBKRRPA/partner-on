@@ -1,6 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800;900&family=Roboto:wght@300;400;500;700;900&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Min Sans";
+  src: url("/fonts/MinSansVF.woff2") format("woff2"), url("/fonts/MinSansVF.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
   .fujifilm-gradation-bg {
     background: linear-gradient(90deg, #00D164 0%, #01916D 45%, #96FFFD 95%);
@@ -8,14 +16,14 @@
 }
 
 :root {
-  font-family: "Clarimo UD", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font-family: "Min Sans", "Clarimo UD", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
 
 body {
   background-color: #F8FAFC;
   color: #333333;
   min-height: 100vh;
-  font-family: "Clarimo UD", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font-family: "Min Sans", "Clarimo UD", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
