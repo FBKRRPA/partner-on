@@ -18,6 +18,13 @@ django.template.context.Context.__copy__ = _fixed_context_copy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
+
 # Security: Secret Key configuration with fallback for dev
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "development-only-change-me-secure-key-partneron")
 
