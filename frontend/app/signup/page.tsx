@@ -21,9 +21,25 @@ function SignUpFormContent() {
   const [memberSuccess, setMemberSuccess] = useState(false);
 
   useEffect(() => {
+    const tokenParam = searchParams?.get("token");
     const tabParam = searchParams?.get("tab");
     const codeParam = searchParams?.get("code");
     const emailParam = searchParams?.get("email");
+
+    if (tokenParam) {
+      try {
+        const decoded = atob(tokenParam);
+        const [code, email] = decoded.split(":");
+        if (code && email) {
+          setTab("MEMBER");
+          setInviteCode(code);
+          setMemberEmail(email);
+          return;
+        }
+      } catch (e) {
+        console.error("Invalid invitation token format", e);
+      }
+    }
 
     if (tabParam === "invite" || codeParam) {
       setTab("MEMBER");

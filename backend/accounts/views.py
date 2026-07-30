@@ -644,9 +644,11 @@ class MemberInviteView(APIView):
             is_invite_accepted=False,
         )
 
-        # Dynamic Frontend Signup URL with query params for auto-selecting tab & filling invite code
+        # Encrypted Token URL for clean & secure invitation link
         request_host = request.get_host().split(":")[0]
-        signup_url = f"http://{request_host}:3001/signup?tab=invite&code={invite_code}&email={user.email}"
+        token_bytes = base64.urlsafe_b64encode(f"{invite_code}:{user.email}".encode("utf-8"))
+        invite_token = token_bytes.decode("utf-8")
+        signup_url = f"http://{request_host}:3001/signup?token={invite_token}"
         support_url = "https://forms.cloud.microsoft/pages/responsepage.aspx?id=ECpZksKL6kWIDvYroW1G7TxG45ChbQdMouo5znIVhM5UQ0E1Q0wyMzJYU0gxWFNEWlZTNjlOREtXUS4u&route=shorturl"
 
         subject = "Partner On 계정 초대 안내"
@@ -782,7 +784,9 @@ class MemberReinviteView(APIView):
         user.save(update_fields=["invite_code", "invite_created_at"])
 
         request_host = request.get_host().split(":")[0]
-        signup_url = f"http://{request_host}:3001/signup?tab=invite&code={invite_code}&email={user.email}"
+        token_bytes = base64.urlsafe_b64encode(f"{invite_code}:{user.email}".encode("utf-8"))
+        invite_token = token_bytes.decode("utf-8")
+        signup_url = f"http://{request_host}:3001/signup?token={invite_token}"
         support_url = "https://forms.cloud.microsoft/pages/responsepage.aspx?id=ECpZksKL6kWIDvYroW1G7TxG45ChbQdMouo5znIVhM5UQ0E1Q0wyMzJYU0gxWFNEWlZTNjlOREtXUS4u&route=shorturl"
 
         subject = "Partner On 계정 초대 안내 (초대 코드 재발송)"
