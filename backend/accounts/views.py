@@ -643,20 +643,103 @@ class MemberInviteView(APIView):
             is_invite_accepted=False,
         )
 
-        # Send Invitation Email with Invite Code
-        workplace_name = request.user.workplace.name if request.user.workplace else "PartnerOn"
-        subject = f"[PartnerOn] {workplace_name} 회원 가입 초대 코드가 도착했습니다."
-        message_body = (
-            f"안녕하세요, {user.name}님.\n\n"
-            f"'{workplace_name}'의 대표자님이 귀하를 [{user.get_role_display()}] 직급으로 초대하셨습니다.\n\n"
-            f"아래 8자리 초대 코드를 회원가입 페이지에 입력하여 가입을 완료해 주세요.\n\n"
-            f"초대 코드: {invite_code}\n"
+        # Dynamic Frontend Signup URL with query params for auto-selecting tab & filling invite code
+        request_host = request.get_host().split(":")[0]
+        signup_url = f"http://{request_host}:3001/signup?tab=invite&code={invite_code}&email={user.email}"
+        support_url = "https://forms.cloud.microsoft/pages/responsepage.aspx?id=ECpZksKL6kWIDvYroW1G7TxG45ChbQdMouo5znIVhM5UQ0E1Q0wyMzJYU0gxWFNEWlZTNjlOREtXUS4u&route=shorturl"
+
+        subject = "Partner On 계정 초대 안내"
+        plain_message = (
+            f"안녕하세요. Partner On을 이용해 주셔서 감사합니다.\n\n"
+            f"Partner On 서비스 이용을 위한 계정이 파트너사 대표에 의해 생성되었습니다.\n"
+            f"초대코드: {invite_code}\n\n"
+            f"회원 등록 페이지: {signup_url}\n"
         )
+
+        html_message = f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ko" xml:lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partner On 계정 초대 안내</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:#f5f5f5; padding:20px 0;">
+    <tr>
+      <td align="center">
+        <div style="width:100%;max-width:640px;margin:0 auto;background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e5e5e5;box-sizing:border-box;">
+          <!-- 헤더 -->
+          <div style="background-color:#727EB8;color:#ffffff;padding:20px 28px;font-size:18px;font-weight:600;text-align:left;">
+            Partner On 계정 초대 안내
+          </div>
+
+          <!-- 본문 -->
+          <div style="padding:24px 28px 32px 28px;color:#333333;font-size:14px;line-height:1.7;text-align:left;">
+            <p style="margin:0 0 12px 0;text-align:left;color:#333333;font-size:14px;line-height:1.7;">안녕하세요. Partner On를 이용해주셔서 감사합니다.</p>
+            <p style="margin:0 0 12px 0;text-align:left;color:#333333;font-size:14px;line-height:1.7;">
+              Partner On 서비스 이용을 위한 계정이 파트너사 대표에 의해 생성되었습니다.<br />
+              서비스를 이용하시려면 아래 안내에 따라 회원 등록을 완료해 주세요.
+            </p>
+
+            <div style="font-weight:600;margin:20px 0 8px 0;font-size:15px;color:#222222;text-align:left;">1. 아래 초대코드를 복사해 주세요.</div>
+            <div style="background-color:#f3f6fb;border:1px solid #d4e0f4;border-radius:4px;padding:12px 14px;font-family:Consolas,'Courier New',monospace;font-size:12px;word-break:break-all;color:#1a1a1a;margin:8px 0 16px 0;text-align:left;">
+              초대코드:<br />
+              <strong>{invite_code}</strong>
+            </div>
+
+            <div style="font-weight:600;margin:20px 0 8px 0;font-size:15px;color:#222222;text-align:left;">2. 아래 링크를 통해 등록 페이지에 접속해 주세요.</div>
+            <div style="margin:16px 0 20px 0;">
+              <a href="{signup_url}" target="_blank" style="display:inline-block;padding:10px 20px;background-color:#727EB8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:4px;box-sizing:border-box;word-break:keep-all;">
+                Partner On 등록 페이지 열기
+              </a>
+            </div>
+            <p style="font-size:12px;color:#555555;word-break:break-all;margin:0 0 12px 0;text-align:left;">
+              버튼 클릭이 어려운 경우, 아래 주소를 복사하여 브라우저 주소창에 붙여넣기 해 주세요.<br />
+              {signup_url}
+            </p>
+
+            <div style="font-weight:600;margin:20px 0 8px 0;font-size:15px;color:#222222;text-align:left;">3. 화면 안내에 따라 회원 등록을 완료해 주세요.</div>
+            <p style="margin:0 0 12px 0;text-align:left;color:#333333;font-size:14px;line-height:1.7;">
+              &middot; 등록 페이지에서 초대코드를 입력합니다.<br />
+              &middot; 성함, 이메일 등 필수 정보를 입력합니다.<br />
+              &middot; 안내에 따라 회원 등록을 완료합니다.
+            </p>
+
+            <p style="margin-top:20px;">
+              초대코드를 이용해 등록을 완료하셔야 Partner On 서비스를 정상적으로 이용하실 수 있습니다.<br />
+              만약 초대코드가 작동하지 않거나 등록 과정에서 오류가 발생할 경우, 아래 접수처로 문의해 주세요.
+            </p>
+
+            <div style="margin:16px 0 20px 0;">
+              <a href="{support_url}" target="_blank" style="display:inline-block;padding:10px 20px;background-color:#727EB8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;border-radius:4px;box-sizing:border-box;word-break:keep-all;">
+                문의 접수하기
+              </a>
+            </div>
+            <p style="font-size:12px;color:#555555;word-break:break-all;margin:0 0 12px 0;text-align:left;">
+              버튼 클릭이 어려운 경우, 아래 주소를 복사하여 브라우저 주소창에 붙여넣기 해 주세요.<br />
+              {support_url}
+            </p>
+
+            <p style="margin-top:16px;">감사합니다.</p>
+          </div>
+
+          <!-- 푸터 -->
+          <div style="text-align:center;font-size:11px;color:#888888;padding:14px 10px 20px 10px;">
+            본 메일은 Partner On 서비스 이용을 위한 계정 등록 안내를 위해 발송되었습니다.
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
 
         try:
             send_mail(
                 subject=subject,
-                message=message_body,
+                message=plain_message,
+                html_message=html_message,
                 from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
                 recipient_list=[user.email],
                 fail_silently=False,
