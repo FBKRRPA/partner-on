@@ -11,6 +11,7 @@ type MenuScaffoldPageProps = {
   title: string;
   description: string;
   icon?: string;
+  children?: React.ReactNode;
 };
 
 const PATH_TO_KEY_MAP: Record<string, string> = {
@@ -47,6 +48,7 @@ export function MenuScaffoldPage({
   title,
   description,
   icon = "📌",
+  children,
 }: MenuScaffoldPageProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -110,40 +112,46 @@ export function MenuScaffoldPage({
             <p className="text-xs sm:text-sm text-[#5C5C5C]">{description}</p>
           </div>
 
-          {/* Scaffold Dashboard Card */}
-          <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-6">
-            <div className="w-20 h-20 rounded-3xl bg-[#01916D]/10 border border-[#01916D]/30 flex items-center justify-center text-4xl mx-auto shadow-xs">
-              {icon}
+          {/* Interactive Feature Children or Default Scaffold Card */}
+          {children ? (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs">
+              {children}
             </div>
+          ) : (
+            <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-6">
+              <div className="w-20 h-20 rounded-3xl bg-[#01916D]/10 border border-[#01916D]/30 flex items-center justify-center text-4xl mx-auto shadow-xs">
+                {icon}
+              </div>
 
-            <div className="max-w-md mx-auto space-y-2">
-              <h2 className="text-xl font-bold text-slate-800">
-                {title} 서비스 대시보드
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                현재 <strong>{category} › {title}</strong> 모듈이 연결되어 있습니다.
-                실시간 통합 관리 기능 및 세부 데이터가 이곳에 표시됩니다.
-              </p>
-            </div>
+              <div className="max-w-md mx-auto space-y-2">
+                <h2 className="text-xl font-bold text-slate-800">
+                  {title} 서비스 대시보드
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  현재 <strong>{category} › {title}</strong> 모듈이 연결되어 있습니다.
+                  실시간 통합 관리 기능 및 세부 데이터가 이곳에 표시됩니다.
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4 text-left">
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="text-[11px] font-bold text-slate-400">데이터 수집 상태</div>
-                <div className="text-sm font-bold text-[#01916D] flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#01916D] animate-ping" />
-                  실시간 정상 동기화
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4 text-left">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
+                  <div className="text-[11px] font-bold text-slate-400">데이터 수집 상태</div>
+                  <div className="text-sm font-bold text-[#01916D] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#01916D] animate-ping" />
+                    실시간 정상 동기화
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
+                  <div className="text-[11px] font-bold text-slate-400">보안 관리 수준</div>
+                  <div className="text-sm font-bold text-[#01916D]">최상 (RBAC 통제)</div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
+                  <div className="text-[11px] font-bold text-slate-400">권한 세션</div>
+                  <div className="text-sm font-bold text-slate-800">인증됨 (JWT)</div>
                 </div>
               </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="text-[11px] font-bold text-slate-400">보안 관리 수준</div>
-                <div className="text-sm font-bold text-[#01916D]">최상 (RBAC 통제)</div>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                <div className="text-[11px] font-bold text-slate-400">권한 세션</div>
-                <div className="text-sm font-bold text-slate-800">인증됨 (JWT)</div>
-              </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
 
