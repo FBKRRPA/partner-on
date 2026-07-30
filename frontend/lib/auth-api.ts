@@ -119,9 +119,10 @@ export function getApiBaseUrl(): string {
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
+  const deviceUuid = request.device_uuid || (await getOrCreateDeviceId());
   const payload = {
     ...request,
-    device_uuid: request.device_uuid || getOrCreateDeviceId(),
+    device_uuid: deviceUuid,
     device_name: request.device_name || getDeviceName(),
   };
 
