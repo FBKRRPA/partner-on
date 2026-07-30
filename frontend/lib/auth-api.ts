@@ -12,6 +12,7 @@ export type LoginRequest = {
 export type LoginResponse = {
   access?: string;
   refresh?: string;
+  detail?: string;
   require_2fa?: boolean;
   pre_token?: string;
   email?: string;
@@ -494,7 +495,7 @@ export async function signUpWithInvite(payload: {
   email: string;
   invite_code: string;
   password: string;
-}): Promise<LoginResult> {
+}): Promise<LoginResponse> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/signup-with-invite/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
