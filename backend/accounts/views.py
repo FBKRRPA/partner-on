@@ -6,6 +6,8 @@ import pyotp
 import qrcode
 from django.utils import timezone
 from datetime import timedelta
+from django.core.mail import send_mail
+from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -523,9 +525,33 @@ class PasswordResetRequestView(APIView):
         user.otp_created_at = timezone.now()
         user.save(update_fields=["otp_code", "otp_created_at"])
 
+        # Send Password Reset Email with OTP
+        subject = "[PartnerOn] 비밀번호 재설정 인증번호"
+        message_body = (
+            f"안녕하세요, {user.name}님.\n\n"
+            f"요청하신 PartnerOn 비밀번호 재설정 6자리 인증번호는 다음과 같습니다:\n\n"
+            f"인증번호: {otp}\n\n"
+            f"해당 인증번호는 5분간 유효합니다."
+        )
+        try:
+            send_mail(
+                subject=subject,
+                message=message_body,
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            user.otp_code = None
+            user.save(update_fields=["otp_code"])
+            return Response(
+                {"detail": f"이메일 발송 실패: SMTP 이메일 전송 중 오류가 발생했습니다. ({str(e)})"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         return Response(
             {
-                "detail": f"인증번호가 {email} 이메일로 발송되었습니다.",
+                "detail": f"인증번호가 {email} 이메일로 성공적으로 발송되었습니다.",
                 "email": email,
             },
             status=status.HTTP_200_OK,
@@ -617,9 +643,35 @@ class MemberInviteView(APIView):
             is_invite_accepted=False,
         )
 
+        # Send Invitation Email with Invite Code
+        workplace_name = request.user.workplace.name if request.user.workplace else "PartnerOn"
+        subject = f"[PartnerOn] {workplace_name} 회원 가입 초대 코드가 도착했습니다."
+        message_body = (
+            f"안녕하세요, {user.name}님.\n\n"
+            f"'{workplace_name}'의 대표자님이 귀하를 [{user.get_role_display()}] 직급으로 초대하셨습니다.\n\n"
+            f"아래 8자리 초대 코드를 회원가입 페이지에 입력하여 가입을 완료해 주세요.\n\n"
+            f"초대 코드: {invite_code}\n"
+        )
+
+        try:
+            send_mail(
+                subject=subject,
+                message=message_body,
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            # Rollback user creation on email sending failure
+            user.delete()
+            return Response(
+                {"detail": f"초대 메일 전송 실패: 이메일 전송 실패로 초대를 완료하지 못했습니다. ({str(e)})"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         return Response(
             {
-                "detail": f"'{user.name}' 구성원에게 초대 코드 [{invite_code}]가 발송되었습니다.",
+                "detail": f"'{user.name}' 구성원에게 초대 코드 [{invite_code}] 발송이 완료되었습니다.",
                 "user": UserDtoSerializer(user).data,
                 "invite_code": invite_code,
             },
