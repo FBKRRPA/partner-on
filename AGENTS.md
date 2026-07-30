@@ -59,6 +59,10 @@
 * 상단 헤더 메뉴는 [AppHeader.tsx](file:///d:/workspace/Partneron_v1/frontend/components/layout/AppHeader.tsx)의 7대 대분류 + 25개 소분류 드롭다운 네비게이션을 유지합니다.
 * 새로 추가되는 소분류 메뉴는 `MenuScaffoldPage` 컴포넌트를 활용하여 일관된 Breadcrumb (`카테고리 › 소분류`)과 모듈 카드 UI를 제공합니다.
 
+### ⑤ **UI 아이콘 & 이모지 사용 제한 (Text-First Design)**
+* ❌ **금지**: 헤더, 버튼, 카테고리 빵부스러기, 카드 타이틀 등에 임의의 유니코드 이모지(📌, 👥, 📱, 📈 등) 및 조잡한 아이콘 삽입을 금지합니다.
+* ✅ **원칙**: 텍스트 중심의 차분하고 정돈된 B2B 프리미엄 UI 레이아웃을 유지하며, 시각적 강조가 필요한 경우 Fujifilm 브랜드 컬러 뱃지(`bg-[#01916D]/10 text-[#01916D]`)와 상태 컬러 태그만 활용합니다.
+
 ---
 
 ## 🔒 4. 시큐어 코딩 & 웹 보안 취약점 방지 수칙 (Web Vulnerability Prevention)

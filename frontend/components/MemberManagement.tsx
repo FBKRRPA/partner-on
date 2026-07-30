@@ -287,7 +287,7 @@ export function MemberManagement({ accessToken }: Props) {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          👥 구성원 목록 ({members.length})
+          구성원 목록 ({members.length})
         </button>
         <button
           onClick={() => {
@@ -300,7 +300,7 @@ export function MemberManagement({ accessToken }: Props) {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          📱 기기 승인 관리 ({devices.length})
+          기기 승인 관리 ({devices.length})
           {pendingDevices.length > 0 && (
             <span className="bg-[#E01E35] text-white text-[11px] font-extrabold px-2 py-0.5 rounded-full">
               {pendingDevices.length} 대기
@@ -318,7 +318,7 @@ export function MemberManagement({ accessToken }: Props) {
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          🛡️ 2FA 역할별 강제 정책
+          2FA 역할별 강제 정책
         </button>
       </div>
 
@@ -387,7 +387,7 @@ export function MemberManagement({ accessToken }: Props) {
                                   : "bg-slate-100 text-slate-500"
                               }`}
                             >
-                              {m.requires_2fa ? "🔒 2FA 적용" : "🔓 미적용"}
+                              {m.requires_2fa ? "2FA 적용" : "미적용"}
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-right space-x-2">
@@ -424,12 +424,12 @@ export function MemberManagement({ accessToken }: Props) {
           {viewMode === "CREATE" && (
             <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-base font-bold text-[#333333]">➕ 새 구성원 추가</h3>
+                <h3 className="text-base font-bold text-[#333333]">새 구성원 추가</h3>
                 <button
                   onClick={() => setViewMode("LIST")}
                   className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
-                  ✕ 취소
+                  취소
                 </button>
               </div>
 
@@ -502,7 +502,7 @@ export function MemberManagement({ accessToken }: Props) {
           {viewMode === "EDIT" && selectedMember && (
             <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-base font-bold text-[#333333]">✏️ 구성원 정보 수정</h3>
+                <h3 className="text-base font-bold text-[#333333]">구성원 정보 수정</h3>
                 <button
                   onClick={() => {
                     setViewMode("LIST");
@@ -510,7 +510,7 @@ export function MemberManagement({ accessToken }: Props) {
                   }}
                   className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
                 >
-                  ✕ 취소
+                  취소
                 </button>
               </div>
 
@@ -590,7 +590,7 @@ export function MemberManagement({ accessToken }: Props) {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold text-[#333333]">📱 접속 승인 기기 모듈</h3>
+              <h3 className="text-lg font-bold text-[#333333]">접속 승인 기기 모듈</h3>
               <p className="text-xs text-slate-500 mt-0.5">
                 사원 및 외부 접속 기기(브라우저)의 승인 대기 상태를 검토, 허용 및 관리합니다.
               </p>
@@ -604,9 +604,8 @@ export function MemberManagement({ accessToken }: Props) {
                   placeholder="사용자명, 이메일, 기기 검색..."
                   value={deviceSearchQuery}
                   onChange={(e) => setDeviceSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] w-48 sm:w-64"
+                  className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] w-48 sm:w-64"
                 />
-                <span className="absolute left-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
               </div>
 
               <select
@@ -615,9 +614,9 @@ export function MemberManagement({ accessToken }: Props) {
                 className="px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] cursor-pointer"
               >
                 <option value="ALL">전체 상태 ({devices.length})</option>
-                <option value="PENDING">⏳ 승인 대기 ({pendingDevices.length})</option>
-                <option value="APPROVED">✅ 승인 완료</option>
-                <option value="REJECTED">❌ 승인 거절</option>
+                <option value="PENDING">승인 대기 ({pendingDevices.length})</option>
+                <option value="APPROVED">승인 완료</option>
+                <option value="REJECTED">승인 거절</option>
               </select>
             </div>
           </div>
@@ -665,10 +664,10 @@ export function MemberManagement({ accessToken }: Props) {
                           }`}
                         >
                           {d.status === "APPROVED"
-                            ? "✅ 승인됨"
+                            ? "승인됨"
                             : d.status === "PENDING"
-                            ? "⏳ 승인 대기"
-                            : "❌ 거절됨"}
+                            ? "승인 대기"
+                            : "거절됨"}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-500 font-mono">
@@ -714,7 +713,7 @@ export function MemberManagement({ accessToken }: Props) {
       {activeTab === "POLICY" && (
         <div className="space-y-6 max-w-2xl">
           <div>
-            <h3 className="text-lg font-bold text-[#333333]">🛡️ 사업장 2FA 역할별 필수 정책 설정</h3>
+            <h3 className="text-lg font-bold text-[#333333]">사업장 2FA 역할별 필수 정책 설정</h3>
             <p className="text-xs text-slate-500 mt-1">
               특정 직급(관리자 대표, 관리자 사무직원, 영업, CE)에 대해 2차 인증(2FA) 사용을 강제하도록 지정할 수 있습니다.
             </p>
@@ -727,7 +726,7 @@ export function MemberManagement({ accessToken }: Props) {
               {/* OWNER Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">👑 관리자(대표) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">관리자(대표) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     대표 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
@@ -750,7 +749,7 @@ export function MemberManagement({ accessToken }: Props) {
               {/* ADMIN_STAFF Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">💼 관리자(사무직원) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">관리자(사무직원) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     관리자 사무직원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
@@ -773,7 +772,7 @@ export function MemberManagement({ accessToken }: Props) {
               {/* SALES Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">📈 영업 (SALES) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">영업 (SALES) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     영업 담당 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>
@@ -796,7 +795,7 @@ export function MemberManagement({ accessToken }: Props) {
               {/* CE Enforcement */}
               <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
                 <div>
-                  <div className="font-bold text-slate-800 text-sm">🔧 CE (엔지니어) 2FA 필수화</div>
+                  <div className="font-bold text-slate-800 text-sm">CE (엔지니어) 2FA 필수화</div>
                   <div className="text-xs text-slate-500 mt-0.5">
                     CE 엔지니어 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
                   </div>

@@ -47,7 +47,6 @@ export function MenuScaffoldPage({
   category,
   title,
   description,
-  icon = "📌",
   children,
 }: MenuScaffoldPageProps) {
   const router = useRouter();
@@ -105,9 +104,8 @@ export function MenuScaffoldPage({
               <span>›</span>
               <span>{title}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#333333] tracking-tight flex items-center gap-2">
-              <span>{icon}</span>
-              <span>{title}</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#333333] tracking-tight">
+              {title}
             </h1>
             <p className="text-xs sm:text-sm text-[#5C5C5C]">{description}</p>
           </div>
@@ -119,10 +117,6 @@ export function MenuScaffoldPage({
             </div>
           ) : (
             <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-6">
-              <div className="w-20 h-20 rounded-3xl bg-[#01916D]/10 border border-[#01916D]/30 flex items-center justify-center text-4xl mx-auto shadow-xs">
-                {icon}
-              </div>
-
               <div className="max-w-md mx-auto space-y-2">
                 <h2 className="text-xl font-bold text-slate-800">
                   {title} 서비스 대시보드
