@@ -1148,7 +1148,12 @@ class AgentIngestBatchView(APIView):
         token = auth_header.replace("Bearer ", "").strip()
         auth_code = token.replace("token_agent_", "")
 
-        # 2. High-Performance Bulk Ingestion for REGISTERED Devices ONLY
+        now = timezone.now()
+        collector = AgentCollector.objects.filter(auth_code=auth_code).first()
+        if not collector:
+            collector = AgentCollector.objects.filter(agent_token=token).first()
+
+        # High-Performance Bulk Ingestion for REGISTERED Devices ONLY
         matched_asset_ids = set()
         workplace = collector.workplace if collector else Workplace.objects.first()
         today_str = now.strftime("%Y%m%d")
@@ -1397,23 +1402,13 @@ class AgentIngestBatchView(APIView):
                 ],
             )
 
-        if unregistered_printer_updates:
-            UnregisteredPrinter.objects.bulk_create(
-                unregistered_printer_updates,
-                update_conflicts=True,
-                unique_fields=["workplace", "serial_no"],
-                update_fields=["scanned_model", "ip", "registered", "updated_at"],
-            )
-
         matched_count = len(matched_asset_ids)
-        unregistered_count = max(0, device_count - matched_count)
 
         return Response(
             {
-                "detail": f"엔터프라이즈 벌크엔진: 총 {device_count}대 고속 수집 완료 (매칭 장비: {matched_count}대, 미등록 감지: {unregistered_count}대)",
-                "processed_count": device_count,
+                "detail": f"등록 장비 전용 수집 완료 (처리된 등록 장비: {matched_count}대)",
+                "processed_count": matched_count,
                 "matched_count": matched_count,
-                "unregistered_count": unregistered_count,
             },
             status=status.HTTP_200_OK,
         )

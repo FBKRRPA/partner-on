@@ -26,6 +26,7 @@
 | **TC-016** | SNMP/OID | 복합기 제조사별 OID 동적 맵 매핑 | PrinterOidMapping Master | ✅ PASS |
 | **TC-017** | 수집 API | Agent 배치 업로드 `SuppliesAlert` 필드 500 에러 해결 | DRF Ingest API | ✅ PASS |
 | **TC-018** | Agent/보안 | 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제 | Agent Pinpoint Scan & DB Purge | ✅ PASS |
+| **TC-019** | 수집 API | Agent Ingest API `NameError` (collector, unregistered_printer_updates) 정정 | DRF Ingest API & Tests | ✅ PASS |
 
 ---
 
@@ -125,5 +126,11 @@
   2. 백엔드 `AgentIngestBatchView`에서 미등록 기기를 `UnregisteredPrinter`로 보관하던 수집 로직을 완전 제거하고, `AgentCollector.detected_count` 카운터도 오직 실시간 매칭 성공한 등록 장비 수(`matched_count`)로만 갱신되도록 수정.
   3. DB에 축적된 미등록 기기 데이터 10,253건을 일괄 완전 삭제.
 * **검증 결과**: DB 미등록 레코드 0건 완벽 청제, UI 수집기 탐지 수량 `2대` 100% 명확히 고정 및 Agent 실행 시 정식 등록된 2대 복합기만 핀포인트 전용 수집 성공.
+
+### 19. [TC-019] Agent Ingest API NameError (collector, unregistered_printer_updates) 정정
+* **발생 원인/배경**: `backend/accounts/views.py` `AgentIngestBatchView`에서 미선언 `collector` 변수 참조 및 제거된 `unregistered_printer_updates` 잔여 구문 호출로 인한 `NameError` 500 서버 에러 발생.
+* **조치 내용**: `collector` 변수 선언 위치 복원 및 미등록 장비 잔여 `bulk_create` 구문 완전 제거.
+* **검증 결과**: `target-assets`, `oids`, `ingest` 3개 Agent REST API 모두 HTTP 200 OK 응답 및 백엔드 테스트 9/9 PASS.
+
 
 
