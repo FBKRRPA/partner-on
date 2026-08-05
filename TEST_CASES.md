@@ -32,6 +32,7 @@
 | **TC-022** | 수집 DB | 미등록 장비 시리얼 미반환 시 대체 식별자(`UNREG-IP-xxx`) 자동 생성 | DRF Ingest Serial Fallback | ✅ PASS |
 | **TC-023** | 수집 DB | 동일 IP 기기의 시리얼 번호 재스캔 시 실시간 자동 갱신(Update) 구축 | UnregisteredPrinter Unique (workplace, ip) | ✅ PASS |
 | **TC-024** | OID/수집 | 지능형 OID 유추 엔진 (`OidInferenceEngine`) 구축 (모델명/카운터/소모품 유추) | OidInferenceEngine & Agent Ingest | ✅ PASS |
+| **TC-025** | OID/학습 | OID 지식 실시간 자동 학습 & DB 캐싱 구축 (`PrinterOidMapping` 캐싱) | OidInferenceEngine.learn_and_cache | ✅ PASS |
 
 ---
 
@@ -161,6 +162,12 @@
 * **발생 원인/배경**: 미등록 기기 `scanned_model` 및 등록 기기 카운터/소모품 잔량 OID가 응답하지 않거나 빠진 경우 지능적으로 자동 유추/보완 요구.
 * **조치 내용**: `backend/accounts/oid_inference.py` 및 `agent/oid_inference.py` 지능형 OID 유추 엔진 모듈 탑재. 브랜드(Fujifilm, Canon, Ricoh, HP, Standard) 자동 판별 및 `sysDescr` 정제, 누락 카운터/소모품 비율 유추 자동 보완.
 * **검증 결과**: 미등록 기기 모델명 정제(`"Canon imageRUNNER ADVANCE C3525i"`) 및 등록 기기 누락 총카운터(79,000) 자동 유추 보완 100% 성공 및 백엔드 테스트 9/9 PASS.
+
+### 25. [TC-025] OID 지식 실시간 자동 학습 & DB 캐싱 구축 (`PrinterOidMapping` 캐싱)
+* **발생 원인/배경**: 신규 기종 및 펌웨어 버전 장비 수집 시 유추/발굴된 OID 매핑 지식을 DB에 자동 누적 학습하여 차후 동일/유사 장비 스캔 시 0.1초 만에 자동 찾아가는 시스템 적용 요구.
+* **조치 내용**: `OidInferenceEngine.learn_and_cache_oid_mapping` 메서드 구현 및 `AgentIngestBatchView` 수집 연동. 유추 성공 시 `PrinterOidMapping` DB 모델에 실시간으로 캐시 매핑 추가 및 활성화.
+* **검증 결과**: 신규 장비(Canon, HP) 수집 시 OID 매핑 DB 레코드 자동 축적(+3개) 및 2차 스캔 최단시간 매칭 100% 성공, 백엔드 테스트 9/9 PASS.
+
 
 
 

@@ -123,3 +123,31 @@ class OidInferenceEngine:
                 inferred[supply_key] = 100
 
         return inferred
+
+    @classmethod
+    def learn_and_cache_oid_mapping(cls, device_payload: Dict[str, Any]) -> int:
+        """
+        Auto-Learns and caches discovered vendor/model/version OID mappings into PrinterOidMapping DB model
+        """
+        from accounts.models import PrinterOidMapping
+
+        vendor = device_payload.get("vendor_name", "Standard")
+        model = device_payload.get("model_name", "Standard MFP")
+        sys_descr = device_payload.get("sysDescr", "")
+        vendor_oids = cls.VENDOR_OIDS.get(vendor, cls.VENDOR_OIDS["Standard"])
+
+        learned_count = 0
+        for oid_key, oid_val in vendor_oids.items():
+            _, created = PrinterOidMapping.objects.get_or_create(
+                vendor_name=vendor,
+                oid_key=oid_key,
+                defaults={
+                    "oid_value": oid_val,
+                    "description": f"Auto-Learned OID for {vendor} ({model}) - {oid_key}",
+                    "is_active": True,
+                },
+            )
+            if created:
+                learned_count += 1
+
+        return learned_count

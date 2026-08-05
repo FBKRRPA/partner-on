@@ -1220,6 +1220,9 @@ class AgentIngestBatchView(APIView):
 
         for raw_item in devices:
             item = OidInferenceEngine.infer_device_data(raw_item)
+            # Auto-learn and cache vendor/model OID mapping into PrinterOidMapping DB
+            OidInferenceEngine.learn_and_cache_oid_mapping(item)
+
             s_no = item.get("serial_no")
             clean_sno = str(s_no).strip() if s_no else ""
             upper_sno = clean_sno.upper()
