@@ -30,7 +30,7 @@ class ApiClient:
             raise Exception(f"인증에 실패했습니다: {e}")
 
     def fetch_latest_oids(self, agent_token: str) -> Dict[str, Any]:
-        """Downloads latest OID mapping table dynamically from Server"""
+        """Downloads latest OID mapping table dynamically from Server with Safe Fallback"""
         url = f"{self.server_url}/api/v1/agent/oids/"
         req = urllib.request.Request(
             url,
@@ -41,10 +41,13 @@ class ApiClient:
             method="GET",
         )
         try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                res_data = json.loads(resp.read().decode("utf-8"))
+                if isinstance(res_data, dict):
+                    return res_data
+                return {}
         except Exception:
-            # Fallback to empty dict (uses default OIDs in scanner)
+            # Safe Fallback to default built-in OID map if server connection delayed
             return {}
 
     def upload_batch_data(self, agent_token: str, scanned_devices: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -61,10 +64,13 @@ class ApiClient:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as he:
+            err_msg = he.read().decode("utf-8") if he.fp else str(he)
+            return {"detail": f"서버 통신 응답 에러 (HTTP {he.code}): {err_msg}"}
         except Exception as e:
-            raise Exception(f"데이터 업로드 실패: {e}")
+            return {"detail": f"네트워크 통신 오류: {e}"}
 
     def update_status(self, agent_token: str, status: str = "OFFLINE") -> Dict[str, Any]:
         """Notifies Server of Agent status change (e.g. OFFLINE on shutdown)"""
