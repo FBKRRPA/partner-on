@@ -58,11 +58,29 @@ export default function AgentCollectorsPage() {
     }
   }
 
-  function handleCopyCode() {
+  async function handleCopyCode() {
     if (!generatedCode) return;
-    navigator.clipboard.writeText(generatedCode);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 3000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(generatedCode);
+      } else {
+        // Fallback for non-HTTPS / IP address origins
+        const textArea = document.createElement("textarea");
+        textArea.value = generatedCode;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to copy auth code:", err);
+      alert(`[인증 코드: ${generatedCode}]\n클립보드 자동 복사에 실패하여 화면의 코드를 수동으로 복사해 주세요.`);
+    }
   }
 
   return (
