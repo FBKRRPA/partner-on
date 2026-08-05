@@ -17,6 +17,11 @@ export default function MonitoringSuppliesPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"SNAPSHOT" | "HISTORY">("HISTORY");
 
+  // Filters State
+  const [selectedModel, setSelectedModel] = useState<string>("ALL");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+
   useEffect(() => {
     const token =
       sessionStorage.getItem("accessToken") ||
@@ -36,8 +41,24 @@ export default function MonitoringSuppliesPage() {
     }
   }, []);
 
-  const criticalCount = suppliesList.filter((s) => s.status_alert === "CRITICAL").length;
-  const warningCount = suppliesList.filter((s) => s.status_alert === "WARNING").length;
+  // Filtered Options
+  const uniqueModels = Array.from(
+    new Set([...suppliesList.map((s) => s.model_name)])
+  ).filter(Boolean);
+
+  const filteredHistory = historyList.filter((item) => {
+    if (startDate && item.date_formatted < startDate) return false;
+    if (endDate && item.date_formatted > endDate) return false;
+    return true;
+  });
+
+  const filteredDevices = suppliesList.filter((item) => {
+    if (selectedModel !== "ALL" && item.model_name !== selectedModel) return false;
+    return true;
+  });
+
+  const criticalCount = filteredDevices.filter((s) => s.status_alert === "CRITICAL").length;
+  const warningCount = filteredDevices.filter((s) => s.status_alert === "WARNING").length;
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-[#333333] flex flex-col font-sans">
@@ -69,7 +90,7 @@ export default function MonitoringSuppliesPage() {
                     : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                소모품 소진 이력 ({totalRecordsCount}건)
+                소모품 소진 이력 ({filteredHistory.length}건)
               </button>
               <button
                 onClick={() => setActiveTab("SNAPSHOT")}
@@ -83,6 +104,59 @@ export default function MonitoringSuppliesPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Filter Control Bar */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Model Name Select Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-extrabold text-slate-600">복합기 모델명:</label>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#01916D]"
+              >
+                <option value="ALL">전체 모델 ({uniqueModels.length}종)</option>
+                {uniqueModels.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date Period Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-extrabold text-slate-600">수집 기간:</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#01916D]"
+              />
+              <span className="text-xs text-slate-400 font-bold">~</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#01916D]"
+              />
+            </div>
+          </div>
+
+          {(selectedModel !== "ALL" || startDate || endDate) && (
+            <button
+              onClick={() => {
+                setSelectedModel("ALL");
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-extrabold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1 self-start md:self-auto"
+            >
+              <span>🔄 필터 초기화</span>
+            </button>
+          )}
         </div>
 
         {/* Status Cards */}
@@ -136,9 +210,9 @@ export default function MonitoringSuppliesPage() {
               <div className="p-12 text-center text-slate-400 text-sm font-semibold">
                 소모품 이력 데이터를 불러오는 중입니다...
               </div>
-            ) : historyList.length === 0 ? (
+            ) : filteredHistory.length === 0 ? (
               <div className="p-12 text-center text-slate-400 text-sm">
-                누적 수집된 소모품 이력 데이터가 없습니다.
+                조건에 일치하는 소모품 이력 데이터가 없습니다. (필터 조건을 확인하세요)
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -153,7 +227,7 @@ export default function MonitoringSuppliesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {historyList.map((item) => (
+                    {filteredHistory.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-4 px-6 font-mono font-extrabold text-[#01916D]">
                           {item.date_formatted}
@@ -162,11 +236,35 @@ export default function MonitoringSuppliesPage() {
                           {item.serial_no}
                         </td>
                         <td className="py-4 px-6">
-                          <div className="space-y-1 text-xs font-mono">
-                            <span className="text-cyan-600 font-bold mr-2">C:{item.toner_c}%</span>
-                            <span className="text-pink-600 font-bold mr-2">M:{item.toner_m}%</span>
-                            <span className="text-amber-500 font-bold mr-2">Y:{item.toner_y}%</span>
-                            <span className="text-slate-800 font-bold">K:{item.toner_k}%</span>
+                          <div className="space-y-1.5 text-xs font-mono">
+                            <div className="flex items-center gap-2">
+                              <span className="w-4 font-bold text-cyan-600">C:</span>
+                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div className="bg-cyan-500 h-2 rounded-full" style={{ width: `${item.toner_c}%` }} />
+                              </div>
+                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_c}%</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-4 font-bold text-pink-600">M:</span>
+                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div className="bg-pink-500 h-2 rounded-full" style={{ width: `${item.toner_m}%` }} />
+                              </div>
+                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_m}%</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-4 font-bold text-amber-500">Y:</span>
+                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div className="bg-amber-400 h-2 rounded-full" style={{ width: `${item.toner_y}%` }} />
+                              </div>
+                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_y}%</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="w-4 font-bold text-slate-800">K:</span>
+                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div className="bg-slate-800 h-2 rounded-full" style={{ width: `${item.toner_k}%` }} />
+                              </div>
+                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_k}%</span>
+                            </div>
                           </div>
                         </td>
                         <td className="py-4 px-6 font-mono font-bold text-slate-800">
@@ -194,9 +292,9 @@ export default function MonitoringSuppliesPage() {
               <div className="p-12 text-center text-slate-400 text-sm font-semibold">
                 소모품 현황 데이터를 불러오는 중입니다...
               </div>
-            ) : suppliesList.length === 0 ? (
+            ) : filteredDevices.length === 0 ? (
               <div className="p-12 text-center text-slate-400 text-sm">
-                소모품 모니터링 데이터가 없습니다.
+                조건에 일치하는 소모품 스냅샷 데이터가 없습니다.
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -212,7 +310,7 @@ export default function MonitoringSuppliesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {suppliesList.map((item) => (
+                    {filteredDevices.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-4 px-6">
                           <div className="font-bold text-[#333333]">{item.customer_name}</div>
