@@ -17,11 +17,11 @@ def main():
     parser.add_argument("--auth", type=str, help="8-digit Auth Code for Agent initial activation")
     parser.add_argument("--add-ip", type=str, help="Manually add custom designated printer IP")
     parser.add_argument("--server", type=str, default="http://localhost:8000", help="PartnerOn Server URL")
-    parser.add_argument("--interval", type=int, default=3600, help="Scan interval in seconds (default: 3600s)")
+    parser.add_argument("--mode", type=str, choices=["auto", "get", "walk"], default="auto", help="SNMP Scan Mode (auto/get/walk)")
     args = parser.parse_args()
 
     print("============================================================")
-    print(f"  PartnerOn Windows SNMP Agent ({AGENT_VERSION})")
+    print(f"  PartnerOn Windows SNMP Agent ({AGENT_VERSION}) - Mode: {args.mode.upper()}")
     print("============================================================")
 
     config_mgr = ConfigManager()
@@ -77,8 +77,8 @@ def main():
             # Fetch dynamic OIDs from Server
             oid_map = api_client.fetch_latest_oids(agent_token)
             
-            # Perform multi-threaded SNMP scan
-            scanner = SNMPScanner(custom_ips=custom_ips, oid_map=oid_map)
+            # Perform multi-threaded SNMP scan with chosen mode (AUTO / GET / WALK)
+            scanner = SNMPScanner(custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
             scanned_devices = scanner.scan_all()
 
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 복합기/프린터 감지됨.")
