@@ -219,16 +219,17 @@
 * 유저의 2FA 요구 여부는 반드시 `user.requires_2fa()` 메서드를 호출하여 판단합니다.
 * 2FA가 필요한 경우 `LoginView`는 JWT 대신 `require_2fa: True`와 `pre_token`, `otp_code`를 리턴하고, 프론트엔드의 2FA verification modal을 통해 `Verify2FAView`에서 최종 JWT를 발급합니다.
 
-### ② **REST API URL 규격**
-* 인증/계정 관련 API: `/api/v1/auth/...`
-* 사업장/보안정책 관련 API: `/api/v1/workplace/...`
-* 메뉴 접근 권한 관련 API: `/api/v1/workplace/permissions/`
-* 모든 뷰 클래스는 DRF `APIView` 또는 `TokenObtainPairView`를 상속받아 명확한 HTTP Status Code(200 OK, 400 Bad Request, 403 Forbidden)를 반환합니다.
-
-### ③ **Django ORM 및 데이터베이스 무결성 & AGENTS.md 동기화 (필수 지침)**
-* ⚠️ **[중요] 모델/테이블 추가 및 필드 수정 시 필수 절차**:
-  1. `models.py` 수정 후 `python manage.py makemigrations` 및 `python manage.py migrate` 수행.
-  2. **새로운 모델/테이블이 생성되거나 필드가 변경된 경우, LLM 코딩 에이전트는 반드시 `AGENTS.md` 파일의 `4. 데이터베이스 스키마 & ORM 모델` 섹션에 해당 테이블 및 필드 설명을 업데이트해야 합니다.**
+### ④ **에이전트 이중 수집 분리 & 3가지 스캔 자동 분기 규칙 (필수 준수)**
+* **등록 장비와 미등록 장비의 이중 수집 분리**:
+  * [장비관리] 정식 등록 복합기(`PrinterAsset`) ➔ `PrinterAsset`, `MonitoringPrinter`, `MonitoringData`, `MonitoringDataRecord`, `SuppliesAlert` 관제 DB 실시간 갱신.
+  * 미등록 탐지 기기 ➔ 관제 DB 오염 없이 `unregistered_printers` DB 테이블 (`UnregisteredPrinter`, `unique_together = ("workplace", "ip")`)에 실시간 분리 저장.
+* **에이전트 3가지 스캔 분기 조건 메커니즘**:
+  * **조건 1 (최초 등록 0대 상태)**: `target_serials` 0대 ➔ 전체 서브넷(.1~.254) 자동 풀 스캔(Full Scan).
+  * **조건 2 (미등록 장비 스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 API 쿼리 수신 ➔ 전체 서브넷(.1~.254) 자동 풀 스캔(Full Scan).
+  * **조건 3 (기존 등록 장비가 있는 정기 수집)**: 정식 등록 기기 존재 ➔ 0.5초 초고속 등록 장비 전용 핀포인트 스캔(Pinpoint Scan).
+* **지능형 OID 유추 엔진 (`OidInferenceEngine`) 및 실시간 지식 캐싱**:
+  * `sysDescr` 및 브랜드 패턴 분석을 통한 모델명 정제 (`scanned_model`), 카운터/소모품 비율 유추 보완.
+  * 유추 성공 시 `PrinterOidMapping` DB 모델에 `learn_and_cache_oid_mapping`을 호출하여 OID 지식을 실시간 자동 캐싱 학습.
 
 ---
 
