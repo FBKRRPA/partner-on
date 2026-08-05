@@ -993,6 +993,59 @@ class AgentIngestBatchView(APIView):
         )
 
 
+class CollectorCodeGenerateView(APIView):
+    """
+    Generates 8-digit Auth Code for Windows Agent
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request) -> Response:
+        code_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        auth_code = f"AST-{code_str}"
+        return Response(
+            {
+                "detail": "신규 수집기 인증 코드가 발급되었습니다.",
+                "auth_code": auth_code,
+                "expires_in_hours": 24,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class CollectorListView(APIView):
+    """
+    Returns list of active Agents/Collectors for current workplace
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        # Mock active collector dataset for demonstration
+        collectors = [
+            {
+                "id": 1,
+                "name": "강남 지점 메인 에이전트",
+                "customer_name": "(주)파트너온 본사",
+                "ip_range": "192.168.1.1/24",
+                "custom_ips": ["192.168.10.55", "192.168.10.60"],
+                "status": "ONLINE",
+                "last_scanned_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "detected_count": 14,
+            },
+            {
+                "id": 2,
+                "name": "여의도 지서 수집기",
+                "customer_name": "한국금융 렌탈사업부",
+                "ip_range": "10.10.5.1/24",
+                "custom_ips": [],
+                "status": "OFFLINE",
+                "last_scanned_at": (timezone.now() - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S"),
+                "detected_count": 8,
+            },
+        ]
+        return Response(collectors, status=status.HTTP_200_OK)
+
+
+
 
 
 

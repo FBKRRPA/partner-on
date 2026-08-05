@@ -3,6 +3,8 @@ from .views import (
     AgentAuthView,
     AgentFetchOidsView,
     AgentIngestBatchView,
+    CollectorCodeGenerateView,
+    CollectorListView,
     DeviceActionView,
     DeviceDetailView,
     DeviceListApprovalView,
@@ -43,6 +45,10 @@ urlpatterns = [
     path("workplace/2fa-policy/", Workplace2FAPolicyView.as_view(), name="2fa-policy"),
     path("workplace/permissions/", RoleMenuPermissionView.as_view(), name="menu-permissions"),
     
+    # Workplace Agent/Collector Management APIs
+    path("workplace/collectors/", CollectorListView.as_view(), name="collector-list"),
+    path("workplace/collectors/generate-code/", CollectorCodeGenerateView.as_view(), name="collector-generate-code"),
+
     # Agent REST APIs
     path("agent/authenticate/", AgentAuthView.as_view(), name="agent-authenticate"),
     path("agent/oids/", AgentFetchOidsView.as_view(), name="agent-oids"),

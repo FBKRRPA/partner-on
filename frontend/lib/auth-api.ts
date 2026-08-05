@@ -509,6 +509,40 @@ export async function reinviteMember(
   return body as { detail: string; invite_code: string };
 }
 
+export interface CollectorDto {
+  id: number;
+  name: string;
+  customer_name: string;
+  ip_range: string;
+  custom_ips: string[];
+  status: "ONLINE" | "OFFLINE";
+  last_scanned_at: string;
+  detected_count: number;
+}
+
+export async function getCollectors(token: string): Promise<CollectorDto[]> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/collectors/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "수집기 목록을 불러오지 못했습니다."));
+  }
+  return body as CollectorDto[];
+}
+
+export async function generateAgentCode(token: string): Promise<{ detail: string; auth_code: string; expires_in_hours: number }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/collectors/generate-code/`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "인증 코드 발급에 실패했습니다."));
+  }
+  return body as { detail: string; auth_code: string; expires_in_hours: number };
+}
+
 export async function signUpWithInvite(payload: {
   email: string;
   invite_code: string;
