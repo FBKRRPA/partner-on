@@ -13,6 +13,8 @@ from .views import (
     MemberInviteView,
     MemberListCreateView,
     MemberReinviteView,
+    MonitoringSuppliesView,
+    MonitoringUsageView,
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RoleMenuPermissionView,
@@ -48,6 +50,10 @@ urlpatterns = [
     # Workplace Agent/Collector Management APIs
     path("workplace/collectors/", CollectorListView.as_view(), name="collector-list"),
     path("workplace/collectors/generate-code/", CollectorCodeGenerateView.as_view(), name="collector-generate-code"),
+
+    # Monitoring APIs
+    path("monitoring/usage/", MonitoringUsageView.as_view(), name="monitoring-usage"),
+    path("monitoring/supplies/", MonitoringSuppliesView.as_view(), name="monitoring-supplies"),
 
     # Agent REST APIs
     path("agent/authenticate/", AgentAuthView.as_view(), name="agent-authenticate"),

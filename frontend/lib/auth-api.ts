@@ -543,6 +543,59 @@ export async function generateAgentCode(token: string): Promise<{ detail: string
   return body as { detail: string; auth_code: string; expires_in_hours: number };
 }
 
+export interface MonitoringUsageDto {
+  id: number;
+  customer_name: string;
+  serial_no: string;
+  model_name: string;
+  location: string;
+  count_color: number;
+  count_mono: number;
+  count_large_color: number;
+  count_total: number;
+  monthly_usage_color: number;
+  monthly_usage_mono: number;
+  last_updated_at: string;
+}
+
+export interface MonitoringSupplyDto {
+  id: number;
+  customer_name: string;
+  serial_no: string;
+  model_name: string;
+  location: string;
+  toner_c: number;
+  toner_m: number;
+  toner_y: number;
+  toner_k: number;
+  drum_k: number;
+  status_alert: "CRITICAL" | "WARNING" | "NORMAL";
+  alert_message: string;
+  last_updated_at: string;
+}
+
+export async function getMonitoringUsage(token: string): Promise<MonitoringUsageDto[]> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/usage/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "사용량 데이터를 불러오지 못했습니다."));
+  }
+  return body as MonitoringUsageDto[];
+}
+
+export async function getMonitoringSupplies(token: string): Promise<MonitoringSupplyDto[]> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/supplies/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "소모품 현황 데이터를 불러오지 못했습니다."));
+  }
+  return body as MonitoringSupplyDto[];
+}
+
 export async function signUpWithInvite(payload: {
   email: string;
   invite_code: string;

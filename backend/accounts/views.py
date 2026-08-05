@@ -1064,6 +1064,104 @@ class CollectorListView(APIView):
         return Response(ACTIVE_AGENT_REGISTRY, status=status.HTTP_200_OK)
 
 
+class MonitoringUsageView(APIView):
+    """
+    Returns device SNMP counter usage data for monitoring
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        usage_data = [
+            {
+                "id": 1,
+                "customer_name": "(주)파트너온 본사",
+                "serial_no": "FX-721495-192168155",
+                "model_name": "ApeosPort-VII C3373",
+                "location": "2층 경영지원팀",
+                "count_color": 15420,
+                "count_mono": 48900,
+                "count_large_color": 120,
+                "count_total": 64440,
+                "monthly_usage_color": 1240,
+                "monthly_usage_mono": 3500,
+                "last_updated_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            {
+                "id": 2,
+                "customer_name": "한국금융 렌탈사업부",
+                "serial_no": "FX-839102-1010522",
+                "model_name": "DocuCentre-V C2275",
+                "location": "3층 영원영업부",
+                "count_color": 8920,
+                "count_mono": 124500,
+                "count_large_color": 450,
+                "count_total": 133870,
+                "monthly_usage_color": 890,
+                "monthly_usage_mono": 8200,
+                "last_updated_at": (timezone.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        ]
+        return Response(usage_data, status=status.HTTP_200_OK)
+
+
+class MonitoringSuppliesView(APIView):
+    """
+    Returns toner & drum remaining status (%) for monitoring
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        supplies_data = [
+            {
+                "id": 1,
+                "customer_name": "(주)파트너온 본사",
+                "serial_no": "FX-721495-192168155",
+                "model_name": "ApeosPort-VII C3373",
+                "location": "2층 경영지원팀",
+                "toner_c": 85,
+                "toner_m": 12,  # WARNING
+                "toner_y": 92,
+                "toner_k": 45,
+                "drum_k": 78,
+                "status_alert": "WARNING",  # CRITICAL / WARNING / NORMAL
+                "alert_message": "마젠타(M) 토너 잔량 15% 이하 (교체 필요)",
+                "last_updated_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            {
+                "id": 2,
+                "customer_name": "한국금융 렌탈사업부",
+                "serial_no": "FX-839102-1010522",
+                "model_name": "DocuCentre-V C2275",
+                "location": "3층 영업부",
+                "toner_c": 90,
+                "toner_m": 88,
+                "toner_y": 75,
+                "toner_k": 5,  # CRITICAL
+                "drum_k": 40,
+                "status_alert": "CRITICAL",
+                "alert_message": "블랙(K) 토너 잔량 5% 미만 (즉시 교체)",
+                "last_updated_at": (timezone.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            {
+                "id": 3,
+                "customer_name": "미래아이티 연구소",
+                "serial_no": "CAN-994812-1921681100",
+                "model_name": "imageRUNNER ADV C3530",
+                "location": "1층 연구실",
+                "toner_c": 95,
+                "toner_m": 90,
+                "toner_y": 88,
+                "toner_k": 82,
+                "drum_k": 95,
+                "status_alert": "NORMAL",
+                "alert_message": "모든 소모품 정상",
+                "last_updated_at": (timezone.now() - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        ]
+        return Response(supplies_data, status=status.HTTP_200_OK)
+
+
+
 
 
 
