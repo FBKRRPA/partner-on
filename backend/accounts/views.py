@@ -1456,27 +1456,27 @@ class CollectorListView(APIView):
 
 class MonitoringUsageView(APIView):
     """
-    Returns real PrinterAsset SNMP counter usage data from DB
+    Returns real PrinterAsset SNMP counter usage data & full MonitoringDataRecord time-series history
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
         workplace = request.user.workplace
         if not workplace:
-            return Response([], status=status.HTTP_200_OK)
+            return Response({"devices": [], "records": []}, status=status.HTTP_200_OK)
 
+        # 1. Current Device Snapshots
         printers = PrinterAsset.objects.filter(workplace=workplace)
-        usage_data = []
+        devices_summary = []
         for p in printers:
             m_color = p.monthly_usage_color
             m_mono = p.monthly_usage_mono
-            # Dynamic calculation fallback if monthly_usage stored values are 0
             if m_color == 0 and p.count_color > 0:
                 m_color = int(p.count_color * 0.08)
             if m_mono == 0 and p.count_mono > 0:
                 m_mono = int(p.count_mono * 0.12)
 
-            usage_data.append(
+            devices_summary.append(
                 {
                     "id": p.id,
                     "customer_name": p.customer_name,
@@ -1492,20 +1492,47 @@ class MonitoringUsageView(APIView):
                     "last_updated_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
                 }
             )
-        return Response(usage_data, status=status.HTTP_200_OK)
+
+        # 2. Time-Series Accumulated Records from MonitoringDataRecord (Up to 300 latest records)
+        history_records = []
+        db_records = MonitoringDataRecord.objects.filter(workplace=workplace).order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        for r in db_records:
+            history_records.append(
+                {
+                    "id": r.id,
+                    "yyyymmdd": r.yyyymmdd,
+                    "date_formatted": f"{r.yyyymmdd[:4]}-{r.yyyymmdd[4:6]}-{r.yyyymmdd[6:]}",
+                    "serial_no": r.serial_no,
+                    "model_name": r.monitoring_printer.printer_model if r.monitoring_printer else "Standard MFP",
+                    "count_color": r.count1,
+                    "count_mono": r.count2,
+                    "count_total": r.count4,
+                    "agent_updated_at": timezone.localtime(r.agent_updated_at).strftime("%Y-%m-%d %H:%M:%S") if r.agent_updated_at else "-",
+                }
+            )
+
+        return Response(
+            {
+                "devices": devices_summary,
+                "history": history_records,
+                "total_records_count": len(history_records),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class MonitoringSuppliesView(APIView):
     """
-    Returns real PrinterAsset toner & drum remaining status (%) from DB
+    Returns real PrinterAsset toner & drum remaining status (%) & full Supplies History
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
         workplace = request.user.workplace
         if not workplace:
-            return Response([], status=status.HTTP_200_OK)
+            return Response({"devices": [], "history": []}, status=status.HTTP_200_OK)
 
+        # 1. Current Device Toner Snapshots
         printers = PrinterAsset.objects.filter(workplace=workplace)
         supplies_data = []
         for p in printers:
@@ -1520,23 +1547,51 @@ class MonitoringSuppliesView(APIView):
                 alert_level = "NORMAL"
                 msg = "모든 소모품 정상"
 
-            supplies_data.append({
-                "id": p.id,
-                "customer_name": p.customer_name,
-                "serial_no": p.serial_no,
-                "model_name": p.model_name,
-                "location": p.location,
-                "toner_c": p.toner_c,
-                "toner_m": p.toner_m,
-                "toner_y": p.toner_y,
-                "toner_k": p.toner_k,
-                "drum_k": p.drum_k,
-                "status_alert": alert_level,
-                "alert_message": msg,
-                "last_updated_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
-            })
+            supplies_data.append(
+                {
+                    "id": p.id,
+                    "customer_name": p.customer_name,
+                    "serial_no": p.serial_no,
+                    "model_name": p.model_name,
+                    "location": p.location,
+                    "toner_c": p.toner_c,
+                    "toner_m": p.toner_m,
+                    "toner_y": p.toner_y,
+                    "toner_k": p.toner_k,
+                    "drum_k": p.drum_k,
+                    "status_alert": alert_level,
+                    "alert_message": msg,
+                    "last_updated_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
+                }
+            )
 
-        return Response(supplies_data, status=status.HTTP_200_OK)
+        # 2. Supplies Depletion & Alert History from SuppliesAlert / MonitoringDataRecord
+        history_records = []
+        db_records = MonitoringDataRecord.objects.filter(workplace=workplace).order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        for r in db_records:
+            history_records.append(
+                {
+                    "id": r.id,
+                    "yyyymmdd": r.yyyymmdd,
+                    "date_formatted": f"{r.yyyymmdd[:4]}-{r.yyyymmdd[4:6]}-{r.yyyymmdd[6:]}",
+                    "serial_no": r.serial_no,
+                    "toner_c": r.toner_c,
+                    "toner_m": r.toner_m,
+                    "toner_y": r.toner_y,
+                    "toner_k": r.toner_k,
+                    "drum_k": r.drum_k,
+                    "agent_updated_at": timezone.localtime(r.agent_updated_at).strftime("%Y-%m-%d %H:%M:%S") if r.agent_updated_at else "-",
+                }
+            )
+
+        return Response(
+            {
+                "devices": supplies_data,
+                "history": history_records,
+                "total_records_count": len(history_records),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 
