@@ -18,7 +18,7 @@ export default function MonitoringSuppliesPage() {
   const [activeTab, setActiveTab] = useState<"SNAPSHOT" | "HISTORY">("HISTORY");
 
   // Filters State
-  const [selectedModel, setSelectedModel] = useState<string>("ALL");
+  const [selectedSerial, setSelectedSerial] = useState<string>("ALL");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
@@ -41,19 +41,21 @@ export default function MonitoringSuppliesPage() {
     }
   }, []);
 
-  // Filtered Options
-  const uniqueModels = Array.from(
-    new Set([...suppliesList.map((s) => s.model_name)])
-  ).filter(Boolean);
+  // Filter Options matched by serial_no
+  const deviceOptions = suppliesList.map((s) => ({
+    serial_no: s.serial_no,
+    label: `${s.model_name} (${s.serial_no})`,
+  }));
 
   const filteredHistory = historyList.filter((item) => {
+    if (selectedSerial !== "ALL" && item.serial_no !== selectedSerial) return false;
     if (startDate && item.date_formatted < startDate) return false;
     if (endDate && item.date_formatted > endDate) return false;
     return true;
   });
 
   const filteredDevices = suppliesList.filter((item) => {
-    if (selectedModel !== "ALL" && item.model_name !== selectedModel) return false;
+    if (selectedSerial !== "ALL" && item.serial_no !== selectedSerial) return false;
     return true;
   });
 
@@ -109,18 +111,18 @@ export default function MonitoringSuppliesPage() {
         {/* Filter Control Bar */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
-            {/* Model Name Select Filter */}
+            {/* Model Name Select Filter (Bound to serial_no) */}
             <div className="flex items-center gap-2">
               <label className="text-xs font-extrabold text-slate-600">복합기 모델명:</label>
               <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
+                value={selectedSerial}
+                onChange={(e) => setSelectedSerial(e.target.value)}
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#01916D]"
               >
-                <option value="ALL">전체 모델 ({uniqueModels.length}종)</option>
-                {uniqueModels.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
+                <option value="ALL">전체 등록 장비 ({deviceOptions.length}대)</option>
+                {deviceOptions.map((opt) => (
+                  <option key={opt.serial_no} value={opt.serial_no}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
@@ -145,10 +147,10 @@ export default function MonitoringSuppliesPage() {
             </div>
           </div>
 
-          {(selectedModel !== "ALL" || startDate || endDate) && (
+          {(selectedSerial !== "ALL" || startDate || endDate) && (
             <button
               onClick={() => {
-                setSelectedModel("ALL");
+                setSelectedSerial("ALL");
                 setStartDate("");
                 setEndDate("");
               }}
