@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AppHeader } from "../../../../components/layout/AppHeader";
 import { AppFooter } from "../../../../components/layout/AppFooter";
-import { getMonitoringSupplies, MonitoringSupplyDto } from "../../../../lib/auth-api";
+import { getMonitoringSupplies, MonitoringSupplyDto, formatKoreanDateTime } from "../../../../lib/auth-api";
 
 export default function MonitoringSuppliesPage() {
   const [suppliesList, setSuppliesList] = useState<MonitoringSupplyDto[]>([]);
@@ -172,8 +172,8 @@ export default function MonitoringSuppliesPage() {
                           <span className="text-xs text-slate-700 font-semibold">{item.alert_message}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-right text-xs text-slate-500">
-                        {item.last_updated_at}
+                      <td className="py-4 px-6 text-right text-xs text-slate-500 font-medium">
+                        {formatKoreanDateTime(item.last_updated_at)}
                       </td>
                     </tr>
                   ))}

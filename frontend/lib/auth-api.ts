@@ -1,4 +1,5 @@
 import { getOrCreateDeviceId, getDeviceName } from "./device";
+export { formatKoreanDateTime, formatKoreanDate } from "./date-utils";
 
 export type RoleType = "OWNER" | "ADMIN_STAFF" | "SALES" | "CE";
 

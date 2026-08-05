@@ -51,6 +51,8 @@ class DeviceDtoSerializer(serializers.ModelSerializer):
     user_email = serializers.CharField(source="user.email", read_only=True)
     user_name = serializers.CharField(source="user.name", read_only=True)
     user_role = serializers.CharField(source="user.role", read_only=True)
+    requested_at = serializers.SerializerMethodField()
+    approved_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Device
@@ -67,6 +69,22 @@ class DeviceDtoSerializer(serializers.ModelSerializer):
             "user_name",
             "user_role",
         )
+
+    def _format_korean_dt(self, dt) -> str:
+        if not dt:
+            return "-"
+        local_dt = timezone.localtime(dt)
+        ampm = "오전" if local_dt.hour < 12 else "오후"
+        hour_12 = local_dt.hour if local_dt.hour in (0, 12) else local_dt.hour % 12
+        if hour_12 == 0:
+            hour_12 = 12
+        return f"{local_dt.year}년 {local_dt.month}월 {local_dt.day}일 {ampm} {hour_12:02d}:{local_dt.minute:02d}:{local_dt.second:02d}"
+
+    def get_requested_at(self, obj: Device) -> str:
+        return self._format_korean_dt(obj.requested_at)
+
+    def get_approved_at(self, obj: Device) -> str:
+        return self._format_korean_dt(obj.approved_at)
 
 
 class LoginRequestSerializer(TokenObtainPairSerializer):

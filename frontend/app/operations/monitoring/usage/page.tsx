@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AppHeader } from "../../../../components/layout/AppHeader";
 import { AppFooter } from "../../../../components/layout/AppFooter";
-import { getMonitoringUsage, MonitoringUsageDto } from "../../../../lib/auth-api";
+import { getMonitoringUsage, MonitoringUsageDto, formatKoreanDateTime } from "../../../../lib/auth-api";
 
 export default function MonitoringUsagePage() {
   const [usageList, setUsageList] = useState<MonitoringUsageDto[]>([]);
@@ -138,8 +138,8 @@ export default function MonitoringUsagePage() {
                           +{item.monthly_usage_mono.toLocaleString()} 매
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-right text-xs text-slate-500">
-                        {item.last_updated_at}
+                      <td className="py-4 px-6 text-right text-xs text-slate-500 font-medium">
+                        {formatKoreanDateTime(item.last_updated_at)}
                       </td>
                     </tr>
                   ))}

@@ -7,6 +7,7 @@ import {
   createPrinterAsset,
   getPrinterAssets,
   PrinterAssetDto,
+  formatKoreanDateTime,
 } from "../../../../lib/auth-api";
 
 export default function AssetDevicesPage() {
@@ -202,8 +203,8 @@ export default function AssetDevicesPage() {
                       <td className="py-4 px-6 text-right font-mono font-bold text-slate-800">
                         {p.count_mono.toLocaleString()} 매
                       </td>
-                      <td className="py-4 px-6 text-right text-xs text-slate-500">
-                        {p.last_scanned_at}
+                      <td className="py-4 px-6 text-right text-xs text-slate-500 font-medium">
+                        {formatKoreanDateTime(p.last_scanned_at)}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <span

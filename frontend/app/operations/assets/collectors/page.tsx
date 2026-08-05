@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AppHeader } from "../../../../components/layout/AppHeader";
 import { AppFooter } from "../../../../components/layout/AppFooter";
-import { CollectorDto, generateAgentCode, getCollectors } from "../../../../lib/auth-api";
+import { CollectorDto, generateAgentCode, getCollectors, formatKoreanDateTime } from "../../../../lib/auth-api";
 
 export default function AgentCollectorsPage() {
   const [accessToken, setAccessToken] = useState("");
@@ -198,7 +198,7 @@ export default function AgentCollectorsPage() {
                         )}
                       </td>
                       <td className="py-4 px-6 font-bold text-[#333333]">{c.detected_count}대</td>
-                      <td className="py-4 px-6 text-slate-500 text-xs">{c.last_scanned_at}</td>
+                      <td className="py-4 px-6 text-slate-500 text-xs font-medium">{formatKoreanDateTime(c.last_scanned_at)}</td>
                       <td className="py-4 px-6 text-right">
                         <span
                           className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${

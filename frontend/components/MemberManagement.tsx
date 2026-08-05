@@ -19,6 +19,7 @@ import {
   TwoFAPolicyDto,
   update2FAPolicy,
   updateMember,
+  formatKoreanDateTime,
 } from "../lib/auth-api";
 
 interface Props {
@@ -763,7 +764,7 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-xs text-slate-500 font-mono">
-                        {new Date(d.requested_at).toLocaleString("ko-KR")}
+                        {formatKoreanDateTime(d.requested_at)}
                       </td>
                       <td className="py-3.5 px-4 text-right space-x-2">
                         {d.status !== "APPROVED" && (
