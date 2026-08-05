@@ -15,7 +15,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping
+from .models import (
+    User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping,
+    MonitoringPrinter, MonitoringData, MonitoringDataRecord, SuppliesAlert, SupplyUsage, UnregisteredPrinter,
+    PrinterModelMaster, OidListMaster, MonitoringCustomer
+)
 from .permissions import IsOwnerPermission
 from .serializers import (
     DeviceDtoSerializer,
@@ -1042,32 +1046,130 @@ class AgentIngestBatchView(APIView):
             collector.status = AgentCollector.Status.ONLINE
             collector.save()
 
-        # 2. Real DB Ingestion Matching by serial_no
+        # 2. Ingest Data into Monitoring DB Tables
         matched_count = 0
+        unregistered_count = 0
+        workplace = collector.workplace if collector else Workplace.objects.first()
+        today_str = now.strftime("%Y%m%d")
+
         for item in devices:
             s_no = item.get("serial_no")
             if not s_no:
                 continue
 
+            c_color = item.get("count_color", 0)
+            c_mono = item.get("count_mono", 0)
+            c_total = item.get("count_total", 0)
+            t_c = item.get("toner_c", 100)
+            t_m = item.get("toner_m", 100)
+            t_y = item.get("toner_y", 100)
+            t_k = item.get("toner_k", 100)
+            d_k = item.get("drum_k", 100)
+            ip_addr = item.get("ip_address", "127.0.0.1")
+            m_name = item.get("model_name", "Standard MFP")
+
+            # A. Legacy PrinterAsset Update
             asset = PrinterAsset.objects.filter(serial_no=s_no).first()
             if asset:
-                asset.count_color = item.get("count_color", asset.count_color)
-                asset.count_mono = item.get("count_mono", asset.count_mono)
-                asset.count_total = item.get("count_total", asset.count_total)
-                asset.toner_c = item.get("toner_c", asset.toner_c)
-                asset.toner_m = item.get("toner_m", asset.toner_m)
-                asset.toner_y = item.get("toner_y", asset.toner_y)
-                asset.toner_k = item.get("toner_k", asset.toner_k)
-                asset.drum_k = item.get("drum_k", asset.drum_k)
+                asset.count_color = c_color
+                asset.count_mono = c_mono
+                asset.count_total = c_total
+                asset.toner_c = t_c
+                asset.toner_m = t_m
+                asset.toner_y = t_y
+                asset.toner_k = t_k
+                asset.drum_k = d_k
                 asset.last_scanned_at = now
                 asset.save()
                 matched_count += 1
+            else:
+                unregistered_count += 1
+                # B. Record Unregistered Printer if not registered
+                if workplace:
+                    UnregisteredPrinter.objects.update_or_create(
+                        workplace=workplace,
+                        serial_no=s_no,
+                        defaults={
+                            "scanned_model": m_name,
+                            "ip": ip_addr,
+                            "registered": False,
+                            "updated_at": now,
+                        },
+                    )
+
+            if workplace:
+                # C. Update or Create MonitoringPrinter
+                m_printer, _ = MonitoringPrinter.objects.update_or_create(
+                    workplace=workplace,
+                    serial_no=s_no,
+                    defaults={
+                        "printer_model": m_name,
+                        "scanned_model": m_name,
+                        "ip": ip_addr,
+                        "state": "active",
+                        "updated_at": now,
+                    },
+                )
+
+                # D. Update Real-time MonitoringData
+                MonitoringData.objects.update_or_create(
+                    workplace=workplace,
+                    serial_no=s_no,
+                    defaults={
+                        "monitoring_printer": m_printer,
+                        "count1": c_color,
+                        "count2": c_mono,
+                        "count4": c_total,
+                        "toner_c": t_c,
+                        "toner_m": t_m,
+                        "toner_y": t_y,
+                        "toner_k": t_k,
+                        "drum_k": d_k,
+                        "agent_updated_at": now,
+                        "updated_at": now,
+                    },
+                )
+
+                # E. Accumulate Daily History in MonitoringDataRecord
+                MonitoringDataRecord.objects.update_or_create(
+                    monitoring_printer=m_printer,
+                    yyyymmdd=today_str,
+                    defaults={
+                        "workplace": workplace,
+                        "serial_no": s_no,
+                        "count1": c_color,
+                        "count2": c_mono,
+                        "count4": c_total,
+                        "toner_c": t_c,
+                        "toner_m": t_m,
+                        "toner_y": t_y,
+                        "toner_k": t_k,
+                        "drum_k": d_k,
+                        "agent_updated_at": now,
+                        "updated_at": now,
+                    },
+                )
+
+                # F. Update SuppliesAlert
+                SuppliesAlert.objects.update_or_create(
+                    workplace=workplace,
+                    serial_no=s_no,
+                    defaults={
+                        "toner_c": t_c,
+                        "toner_m": t_m,
+                        "toner_y": t_y,
+                        "toner_k": t_k,
+                        "drum_k": d_k,
+                        "updated_at": now,
+                    },
+                )
 
         return Response(
             {
-                "detail": f"총 {device_count}대 스캔 완료 (DB 수동 등록 매칭 장비: {matched_count}대)",
+                "detail": f"총 {device_count}대 스캔 완료 (매칭 장비: {matched_count}대, 미등록 감지: {unregistered_count}대)",
                 "processed_count": device_count,
                 "matched_count": matched_count,
+                "unregistered_count": unregistered_count,
             },
             status=status.HTTP_200_OK,
         )
