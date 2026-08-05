@@ -44,6 +44,7 @@
 | **TC-034** | Agent/네트워크 | 현장 동적 IP 서브넷 대역 자동 감지 탑재 | Dynamic IP Subnet Auto Detection | ✅ PASS |
 | **TC-035** | 실측/DB | 에이전트 풀 스캔 미등록 기기 DB 테이블 100% 저장 실측 검증 | Real Full Scan DB Ingestion Verification | ✅ PASS |
 | **TC-036** | 관제 DB | MonitoringDataRecord 일자별(Daily YYYYMMDD) 누적 적재 및 갱신 매커니즘 검증 | MonitoringDataRecord Daily Accumulation | ✅ PASS |
+| **TC-037** | 모니터링 UI/API | 수집기간(start_date/end_date) 및 장비별 백엔드 쿼리 필터링 탑재 | Monitoring Period Query Filtering | ✅ PASS |
 
 ---
 
@@ -233,6 +234,12 @@
 * **발생 원인/배경**: `monitoring_data_records` 테이블에 일자별로 행이 차곡차곡 쌓이는지(Accumulated Rows) 또는 동일 날짜 내 업데이트 동작 소명 요구.
 * **조치 내용**: `MonitoringDataRecord` 모델의 `unique_together = ("monitoring_printer", "yyyymmdd")` 및 `AgentIngestBatchView` 수집 연동 실측 검증.
 * **검증 결과**: 동일 날짜(YYYYMMDD) 내에서는 당일 최종 수치로 갱신(Update)되고, 날짜 변경 시 새 행(Row)으로 차곡차곡 쌓임(20260805, 20260806 누적 적재 100% 실측 완료) 및 백엔드 테스트 9/9 PASS.
+
+### 37. [TC-037] 수집기간(start_date/end_date) 및 장비별 백엔드 쿼리 필터링 탑재
+* **발생 원인/배경**: 모니터링 웹페이지에서 수집기간 및 시리얼 선택 시 백엔드 파라미터 미전달로 동일한 이력만 나오던 문제 해결 요구.
+* **조치 내용**: 백엔드 `MonitoringUsageView` 및 `MonitoringSuppliesView` 에 `start_date`, `end_date`, `serial_no` 파라미터 DB 필터링(`yyyymmdd__gte`, `yyyymmdd__lte`, `serial_no=...`)을 탑재하고, 프론트엔드(`auth-api.ts`, `usage/page.tsx`, `supplies/page.tsx`) `useEffect`에 쿼리 연동.
+* **검증 결과**: 수집기간 지정 및 시리얼 조건별 동적 이력 데이터 100% 정확 렌더링 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 

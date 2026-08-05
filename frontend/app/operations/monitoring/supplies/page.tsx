@@ -28,7 +28,8 @@ export default function MonitoringSuppliesPage() {
       sessionStorage.getItem("partneron.accessToken") ||
       "";
     if (token) {
-      getMonitoringSupplies(token)
+      setLoading(true);
+      getMonitoringSupplies(token, startDate, endDate, selectedSerial)
         .then((res) => {
           setSuppliesList(res.devices || []);
           setHistoryList(res.history || []);
@@ -39,7 +40,7 @@ export default function MonitoringSuppliesPage() {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [startDate, endDate, selectedSerial]);
 
   // Filter Options matched by serial_no
   const deviceOptions = suppliesList.map((s) => ({

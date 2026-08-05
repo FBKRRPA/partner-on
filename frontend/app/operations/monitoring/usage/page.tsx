@@ -28,7 +28,8 @@ export default function MonitoringUsagePage() {
       sessionStorage.getItem("partneron.accessToken") ||
       "";
     if (token) {
-      getMonitoringUsage(token)
+      setLoading(true);
+      getMonitoringUsage(token, startDate, endDate, selectedSerial)
         .then((res) => {
           setUsageList(res.devices || []);
           setHistoryList(res.history || []);
@@ -39,7 +40,7 @@ export default function MonitoringUsagePage() {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [startDate, endDate, selectedSerial]);
 
   // Filter Options matched by serial_no
   const deviceOptions = usageList.map((u) => ({

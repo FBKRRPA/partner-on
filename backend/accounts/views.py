@@ -1799,12 +1799,21 @@ class MonitoringUsageView(APIView):
                 }
             )
 
-        # 2. Time-Series Accumulated Records from MonitoringDataRecord (Filtered strictly by registered serials)
+        # 2. Time-Series Accumulated Records from MonitoringDataRecord (Filtered strictly by registered serials & period)
+        start_date = request.query_params.get("start_date", "").replace("-", "").strip()
+        end_date = request.query_params.get("end_date", "").replace("-", "").strip()
+        filter_serial = request.query_params.get("serial_no", "").strip()
+
+        records_qs = MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
+        if start_date:
+            records_qs = records_qs.filter(yyyymmdd__gte=start_date)
+        if end_date:
+            records_qs = records_qs.filter(yyyymmdd__lte=end_date)
+        if filter_serial and filter_serial != "ALL":
+            records_qs = records_qs.filter(serial_no=filter_serial)
+
         history_records = []
-        db_records = (
-            MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
-            .order_by("-yyyymmdd", "-agent_updated_at")[:300]
-        )
+        db_records = records_qs.order_by("-yyyymmdd", "-agent_updated_at")[:500]
         for r in db_records:
             history_records.append(
                 {
@@ -1876,12 +1885,21 @@ class MonitoringSuppliesView(APIView):
                 }
             )
 
-        # 2. Supplies Depletion & Alert History from MonitoringDataRecord (Filtered strictly by registered serials)
+        # 2. Supplies Depletion & Alert History from MonitoringDataRecord (Filtered strictly by registered serials & period)
+        start_date = request.query_params.get("start_date", "").replace("-", "").strip()
+        end_date = request.query_params.get("end_date", "").replace("-", "").strip()
+        filter_serial = request.query_params.get("serial_no", "").strip()
+
+        records_qs = MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
+        if start_date:
+            records_qs = records_qs.filter(yyyymmdd__gte=start_date)
+        if end_date:
+            records_qs = records_qs.filter(yyyymmdd__lte=end_date)
+        if filter_serial and filter_serial != "ALL":
+            records_qs = records_qs.filter(serial_no=filter_serial)
+
         history_records = []
-        db_records = (
-            MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
-            .order_by("-yyyymmdd", "-agent_updated_at")[:300]
-        )
+        db_records = records_qs.order_by("-yyyymmdd", "-agent_updated_at")[:500]
         for r in db_records:
             history_records.append(
                 {

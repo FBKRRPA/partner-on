@@ -642,8 +642,19 @@ export interface MonitoringSuppliesResponse {
   total_records_count: number;
 }
 
-export async function getMonitoringUsage(token: string): Promise<MonitoringUsageResponse> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/usage/`, {
+export async function getMonitoringUsage(
+  token: string,
+  startDate?: string,
+  endDate?: string,
+  serialNo?: string
+): Promise<MonitoringUsageResponse> {
+  const params = new URLSearchParams();
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (serialNo) params.append("serial_no", serialNo);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/usage/${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await readJsonResponse(response);
@@ -653,8 +664,19 @@ export async function getMonitoringUsage(token: string): Promise<MonitoringUsage
   return body as unknown as MonitoringUsageResponse;
 }
 
-export async function getMonitoringSupplies(token: string): Promise<MonitoringSuppliesResponse> {
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/supplies/`, {
+export async function getMonitoringSupplies(
+  token: string,
+  startDate?: string,
+  endDate?: string,
+  serialNo?: string
+): Promise<MonitoringSuppliesResponse> {
+  const params = new URLSearchParams();
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+  if (serialNo) params.append("serial_no", serialNo);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/monitoring/supplies/${query}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const body = await readJsonResponse(response);
