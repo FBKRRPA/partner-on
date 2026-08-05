@@ -180,3 +180,33 @@ class PrinterAsset(models.Model):
     def __str__(self) -> str:
         return f"[{self.serial_no}] {self.model_name} - {self.customer_name}"
 
+
+class AgentCollector(models.Model):
+    """
+    Agent Collector Database Model for tracking installed Windows SNMP Agents
+    """
+    class Status(models.TextChoices):
+        ONLINE = "ONLINE", "온라인 (수집중)"
+        OFFLINE = "OFFLINE", "오프라인 (중단)"
+        PENDING = "PENDING", "인증 대기"
+
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="collectors")
+    auth_code = models.CharField(max_length=32, unique=True, help_text="8자리 수집기 인증 코드 (AST-XXXXXX)")
+    agent_token = models.CharField(max_length=120, blank=True, null=True)
+    name = models.CharField(max_length=150, default="현장 수집기 Agent")
+    customer_name = models.CharField(max_length=120, default="자사 본사")
+    ip_range = models.CharField(max_length=100, default="192.168.1.1/24")
+    custom_ips = models.JSONField(default=list, blank=True, help_text="수동 지정 IP 목록")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    detected_count = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_scanned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"[{self.auth_code}] {self.name} ({self.status})"
+
+

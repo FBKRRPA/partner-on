@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset
+from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector
 from .permissions import IsOwnerPermission
 from .serializers import (
     DeviceDtoSerializer,
@@ -931,13 +931,9 @@ class SignUpWithInviteView(APIView):
         )
 
 
-# In-Memory Active Registry for Agent Collectors
-ACTIVE_AGENT_REGISTRY: list[dict] = []
-
-
 class AgentAuthView(APIView):
     """
-    Exchanges 8-digit Auth Code for Agent Token and registers active Agent
+    Exchanges 8-digit Auth Code for Agent Token and updates AgentCollector DB model
     """
     authentication_classes: list = []
     permission_classes: list = []
@@ -955,25 +951,27 @@ class AgentAuthView(APIView):
             parts = client_ip.split(".")
             ip_range = f"{parts[0]}.{parts[1]}.{parts[2]}.1/24" if len(parts) == 4 else f"{client_ip}/24"
 
-        # Register or update in ACTIVE_AGENT_REGISTRY
-        existing = next((c for c in ACTIVE_AGENT_REGISTRY if c["auth_code"] == auth_code), None)
-        now_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        if existing:
-            existing["status"] = "ONLINE"
-            existing["last_scanned_at"] = now_str
+        now = timezone.now()
+        collector = AgentCollector.objects.filter(auth_code=auth_code).first()
+        if collector:
+            collector.agent_token = agent_token
+            collector.ip_range = ip_range
+            collector.status = AgentCollector.Status.ONLINE
+            collector.last_scanned_at = now
+            collector.save()
         else:
-            ACTIVE_AGENT_REGISTRY.append({
-                "id": len(ACTIVE_AGENT_REGISTRY) + 1,
-                "auth_code": auth_code,
-                "name": f"현장 에이전트 수집기 ({auth_code})",
-                "customer_name": getattr(request.user, "workplace", None).name if getattr(request.user, "workplace", None) else "파트너온 수집 사업장",
-                "ip_range": ip_range,
-                "custom_ips": [],
-                "status": "ONLINE",
-                "last_scanned_at": now_str,
-                "detected_count": 0,
-            })
+            workplace = Workplace.objects.first()
+            if workplace:
+                AgentCollector.objects.create(
+                    workplace=workplace,
+                    auth_code=auth_code,
+                    agent_token=agent_token,
+                    name=f"현장 수집기 Agent ({auth_code})",
+                    customer_name=workplace.name,
+                    ip_range=ip_range,
+                    status=AgentCollector.Status.ONLINE,
+                    last_scanned_at=now,
+                )
 
         return Response(
             {
@@ -1007,7 +1005,7 @@ class AgentFetchOidsView(APIView):
 class AgentIngestBatchView(APIView):
     """
     Receives Batch Ingestion dataset from Windows Agent (1,000 printers per batch)
-    Matches ingested devices with PrinterAsset DB records by serial_no
+    Updates AgentCollector DB model & PrinterAsset DB model
     """
     authentication_classes: list = []
     permission_classes: list = []
@@ -1019,14 +1017,16 @@ class AgentIngestBatchView(APIView):
         token = auth_header.replace("Bearer ", "").strip()
         auth_code = token.replace("token_agent_", "")
 
-        # 1. Update active collector registry
+        # 1. Update AgentCollector DB Record
         now = timezone.now()
-        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
-        for agent in ACTIVE_AGENT_REGISTRY:
-            if agent["auth_code"] == auth_code or token.endswith(agent["auth_code"]):
-                agent["detected_count"] = device_count
-                agent["last_scanned_at"] = now_str
-                agent["status"] = "ONLINE"
+        collector = AgentCollector.objects.filter(auth_code=auth_code).first()
+        if not collector:
+            collector = AgentCollector.objects.filter(agent_token=token).first()
+        if collector:
+            collector.detected_count = device_count
+            collector.last_scanned_at = now
+            collector.status = AgentCollector.Status.ONLINE
+            collector.save()
 
         # 2. Real DB Ingestion Matching by serial_no
         matched_count = 0
@@ -1139,13 +1139,26 @@ class PrinterAssetListCreateView(APIView):
 
 class CollectorCodeGenerateView(APIView):
     """
-    Generates 8-digit Auth Code for Windows Agent
+    Generates 8-digit Auth Code for Windows Agent and saves in AgentCollector DB model
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
         code_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
         auth_code = f"AST-{code_str}"
+
+        AgentCollector.objects.create(
+            workplace=workplace,
+            auth_code=auth_code,
+            name=f"현장 에이전트 수집기 ({auth_code})",
+            customer_name=workplace.name,
+            status=AgentCollector.Status.PENDING,
+        )
+
         return Response(
             {
                 "detail": "신규 수집기 인증 코드가 발급되었습니다.",
@@ -1158,12 +1171,31 @@ class CollectorCodeGenerateView(APIView):
 
 class CollectorListView(APIView):
     """
-    Returns list of active Agents/Collectors for current workplace
+    Returns list of active AgentCollectors from DB for current workplace
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
-        return Response(ACTIVE_AGENT_REGISTRY, status=status.HTTP_200_OK)
+        workplace = request.user.workplace
+        if not workplace:
+            return Response([], status=status.HTTP_200_OK)
+
+        collectors = AgentCollector.objects.filter(workplace=workplace)
+        data = [
+            {
+                "id": c.id,
+                "auth_code": c.auth_code,
+                "name": c.name,
+                "customer_name": c.customer_name,
+                "ip_range": c.ip_range,
+                "custom_ips": c.custom_ips,
+                "status": c.status,
+                "last_scanned_at": c.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
+                "detected_count": c.detected_count,
+            }
+            for c in collectors
+        ]
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class MonitoringUsageView(APIView):

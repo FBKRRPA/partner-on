@@ -172,10 +172,17 @@
   * `customer_name`: `CharField(max_length=120)` - 설치 고객사명
   * `location`: `CharField(max_length=150)` - 설치 위치
   * `ip_address`: `GenericIPAddressField` - 기기 IP 주소
-  * `status`: Enum (`APPROVED`, `PENDING`, `INACTIVE`) - 장비 수집 승인 상태
-  * `count_color` / `count_mono` / `count_total`: IntegerField - 누적 SNMP 카운터
-  * `toner_c` / `toner_m` / `toner_y` / `toner_k` / `drum_k`: IntegerField - 토너/드럼 잔량 (%)
-  * `last_scanned_at`: DateTimeField - 최근 Agent 수집 시각
+* **`accounts_agentcollector` (AgentCollector 모델)**:
+  * `id`: Primary Key
+  * `workplace_id`: ForeignKey (`Workplace` 참조)
+  * `auth_code`: `CharField(max_length=32, unique=True)` - 8자리 수집기 인증 코드 (`AST-XXXXXX`)
+  * `name`: `CharField(max_length=150)` - 에이전트 수집기 명칭
+  * `customer_name`: `CharField(max_length=120)` - 설치 고객사 명칭
+  * `ip_range`: `CharField(max_length=100)` - 스캔 대역/IP
+  * `custom_ips`: `JSONField` - 수동 지정 IP 목록
+  * `status`: Enum (`ONLINE`, `OFFLINE`, `PENDING`) - 수집기 연결 상태
+  * `detected_count`: IntegerField - 탐지/스캔된 복합기 수
+  * `last_scanned_at`: DateTimeField - 최근 Agent 통신 시각
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블
