@@ -45,6 +45,7 @@
 | **TC-035** | 실측/DB | 에이전트 풀 스캔 미등록 기기 DB 테이블 100% 저장 실측 검증 | Real Full Scan DB Ingestion Verification | ✅ PASS |
 | **TC-036** | 관제 DB | MonitoringDataRecord 일자별(Daily YYYYMMDD) 누적 적재 및 갱신 매커니즘 검증 | MonitoringDataRecord Daily Accumulation | ✅ PASS |
 | **TC-037** | 모니터링 UI/API | 수집기간(start_date/end_date) 및 장비별 백엔드 쿼리 필터링 탑재 | Monitoring Period Query Filtering | ✅ PASS |
+| **TC-038** | 수집 API | 신규 등록 장비 최초 수집 시 MonitoringPrinter PK 사전 확보 및 NOT NULL 예방 | New Asset Monitoring FK Safeguard | ✅ PASS |
 
 ---
 
@@ -239,6 +240,12 @@
 * **발생 원인/배경**: 모니터링 웹페이지에서 수집기간 및 시리얼 선택 시 백엔드 파라미터 미전달로 동일한 이력만 나오던 문제 해결 요구.
 * **조치 내용**: 백엔드 `MonitoringUsageView` 및 `MonitoringSuppliesView` 에 `start_date`, `end_date`, `serial_no` 파라미터 DB 필터링(`yyyymmdd__gte`, `yyyymmdd__lte`, `serial_no=...`)을 탑재하고, 프론트엔드(`auth-api.ts`, `usage/page.tsx`, `supplies/page.tsx`) `useEffect`에 쿼리 연동.
 * **검증 결과**: 수집기간 지정 및 시리얼 조건별 동적 이력 데이터 100% 정확 렌더링 확인 및 백엔드 테스트 9/9 PASS.
+
+### 38. [TC-038] 신규 등록 장비 최초 수집 시 MonitoringPrinter PK 사전 확보 및 NOT NULL 예방
+* **발생 원인/배경**: [장비관리]에서 새로 장비(`FX-721495-192168201`) 추가 후 최초 수집 시 `monitoring_printer_id null 값이 not null 제약조건 위반` 500 에러 발생.
+* **조치 내용**: `AgentIngestBatchView`에서 `MonitoringPrinter` 객체를 `get_or_create`로 DB Primary Key를 사전 생성/확보 후 `MonitoringData` 및 `MonitoringDataRecord` 외래키(FK)로 안전 바인딩.
+* **검증 결과**: 신규 장비 추가 후 수집 시 500 에러 0건 원천 방어, HTTP 200 OK 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

@@ -1275,18 +1275,21 @@ class AgentIngestBatchView(APIView):
                 asset.last_scanned_at = now
                 assets_to_update.append(asset)
 
-                # Prepare MonitoringPrinter Bulk Object
+                # Prepare MonitoringPrinter Object & Ensure valid PK before binding FK
                 m_printer = existing_m_printers.get(clean_sno)
                 if not m_printer:
-                    m_printer = MonitoringPrinter(
+                    m_printer, _ = MonitoringPrinter.objects.get_or_create(
                         workplace=workplace,
                         serial_no=clean_sno,
-                        printer_model=m_name,
-                        scanned_model=m_name,
-                        ip=ip_addr,
-                        state="active",
-                        updated_at=now,
+                        defaults={
+                            "printer_model": m_name,
+                            "scanned_model": m_name,
+                            "ip": ip_addr,
+                            "state": "active",
+                            "updated_at": now,
+                        },
                     )
+                    existing_m_printers[clean_sno] = m_printer
                 else:
                     m_printer.printer_model = m_name
                     m_printer.scanned_model = m_name
@@ -1300,7 +1303,7 @@ class AgentIngestBatchView(APIView):
                     MonitoringData(
                         workplace=workplace,
                         serial_no=clean_sno,
-                        monitoring_printer=m_printer if m_printer.pk else None,
+                        monitoring_printer=m_printer,
                         count1=c_color,
                         count2=c_mono,
                         count4=c_total,
@@ -1319,7 +1322,7 @@ class AgentIngestBatchView(APIView):
                     MonitoringDataRecord(
                         workplace=workplace,
                         serial_no=clean_sno,
-                        monitoring_printer=m_printer if m_printer.pk else None,
+                        monitoring_printer=m_printer,
                         yyyymmdd=today_str,
                         count1=c_color,
                         count2=c_mono,
