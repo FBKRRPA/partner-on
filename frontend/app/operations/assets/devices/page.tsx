@@ -27,6 +27,8 @@ export default function AssetDevicesPage() {
   const [location, setLocation] = useState("");
   const [ipAddress, setIpAddress] = useState("");
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     const token =
       sessionStorage.getItem("accessToken") ||
@@ -34,21 +36,30 @@ export default function AssetDevicesPage() {
       "";
     setAccessToken(token);
     if (token) {
-      loadPrinters(token);
+      loadPrinters(token, false);
+      // Auto polling every 10 seconds asynchronously without full page reload
+      const intervalId = setInterval(() => {
+        loadPrinters(token, true);
+      }, 10000);
+      return () => clearInterval(intervalId);
     } else {
       setLoading(false);
     }
   }, []);
 
-  async function loadPrinters(token: string) {
+  async function loadPrinters(token: string, isSilent = false) {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
+      else setIsRefreshing(true);
       const data = await getPrinterAssets(token);
       setPrinters(data);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "복합기 장비 조회를 실패했습니다.");
+      if (!isSilent) {
+        setErrorMsg(err instanceof Error ? err.message : "복합기 장비 조회를 실패했습니다.");
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }
 
@@ -100,19 +111,37 @@ export default function AssetDevicesPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
-                등록된 복합기 자산 기기 관리
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
+                  등록된 복합기 자산 기기 관리
+                </h1>
+                <span className="text-xs font-bold text-[#01916D] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#01916D] animate-ping"></span>
+                  10초 자동 갱신중
+                </span>
+              </div>
               <p className="text-sm text-[#5C5C5C] mt-1">
                 수동으로 장비 시리얼 번호를 사전 등록하면, 현장 Windows Agent 수집기가 감지 시 실시간으로 매칭되어 모니터링됩니다.
               </p>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>+ 신규 장비 수동 등록</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => loadPrinters(accessToken, true)}
+                disabled={isRefreshing}
+                className="px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-2"
+                title="페이지 전체 새로고침 없이 백그라운드 데이터만 비동기 갱신합니다."
+              >
+                <span className={isRefreshing ? "animate-spin" : ""}>🔄</span>
+                <span>비동기 새로고침</span>
+              </button>
+
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>+ 신규 장비 수동 등록</span>
+              </button>
+            </div>
           </div>
         </div>
 

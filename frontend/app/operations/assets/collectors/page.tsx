@@ -18,6 +18,8 @@ export default function AgentCollectorsPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [guideTab, setGuideTab] = useState<"CODE" | "GUIDE">("CODE");
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     const token =
       sessionStorage.getItem("accessToken") ||
@@ -25,21 +27,29 @@ export default function AgentCollectorsPage() {
       "";
     setAccessToken(token);
     if (token) {
-      loadCollectors(token);
+      loadCollectors(token, false);
+      const intervalId = setInterval(() => {
+        loadCollectors(token, true);
+      }, 10000);
+      return () => clearInterval(intervalId);
     } else {
       setLoading(false);
     }
   }, []);
 
-  async function loadCollectors(token: string) {
+  async function loadCollectors(token: string, isSilent = false) {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
+      else setIsRefreshing(true);
       const data = await getCollectors(token);
       setCollectors(data);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "수집기 목록 조회를 실패했습니다.");
+      if (!isSilent) {
+        setMessage(err instanceof Error ? err.message : "수집기 목록 조회를 실패했습니다.");
+      }
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }
 
@@ -97,20 +107,38 @@ export default function AgentCollectorsPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
-                Windows Agent 수집기 관리
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
+                  Windows Agent 수집기 관리
+                </h1>
+                <span className="text-xs font-bold text-[#01916D] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#01916D] animate-ping"></span>
+                  10초 자동 갱신중
+                </span>
+              </div>
               <p className="text-sm text-[#5C5C5C] mt-1">
                 현장 LAN 망에서 복합기 SNMP 카운터를 수집하는 상주형 수집기 인증 및 상태 현황을 관제합니다.
               </p>
             </div>
-            <button
-              onClick={handleGenerateCode}
-              disabled={generating}
-              className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>+ 신규 Agent 인증 코드 발급</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => loadCollectors(accessToken, true)}
+                disabled={isRefreshing}
+                className="px-4 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-2"
+                title="페이지 전체 새로고침 없이 백그라운드 데이터만 비동기 갱신합니다."
+              >
+                <span className={isRefreshing ? "animate-spin" : ""}>🔄</span>
+                <span>비동기 새로고침</span>
+              </button>
+
+              <button
+                onClick={handleGenerateCode}
+                disabled={generating}
+                className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>+ 신규 Agent 인증 코드 발급</span>
+              </button>
+            </div>
           </div>
         </div>
 
