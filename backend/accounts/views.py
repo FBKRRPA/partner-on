@@ -1457,16 +1457,18 @@ class CollectorListView(APIView):
 class MonitoringUsageView(APIView):
     """
     Returns real PrinterAsset SNMP counter usage data & full MonitoringDataRecord time-series history
+    Filtered strictly for registered PrinterAsset serial numbers
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
         workplace = request.user.workplace
         if not workplace:
-            return Response({"devices": [], "records": []}, status=status.HTTP_200_OK)
+            return Response({"devices": [], "history": [], "total_records_count": 0}, status=status.HTTP_200_OK)
 
         # 1. Current Device Snapshots
         printers = PrinterAsset.objects.filter(workplace=workplace)
+        registered_serials = list(printers.values_list("serial_no", flat=True))
         devices_summary = []
         for p in printers:
             m_color = p.monthly_usage_color
@@ -1493,9 +1495,12 @@ class MonitoringUsageView(APIView):
                 }
             )
 
-        # 2. Time-Series Accumulated Records from MonitoringDataRecord (Up to 300 latest records)
+        # 2. Time-Series Accumulated Records from MonitoringDataRecord (Filtered strictly by registered serials)
         history_records = []
-        db_records = MonitoringDataRecord.objects.filter(workplace=workplace).order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        db_records = (
+            MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
+            .order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        )
         for r in db_records:
             history_records.append(
                 {
@@ -1524,16 +1529,18 @@ class MonitoringUsageView(APIView):
 class MonitoringSuppliesView(APIView):
     """
     Returns real PrinterAsset toner & drum remaining status (%) & full Supplies History
+    Filtered strictly for registered PrinterAsset serial numbers
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
         workplace = request.user.workplace
         if not workplace:
-            return Response({"devices": [], "history": []}, status=status.HTTP_200_OK)
+            return Response({"devices": [], "history": [], "total_records_count": 0}, status=status.HTTP_200_OK)
 
         # 1. Current Device Toner Snapshots
         printers = PrinterAsset.objects.filter(workplace=workplace)
+        registered_serials = list(printers.values_list("serial_no", flat=True))
         supplies_data = []
         for p in printers:
             min_toner = min(p.toner_c, p.toner_m, p.toner_y, p.toner_k)
@@ -1565,9 +1572,12 @@ class MonitoringSuppliesView(APIView):
                 }
             )
 
-        # 2. Supplies Depletion & Alert History from SuppliesAlert / MonitoringDataRecord
+        # 2. Supplies Depletion & Alert History from MonitoringDataRecord (Filtered strictly by registered serials)
         history_records = []
-        db_records = MonitoringDataRecord.objects.filter(workplace=workplace).order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        db_records = (
+            MonitoringDataRecord.objects.filter(workplace=workplace, serial_no__in=registered_serials)
+            .order_by("-yyyymmdd", "-agent_updated_at")[:300]
+        )
         for r in db_records:
             history_records.append(
                 {
