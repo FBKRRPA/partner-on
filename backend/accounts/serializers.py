@@ -75,6 +75,15 @@ class LoginRequestSerializer(TokenObtainPairSerializer):
     device_name = serializers.CharField(required=False, write_only=True, default="Desktop Browser")
 
     def validate(self, attrs: dict) -> dict:
+        # Handle email vs username input field mapping safely
+        raw_email = attrs.get("email") or attrs.get("username")
+        if raw_email:
+            clean_email = str(raw_email).strip().lower()
+            attrs["email"] = clean_email
+            attrs[self.username_field] = clean_email
+            if "username" in attrs and self.username_field != "username":
+                attrs["username"] = clean_email
+
         device_uuid = attrs.pop("device_uuid", "")
         device_name = attrs.pop("device_name", "Desktop Browser")
 
