@@ -931,9 +931,13 @@ class SignUpWithInviteView(APIView):
         )
 
 
+# In-Memory Active Registry for Agent Collectors
+ACTIVE_AGENT_REGISTRY: list[dict] = []
+
+
 class AgentAuthView(APIView):
     """
-    Exchanges 8-digit Auth Code for Agent Token
+    Exchanges 8-digit Auth Code for Agent Token and registers active Agent
     """
     authentication_classes: list = []
     permission_classes: list = []
@@ -944,6 +948,33 @@ class AgentAuthView(APIView):
             return Response({"detail": "인증 코드가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         agent_token = f"token_agent_{auth_code}"
+        client_ip = request.META.get("REMOTE_ADDR", "127.0.0.1")
+        if client_ip == "127.0.0.1":
+            ip_range = "192.168.1.1/24 (로컬 네트워크)"
+        else:
+            parts = client_ip.split(".")
+            ip_range = f"{parts[0]}.{parts[1]}.{parts[2]}.1/24" if len(parts) == 4 else f"{client_ip}/24"
+
+        # Register or update in ACTIVE_AGENT_REGISTRY
+        existing = next((c for c in ACTIVE_AGENT_REGISTRY if c["auth_code"] == auth_code), None)
+        now_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if existing:
+            existing["status"] = "ONLINE"
+            existing["last_scanned_at"] = now_str
+        else:
+            ACTIVE_AGENT_REGISTRY.append({
+                "id": len(ACTIVE_AGENT_REGISTRY) + 1,
+                "auth_code": auth_code,
+                "name": f"현장 에이전트 수집기 ({auth_code})",
+                "customer_name": getattr(request.user, "workplace", None).name if getattr(request.user, "workplace", None) else "파트너온 수집 사업장",
+                "ip_range": ip_range,
+                "custom_ips": [],
+                "status": "ONLINE",
+                "last_scanned_at": now_str,
+                "detected_count": 0,
+            })
+
         return Response(
             {
                 "detail": "에이전트 인증 성공",
@@ -983,6 +1014,17 @@ class AgentIngestBatchView(APIView):
     def post(self, request) -> Response:
         devices = request.data.get("devices", [])
         device_count = len(devices)
+        auth_header = request.headers.get("Authorization", "")
+        token = auth_header.replace("Bearer ", "").strip()
+        auth_code = token.replace("token_agent_", "")
+
+        # Update scanned count in registry
+        now_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        for agent in ACTIVE_AGENT_REGISTRY:
+            if agent["auth_code"] == auth_code or token.endswith(agent["auth_code"]):
+                agent["detected_count"] = device_count
+                agent["last_scanned_at"] = now_str
+                agent["status"] = "ONLINE"
 
         return Response(
             {
@@ -1019,9 +1061,7 @@ class CollectorListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
-        # Returns empty list for fresh initial state
-        collectors: list = []
-        return Response(collectors, status=status.HTTP_200_OK)
+        return Response(ACTIVE_AGENT_REGISTRY, status=status.HTTP_200_OK)
 
 
 
