@@ -37,6 +37,7 @@
 | **TC-027** | DB/정돈 | 미등록 기기 DB 테스트 샘플 레코드 일괄 삭제 및 클린 초기화 | UnregisteredPrinter Purge & Clean Init | ✅ PASS |
 | **TC-028** | Agent/수집 | 대표 지시 3가지 조건별 스캔 자동 분기 메커니즘 구축 | Agent 3-Branch Scan Logic | ✅ PASS |
 | **TC-029** | 수집 API | Agent 토큰 접두사 다양성 처리 및 Ingest 500 서버 에러 해결 | Token Parsing Exception Defense | ✅ PASS |
+| **TC-030** | Agent/콘솔 | Windows CP949 콘솔 유니코드 인코딩 예외(UnicodeEncodeError) 교정 | Console Unicode Exception Defense | ✅ PASS |
 
 ---
 
@@ -191,6 +192,12 @@
 * **발생 원인/배경**: `python main.py --scan-unregistered` 실행 시 전달되는 토큰 접두사(`agent_token_` 또는 `token_agent_`) 파싱 예외로 인한 `AgentCollector` 식별 실패 및 500 서버 에러 발생.
 * **조치 내용**: `backend/accounts/views.py` `AgentIngestBatchView` 및 `AgentTargetAssetsView`에서 `token.replace("token_agent_", "").replace("agent_token_", "")`로 이중 접두사 방어 조치.
 * **검증 결과**: `--scan-unregistered` 풀 스캔 254대 패킷 업로드 HTTP 200 OK 성공 및 백엔드 테스트 9/9 PASS.
+
+### 30. [TC-030] Windows CP949 콘솔 유니코드 인코딩 예외(UnicodeEncodeError) 교정
+* **발생 원인/배경**: Windows 한글 CP949 터미널 환경에서 에이전트 실행 시 돋보기/번개 유니코드 이모지 인쇄로 인한 `UnicodeEncodeError` 예외 발생.
+* **조치 내용**: `agent/main.py` 출력을 표준 B2B 텍스트 `[FULL SCAN MODE]` 및 `[PINPOINT SCAN MODE]`로 정정하여 인코딩 충돌 방지 (`AGENTS.md` Section 3-⑤ 수칙 준수).
+* **검증 결과**: Windows 터미널에서 `python main.py --scan-unregistered` 예외 없이 100% 정상 가동 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

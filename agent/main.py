@@ -88,11 +88,11 @@ def main():
             # Condition 2: Parameter/Query scan_unregistered is True -> Full Subnet Scan
             # Condition 3: Existing registered assets present -> Pinpoint Scan for Registered Assets Only
             if not target_serials or scan_unregistered_flag:
-                print(f"[INFO] 🔍 [풀 스캔 모드 가동] (사유: {'최초 미등록 상태' if not target_serials else '미등록 장비 스캔 파라미터 전달'}) - 전체 서브넷(.1~.254) 탐지 중...")
+                print(f"[INFO] [FULL SCAN MODE] (Reason: {'Initial Setup' if not target_serials else 'Scan Unregistered Flag Received'}) - Scanning Subnet .1~.254...")
                 full_subnets = [f"192.168.1.{i}" for i in range(1, 255)]
                 scanner = SNMPScanner(target_ips=full_subnets, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
             else:
-                print(f"[INFO] ⚡ [등록 장비 전용 핀포인트 스캔 모드 가동] (등록 장비: {len(target_serials)}대)")
+                print(f"[INFO] [PINPOINT SCAN MODE] (Registered Serials: {len(target_serials)} devices)")
                 scanner = SNMPScanner(target_ips=target_ips, target_serials=target_serials, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
 
             scanned_devices = scanner.scan_all()
@@ -111,7 +111,9 @@ def main():
             print("[INFO] 에이전트가 안전하게 종료되었습니다.")
             break
         except Exception as e:
+            import traceback
             print(f"[WARNING] 주기 수집 중 오류 발생 (다음 주기에 재시도): {e}")
+            traceback.print_exc()
 
         time.sleep(args.interval)
 
