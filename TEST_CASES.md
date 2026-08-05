@@ -43,6 +43,7 @@
 | **TC-033** | DB/재생성 | PostgreSQL unregistered_printers DB 테이블 완전 삭제 및 재생성 | UnregisteredPrinter Table Re-creation | ✅ PASS |
 | **TC-034** | Agent/네트워크 | 현장 동적 IP 서브넷 대역 자동 감지 탑재 | Dynamic IP Subnet Auto Detection | ✅ PASS |
 | **TC-035** | 실측/DB | 에이전트 풀 스캔 미등록 기기 DB 테이블 100% 저장 실측 검증 | Real Full Scan DB Ingestion Verification | ✅ PASS |
+| **TC-036** | 관제 DB | MonitoringDataRecord 일자별(Daily YYYYMMDD) 누적 적재 및 갱신 매커니즘 검증 | MonitoringDataRecord Daily Accumulation | ✅ PASS |
 
 ---
 
@@ -227,6 +228,12 @@
 * **발생 원인/배경**: 대표 지시에 따라 에이전트 풀 스캔 수집 후 `unregistered_printers` DB 테이블에 미등록 장비 레코드가 100% 정상 저장되는지 실측 조증 요구.
 * **조치 내용**: 풀 스캔 수집 실행 ➔ 백엔드 `AgentIngestBatchView` 인제스션 ➔ PostgreSQL `unregistered_printers` 레코드 쿼리 검증.
 * **검증 결과**: `unregistered_printers` DB 테이블에 255개 미등록 장비 레코드 100% 저장 완료 실측 확인 및 백엔드 테스트 9/9 PASS.
+
+### 36. [TC-036] MonitoringDataRecord 일자별(Daily YYYYMMDD) 누적 적재 및 갱신 매커니즘 검증
+* **발생 원인/배경**: `monitoring_data_records` 테이블에 일자별로 행이 차곡차곡 쌓이는지(Accumulated Rows) 또는 동일 날짜 내 업데이트 동작 소명 요구.
+* **조치 내용**: `MonitoringDataRecord` 모델의 `unique_together = ("monitoring_printer", "yyyymmdd")` 및 `AgentIngestBatchView` 수집 연동 실측 검증.
+* **검증 결과**: 동일 날짜(YYYYMMDD) 내에서는 당일 최종 수치로 갱신(Update)되고, 날짜 변경 시 새 행(Row)으로 차곡차곡 쌓임(20260805, 20260806 누적 적재 100% 실측 완료) 및 백엔드 테스트 9/9 PASS.
+
 
 
 
