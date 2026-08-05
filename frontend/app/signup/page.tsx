@@ -108,18 +108,11 @@ function SignUpFormContent() {
       });
 
       setMemberSuccess(true);
-      setMemberMessage(res.detail || "성공적으로 가입되었습니다.");
+      setMemberMessage(res.detail || "성공적으로 가입되었습니다. 대표 관리자의 기기 승인 후 로그인하실 수 있습니다.");
 
-      if (res.access && res.user) {
-        sessionStorage.setItem("accessToken", res.access);
-        sessionStorage.setItem("refreshToken", res.refresh || "");
-        sessionStorage.setItem("user", JSON.stringify(res.user));
-        sessionStorage.setItem("partneron.accessToken", res.access);
-        sessionStorage.setItem("partneron.user", JSON.stringify(res.user));
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
-      }
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
     } catch (error) {
       setMemberMessage(error instanceof Error ? error.message : "초대 코드 가입에 실패했습니다.");
     } finally {

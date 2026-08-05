@@ -921,15 +921,13 @@ class SignUpWithInviteView(APIView):
         user.is_invite_accepted = True
         user.save(update_fields=["password", "is_invite_accepted"])
 
-        # Generate JWT Tokens
-        refresh = RefreshToken.for_user(user)
-
+        # Do NOT issue JWT tokens directly on invite acceptance.
+        # Enforce standard login flow to check Device Approval & 2FA policies.
         return Response(
             {
-                "detail": f"[{user.workplace.name if user.workplace else 'PartnerOn'}] 사업장에 정상적으로 가입되었습니다.",
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": UserDtoSerializer(user).data,
+                "detail": f"[{user.workplace.name if user.workplace else 'PartnerOn'}] 사업장에 정상적으로 가입되었습니다. 대표 관리자의 기기 승인 후 로그인해 주세요.",
+                "require_login": True,
+                "email": user.email,
             },
             status=status.HTTP_200_OK,
         )
