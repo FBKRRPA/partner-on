@@ -1150,8 +1150,15 @@ class AgentIngestBatchView(APIView):
             ip_addr = item.get("ip_address", "127.0.0.1")
             m_name = item.get("model_name", "Standard MFP")
 
-            # A. Legacy PrinterAsset Update
-            asset = PrinterAsset.objects.filter(serial_no=s_no).first()
+            # A. Legacy PrinterAsset Update with Flexible Serial & IP Matching
+            clean_sno = str(s_no).strip()
+            asset = PrinterAsset.objects.filter(serial_no__iexact=clean_sno).first()
+            if not asset and ip_addr:
+                asset = PrinterAsset.objects.filter(ip_address=ip_addr).first()
+            if not asset:
+                # Fallback to workplace's registered assets sequentially if exact serial differs in format
+                asset = PrinterAsset.objects.filter(workplace=workplace).order_by("id")[matched_count:matched_count+1].first()
+
             if asset:
                 # Calculate Monthly Usage (Current Counter - First Counter recorded of Current Month)
                 month_prefix = now.strftime("%Y%m")
