@@ -54,32 +54,25 @@ class SNMPScanner:
 
         if ip.endswith(".55") or ip.endswith(".100") or ip in self.custom_ips:
             last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
-            
-            # Dynamic IP-specific differentiated model & metrics
-            if last_octet % 2 == 0:
+            serial = f"FX-721495-192168{last_octet}"
+
+            # Dynamic IP-specific differentiated model & metrics matching DB
+            if last_octet == 100:
                 model = "imageRUNNER ADVANCE C5535i"
-                base_color = 34120 + (last_octet * 15)
-                base_mono = 98700 + (last_octet * 42)
-                t_c = (last_octet * 7) % 80 + 15
-                t_m = (last_octet * 11) % 75 + 20
-                t_y = (last_octet * 3) % 70 + 10
-                t_k = (last_octet * 13) % 85 + 10
-                d_k = 65
+                base_color = 34120
+                base_mono = 98700
+                t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
             else:
                 model = "ApeosPort-VII C3373"
-                base_color = 18450 + (last_octet * 23)
-                base_mono = 52300 + (last_octet * 67)
-                t_c = (last_octet * 9) % 85 + 10
-                t_m = (last_octet * 5) % 90 + 10
-                t_y = (last_octet * 17) % 80 + 15
-                t_k = (last_octet * 3) % 90 + 5
-                d_k = 88
+                base_color = 18450
+                base_mono = 52300
+                t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
 
             return {
                 "ip": ip,
                 "scan_method": "SNMP_GET",
-                "serial_no": f"FX-{last_octet*1495}-{ip.replace('.', '')}",
-                "product_code": f"{last_octet*100}",
+                "serial_no": serial,
+                "product_code": "721495",
                 "model_name": model,
                 "count_color": base_color,
                 "count_mono": base_mono,
@@ -105,22 +98,23 @@ class SNMPScanner:
 
         if ip.endswith(".55") or ip.endswith(".100") or ip in self.custom_ips:
             last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
-            
-            if last_octet % 2 == 0:
+            serial = f"FX-721495-192168{last_octet}"
+
+            if last_octet == 100:
                 model = "imageRUNNER ADVANCE C5535i"
-                base_color = 34120 + (last_octet * 15)
-                base_mono = 98700 + (last_octet * 42)
+                base_color = 34120
+                base_mono = 98700
                 t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
             else:
                 model = "ApeosPort-VII C3373"
-                base_color = 18450 + (last_octet * 23)
-                base_mono = 52300 + (last_octet * 67)
+                base_color = 18450
+                base_mono = 52300
                 t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
 
             # Full MIB Dump simulation
             walk_dump = {
                 "1.3.6.1.2.1.1.1.0": f"Multi-Function Printer {model}",
-                "1.3.6.1.4.1.2988.1.1.12.1.1.101": f"FX-{last_octet*1495}-{ip.replace('.', '')}",
+                "1.3.6.1.4.1.2988.1.1.12.1.1.101": serial,
                 "1.3.6.1.4.1.2988.1.1.12.1.1.201": base_color + base_mono,
                 "1.3.6.1.4.1.2988.1.1.12.1.1.202": base_color,
                 "1.3.6.1.4.1.2988.1.1.12.1.1.203": base_mono,
@@ -130,8 +124,8 @@ class SNMPScanner:
             return {
                 "ip": ip,
                 "scan_method": "SNMP_WALK",
-                "serial_no": f"FX-{last_octet*1495}-{ip.replace('.', '')}",
-                "product_code": f"{last_octet*100}",
+                "serial_no": serial,
+                "product_code": "721495",
                 "model_name": f"{model} (Auto Walk Discovered)",
                 "count_color": base_color,
                 "count_mono": base_mono,
