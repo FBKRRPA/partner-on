@@ -121,7 +121,7 @@ export default function AssetDevicesPage() {
                 </span>
               </div>
               <p className="text-sm text-[#5C5C5C] mt-1">
-                수동으로 장비 시리얼 번호를 사전 등록하면, 현장 Windows Agent 수집기가 감지 시 실시간으로 매칭되어 모니터링됩니다.
+                수동으로 장비 시리얼 번호를 사전 등록하면, 현장 Windows Agent 수집기가 감지 시 실시간으로 매칭되어 모니터링됩니다. <span className="font-bold text-[#01916D]">(3분 주기 생존 관제 적용)</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -164,8 +164,8 @@ export default function AssetDevicesPage() {
               <span className="text-3xl font-black text-[#01916D]">
                 {printers.filter((p) => p.is_online).length}
               </span>
-              <span className="text-xs font-bold text-[#01916D] bg-emerald-50 px-2 py-0.5 rounded-full">
-                실시간 연동중 (ONLINE)
+              <span className="text-xs font-bold text-[#01916D] bg-emerald-50 px-2 py-0.5 rounded-full" title="3분 이내 수집 패킷 수신 중">
+                실시간 연동중 (3분 주기)
               </span>
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function AssetDevicesPage() {
               <span className="text-3xl font-black text-amber-600">
                 {printers.filter((p) => !p.is_online).length}
               </span>
-              <span className="text-xs font-semibold text-slate-500">대</span>
+              <span className="text-xs font-semibold text-slate-500">대 (3분 이상 무응답)</span>
             </div>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function AssetDevicesPage() {
                     <th className="py-3.5 px-6 text-right">누적 컬러 카운트</th>
                     <th className="py-3.5 px-6 text-right">누적 흑백 카운트</th>
                     <th className="py-3.5 px-6 text-right">최근 Agent 수집 시각</th>
-                    <th className="py-3.5 px-6 text-right">상태</th>
+                    <th className="py-3.5 px-6 text-right">상태 (3분 기준)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -242,8 +242,9 @@ export default function AssetDevicesPage() {
                               ? "bg-emerald-100 text-[#01916D]"
                               : "bg-rose-100 text-[#E01E35]"
                           }`}
+                          title={p.is_online ? "최근 3분 이내 수집 패킷 수신 중" : "3분 이상 수집 패킷 미수신 (통신 중단)"}
                         >
-                          {p.is_online ? "매칭 및 관제중 (ONLINE)" : "연동 중단 (OFFLINE)"}
+                          {p.is_online ? "매칭 및 관제중 (3분 주기)" : "연동 중단 (3분 이상 무응답)"}
                         </span>
                       </td>
                     </tr>

@@ -207,7 +207,7 @@ export default function AgentCollectorsPage() {
                     <th className="py-3.5 px-6">수동 지정 IP</th>
                     <th className="py-3.5 px-6">탐지 기기 수</th>
                     <th className="py-3.5 px-6">최근 수집 시각</th>
-                    <th className="py-3.5 px-6 text-right">상태</th>
+                    <th className="py-3.5 px-6 text-right">상태 (3분 기준)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
@@ -234,8 +234,9 @@ export default function AgentCollectorsPage() {
                               ? "bg-emerald-100 text-[#01916D]"
                               : "bg-rose-100 text-[#E01E35]"
                           }`}
+                          title={c.status === "ONLINE" ? "최근 3분 이내 수집 패킷 수신 중" : "3분 이상 수집 통신 중단"}
                         >
-                          {c.status === "ONLINE" ? "ONLINE (수집중)" : "OFFLINE (중단)"}
+                          {c.status === "ONLINE" ? "ONLINE (3분 주기 수집중)" : "OFFLINE (3분 이상 통신중단)"}
                         </span>
                       </td>
                     </tr>

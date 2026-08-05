@@ -1199,9 +1199,6 @@ class AgentIngestBatchView(APIView):
                 asset.drum_k = d_k
                 asset.last_scanned_at = now
                 asset.save()
-                matched_count += 1
-            else:
-                unregistered_count += 1
                 # B. Record Unregistered Printer if not registered
                 if workplace:
                     UnregisteredPrinter.objects.update_or_create(
