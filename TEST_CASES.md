@@ -34,6 +34,7 @@
 | **TC-024** | OID/수집 | 지능형 OID 유추 엔진 (`OidInferenceEngine`) 구축 (모델명/카운터/소모품 유추) | OidInferenceEngine & Agent Ingest | ✅ PASS |
 | **TC-025** | OID/학습 | OID 지식 실시간 자동 학습 & DB 캐싱 구축 (`PrinterOidMapping` 캐싱) | OidInferenceEngine.learn_and_cache | ✅ PASS |
 | **TC-026** | Agent/경로 | 에이전트 폴더 직접 실행 시 `No module named agent` 경고 완벽 해결 | Agent Import Exception Handling | ✅ PASS |
+| **TC-027** | DB/정돈 | 미등록 기기 DB 테스트 샘플 레코드 일괄 삭제 및 클린 초기화 | UnregisteredPrinter Purge & Clean Init | ✅ PASS |
 
 ---
 
@@ -173,6 +174,12 @@
 * **발생 원인/배경**: 에이전트 폴더 내부에서 `python main.py`를 직접 실행할 때 Python `sys.path` 최상위 패키지 해석 특성으로 인해 `No module named 'agent'` 경고 표출.
 * **조치 내용**: `agent/snmp_scanner.py` 모듈 내 `OidInferenceEngine` 임포트 부를 `try ... except ModuleNotFoundError`로 유연하게 처리하여 프로젝트 루트 및 `agent` 폴더 내부 어디서 실행하든 100% 정상 가동되도록 조치.
 * **검증 결과**: 경고 메시지 0건 완벽 처리 및 에이전트 스캔/수집 100% 성공, 백엔드 테스트 9/9 PASS.
+
+### 27. [TC-027] 미등록 기기 DB 테스트 샘플 레코드 일괄 삭제 및 클린 초기화
+* **발생 원인/배경**: 이전 수집 시뮬레이션으로 임시 저장되어 있던 `unregistered_printers` DB 더미 레코드 일괄 삭제 지침.
+* **조치 내용**: `UnregisteredPrinter` DB 레코드 252건 완전 삭제(`delete()`) 및 `AgentCollector.detected_count` 카운터 2대로 정돈.
+* **검증 결과**: `UnregisteredPrinter` DB 레코드 수 0건 클린 초기화 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 
