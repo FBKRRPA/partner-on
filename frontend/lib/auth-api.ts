@@ -635,6 +635,7 @@ export interface PrinterAssetDto {
   location: string;
   ip_address?: string;
   status: string;
+  is_online?: boolean;
   count_color: number;
   count_mono: number;
   count_total: number;

@@ -133,20 +133,20 @@ export default function AssetDevicesPage() {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-[#01916D]">
-                {printers.filter((p) => p.last_scanned_at !== "-").length}
+                {printers.filter((p) => p.is_online).length}
               </span>
               <span className="text-xs font-bold text-[#01916D] bg-emerald-50 px-2 py-0.5 rounded-full">
-                실시간 연동중
+                실시간 연동중 (ONLINE)
               </span>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
-              수집 대기 / 미감지 장비
+              수집 중단 / 미감지 장비
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-amber-600">
-                {printers.filter((p) => p.last_scanned_at === "-").length}
+                {printers.filter((p) => !p.is_online).length}
               </span>
               <span className="text-xs font-semibold text-slate-500">대</span>
             </div>
@@ -209,12 +209,12 @@ export default function AssetDevicesPage() {
                       <td className="py-4 px-6 text-right">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            p.last_scanned_at !== "-"
+                            p.is_online
                               ? "bg-emerald-100 text-[#01916D]"
-                              : "bg-amber-100 text-amber-800"
+                              : "bg-rose-100 text-[#E01E35]"
                           }`}
                         >
-                          {p.last_scanned_at !== "-" ? "매칭 및 관제중" : "수집 대기중"}
+                          {p.is_online ? "매칭 및 관제중 (ONLINE)" : "연동 중단 (OFFLINE)"}
                         </span>
                       </td>
                     </tr>

@@ -1307,28 +1307,33 @@ class PrinterAssetListCreateView(APIView):
         if not workplace:
             return Response([], status=status.HTTP_200_OK)
 
+        now = timezone.now()
         printers = PrinterAsset.objects.filter(workplace=workplace)
-        data = [
-            {
-                "id": p.id,
-                "serial_no": p.serial_no,
-                "model_name": p.model_name,
-                "customer_name": p.customer_name,
-                "location": p.location,
-                "ip_address": p.ip_address,
-                "status": p.status,
-                "count_color": p.count_color,
-                "count_mono": p.count_mono,
-                "count_total": p.count_total,
-                "toner_c": p.toner_c,
-                "toner_m": p.toner_m,
-                "toner_y": p.toner_y,
-                "toner_k": p.toner_k,
-                "drum_k": p.drum_k,
-                "last_scanned_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "-",
-            }
-            for p in printers
-        ]
+        data = []
+        for p in printers:
+            # Real-time online determination: Scanned within 3 minutes (180s)
+            is_online = bool(p.last_scanned_at and (now - p.last_scanned_at <= timedelta(minutes=3)))
+            data.append(
+                {
+                    "id": p.id,
+                    "serial_no": p.serial_no,
+                    "model_name": p.model_name,
+                    "customer_name": p.customer_name,
+                    "location": p.location,
+                    "ip_address": p.ip_address,
+                    "status": p.status,
+                    "is_online": is_online,
+                    "count_color": p.count_color,
+                    "count_mono": p.count_mono,
+                    "count_total": p.count_total,
+                    "toner_c": p.toner_c,
+                    "toner_m": p.toner_m,
+                    "toner_y": p.toner_y,
+                    "toner_k": p.toner_k,
+                    "drum_k": p.drum_k,
+                    "last_scanned_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "-",
+                }
+            )
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request) -> Response:
