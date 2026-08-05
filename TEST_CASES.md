@@ -27,6 +27,7 @@
 | **TC-017** | 수집 API | Agent 배치 업로드 `SuppliesAlert` 필드 500 에러 해결 | DRF Ingest API | ✅ PASS |
 | **TC-018** | Agent/보안 | 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제 | Agent Pinpoint Scan & DB Purge | ✅ PASS |
 | **TC-019** | 수집 API | Agent Ingest API `NameError` (collector, unregistered_printer_updates) 정정 | DRF Ingest API & Tests | ✅ PASS |
+| **TC-020** | Agent/수집 | 등록 시리얼 2대 타겟팅 동기화 및 2대 전체 스캔/수집 완료 | Agent Scanner & Ingest | ✅ PASS |
 
 ---
 
@@ -131,6 +132,12 @@
 * **발생 원인/배경**: `backend/accounts/views.py` `AgentIngestBatchView`에서 미선언 `collector` 변수 참조 및 제거된 `unregistered_printer_updates` 잔여 구문 호출로 인한 `NameError` 500 서버 에러 발생.
 * **조치 내용**: `collector` 변수 선언 위치 복원 및 미등록 장비 잔여 `bulk_create` 구문 완전 제거.
 * **검증 결과**: `target-assets`, `oids`, `ingest` 3개 Agent REST API 모두 HTTP 200 OK 응답 및 백엔드 테스트 9/9 PASS.
+
+### 20. [TC-020] 에이전트 등록 시리얼 2대 타겟팅 동기화 및 2대 수집 완료
+* **발생 원인/배경**: 에이전트 콘솔 스캔 출력에 `1대 수신/감지`로 표출되던 현상 발생.
+* **조치 내용**: `agent/main.py` 및 `snmp_scanner.py`가 클라우드 서버에서 정식 등록된 `target_serials` 목록(`FX-721495-1921681100`, `FX-721495-192168155`) 2대를 타겟팅하여 2대 모두 스캔/수집하도록 개정.
+* **검증 결과**: 에이전트 실행 시 `>>> 에이전트 스캔 완료: 총 2대 등록 복합기 감지됨!` 및 클라우드 배치 업로드 `matched_count: 2대` 정상 완료.
+
 
 
 

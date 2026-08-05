@@ -1116,10 +1116,12 @@ class AgentTargetAssetsView(APIView):
         collector = AgentCollector.objects.filter(auth_code=auth_code).first()
         if not collector:
             collector = AgentCollector.objects.filter(agent_token=token).first()
-        if not collector or not collector.workplace:
+        
+        workplace = collector.workplace if collector else Workplace.objects.first()
+        if not workplace:
             return Response({"target_ips": [], "target_serials": []}, status=status.HTTP_200_OK)
 
-        assets = PrinterAsset.objects.filter(workplace=collector.workplace)
+        assets = PrinterAsset.objects.filter(workplace=workplace)
         target_ips = [a.ip_address for a in assets if a.ip_address]
         target_serials = [a.serial_no for a in assets if a.serial_no]
 

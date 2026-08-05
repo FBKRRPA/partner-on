@@ -75,15 +75,16 @@ def main():
         try:
             print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 등록 자산 목록 및 최신 OID 다운로드 중...")
             
-            # Fetch dynamic OIDs and Strictly Registered Target IPs from Server
+            # Fetch dynamic OIDs and Strictly Registered Target IPs & Serials from Server
             oid_map = api_client.fetch_latest_oids(agent_token)
             target_res = api_client.fetch_target_assets(agent_token)
             target_ips = target_res.get("target_ips", [])
+            target_serials = target_res.get("target_serials", [])
 
-            print(f"[INFO] 서버에 정식 등록된 스캔 대상 자산: {len(target_ips)}대 IP ({', '.join(target_ips) if target_ips else '없음'})")
+            print(f"[INFO] 서버에 정식 등록된 스캔 대상 시리얼/IP: {len(target_serials)}대 ({', '.join(target_serials)})")
             
-            # Perform pinpoint SNMP scan strictly for REGISTERED Target IPs
-            scanner = SNMPScanner(target_ips=target_ips, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
+            # Perform pinpoint SNMP scan strictly for REGISTERED Target Serials & IPs
+            scanner = SNMPScanner(target_ips=target_ips, target_serials=target_serials, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
             scanned_devices = scanner.scan_all()
 
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 등록 복합기 감지됨.")
