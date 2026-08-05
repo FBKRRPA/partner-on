@@ -1273,9 +1273,6 @@ class AgentIngestBatchView(APIView):
                 )
 
                 # Prepare SuppliesAlert Bulk Object
-                min_t = min(t_c, t_m, t_y, t_k)
-                alert_level = "CRITICAL" if min_t <= 5 else "WARNING" if min_t <= 15 else "NORMAL"
-                alert_msg = f"토너 잔량 {min_t}% 미만" if min_t <= 15 else "정상"
                 supplies_alert_updates.append(
                     SuppliesAlert(
                         workplace=workplace,
@@ -1285,8 +1282,6 @@ class AgentIngestBatchView(APIView):
                         toner_y=t_y,
                         toner_k=t_k,
                         drum_k=d_k,
-                        status_alert=alert_level,
-                        alert_message=alert_msg,
                         updated_at=now,
                     )
                 )
@@ -1379,8 +1374,6 @@ class AgentIngestBatchView(APIView):
                     "toner_y",
                     "toner_k",
                     "drum_k",
-                    "status_alert",
-                    "alert_message",
                     "updated_at",
                 ],
             )

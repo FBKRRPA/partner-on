@@ -24,6 +24,7 @@
 | **TC-014** | 권한/메뉴 | 7대 대분류 25개 소분류 네비게이션 & 4단계 RBAC | RoleMenuPermission | ✅ PASS |
 | **TC-015** | 구성원 관리 | 8자리 구성원 초대 코드 생성 및 회원가입 연동 | Invite Code System | ✅ PASS |
 | **TC-016** | SNMP/OID | 복합기 제조사별 OID 동적 맵 매핑 | PrinterOidMapping Master | ✅ PASS |
+| **TC-017** | 수집 API | Agent 배치 업로드 `SuppliesAlert` 필드 500 에러 해결 | DRF Ingest API | ✅ PASS |
 
 ---
 
@@ -110,3 +111,9 @@
 * **발생 원인/배경**: Fujifilm, Canon, Ricoh 등 제조사별로 서로 다른 SNMP OID 주소를 수집할 수 있는 유연한 구조 필요.
 * **조치 내용**: `PrinterOidMapping` 마스터 DB 테이블 및 `OidListMaster` 구축하여 제조사/모델별 OID 키-값 동적 매핑 지원.
 * **검증 결과**: 에이전트 수집기가 DB에 등록된 OID 맵을 읽어 복합기 SNMP 수집 성공.
+
+### 17. [TC-017] Agent 배치 수집 처리 시 `SuppliesAlert` 필드 500 에러 해결
+* **발생 원인/배경**: Agent 실행 후 수집 데이터 배치 전송 시 `TypeError: SuppliesAlert() got unexpected keyword arguments: 'status_alert', 'alert_message'`로 인해 백엔드에서 500 Internal Server Error 발생.
+* **조치 내용**: `backend/accounts/views.py`에서 `SuppliesAlert` 모델 객체 생성 파라미터 중 DB에 존재하지 않는 불필요 키워드 인자를 제거하고 실제 소모품 필드만 일괄 매핑.
+* **검증 결과**: Agent 실행 후 수집 배치 전송 시 HTTP 200 OK 정상 수집 및 백엔드 테스트 100% 통과.
+
