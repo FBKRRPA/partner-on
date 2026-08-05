@@ -1290,7 +1290,7 @@ class PrinterAssetListCreateView(APIView):
                 "toner_y": p.toner_y,
                 "toner_k": p.toner_k,
                 "drum_k": p.drum_k,
-                "last_scanned_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "-",
+                "last_scanned_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "-",
             }
             for p in printers
         ]
@@ -1392,7 +1392,7 @@ class CollectorListView(APIView):
                 "ip_range": c.ip_range,
                 "custom_ips": c.custom_ips,
                 "status": c.status,
-                "last_scanned_at": c.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
+                "last_scanned_at": timezone.localtime(c.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
                 "detected_count": c.detected_count,
             }
             for c in collectors
@@ -1435,7 +1435,7 @@ class MonitoringUsageView(APIView):
                     "count_total": p.count_total,
                     "monthly_usage_color": m_color,
                     "monthly_usage_mono": m_mono,
-                    "last_updated_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
+                    "last_updated_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
                 }
             )
         return Response(usage_data, status=status.HTTP_200_OK)
@@ -1479,7 +1479,7 @@ class MonitoringSuppliesView(APIView):
                 "drum_k": p.drum_k,
                 "status_alert": alert_level,
                 "alert_message": msg,
-                "last_updated_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
+                "last_updated_at": timezone.localtime(p.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
             })
 
         return Response(supplies_data, status=status.HTTP_200_OK)
