@@ -1222,7 +1222,7 @@ class AgentIngestBatchView(APIView):
         m_data_updates = []
         m_record_updates = []
         supplies_alert_updates = []
-        unregistered_printer_updates = []
+        unregistered_printer_map = {}
 
         from accounts.oid_inference import OidInferenceEngine
 
@@ -1349,30 +1349,30 @@ class AgentIngestBatchView(APIView):
                 )
             else:
                 # Unregistered Scanned Device -> Separately saved into unregistered_printers table with rich detail columns
+                # Deduplicate by IP to prevent PostgreSQL ON CONFLICT DO UPDATE CardinalityViolation error
                 mac_addr = raw_item.get("mac_address", "")
                 vendor = item.get("vendor_name", "Standard")
 
-                unregistered_printer_updates.append(
-                    UnregisteredPrinter(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        scanned_model=m_name,
-                        vendor_name=vendor,
-                        mac_address=mac_addr,
-                        ip=ip_addr,
-                        registered=False,
-                        count_total=c_total,
-                        count_color=c_color,
-                        count_mono=c_mono,
-                        toner_k=t_k,
-                        toner_c=t_c,
-                        toner_m=t_m,
-                        toner_y=t_y,
-                        last_scanned_at=now,
-                        updated_at=now,
-                    )
+                unregistered_printer_map[ip_addr] = UnregisteredPrinter(
+                    workplace=workplace,
+                    serial_no=clean_sno,
+                    scanned_model=m_name,
+                    vendor_name=vendor,
+                    mac_address=mac_addr,
+                    ip=ip_addr,
+                    registered=False,
+                    count_total=c_total,
+                    count_color=c_color,
+                    count_mono=c_mono,
+                    toner_k=t_k,
+                    toner_c=t_c,
+                    toner_m=t_m,
+                    toner_y=t_y,
+                    last_scanned_at=now,
+                    updated_at=now,
                 )
 
+        unregistered_printer_updates = list(unregistered_printer_map.values())
         matched_count = len(matched_asset_ids)
         unregistered_count = len(unregistered_printer_updates)
 

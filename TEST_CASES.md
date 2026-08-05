@@ -39,6 +39,7 @@
 | **TC-029** | 수집 API | Agent 토큰 접두사 다양성 처리 및 Ingest 500 서버 에러 해결 | Token Parsing Exception Defense | ✅ PASS |
 | **TC-030** | Agent/콘솔 | Windows CP949 콘솔 유니코드 인코딩 예외(UnicodeEncodeError) 교정 | Console Unicode Exception Defense | ✅ PASS |
 | **TC-031** | DB/미등록 | 미등록 기기 DB 테이블 상세 스캔 정보 컬럼 10종 확장 구축 | UnregisteredPrinter Rich Columns Expansion | ✅ PASS |
+| **TC-032** | 수집 API | PostgreSQL ON CONFLICT CardinalityViolation 에러 방지 IP 중복 제거 | Ingest IP Deduplication Defense | ✅ PASS |
 
 ---
 
@@ -203,6 +204,12 @@
 * **발생 원인/배경**: 미등록 탐지 기기의 제조사, MAC주소, 카운터 3종, 토너 잔량 4종, 탐지 시각 정보가 DB에 부족한 문제 해결 요구.
 * **조치 내용**: `UnregisteredPrinter` DB 모델 및 PostgreSQL 테이블에 `vendor_name`, `mac_address`, `count_total/color/mono`, `toner_k/c/m/y`, `last_scanned_at` 10개 신규 컬럼 확장 및 `AgentIngestBatchView` 실시간 저장 연동. `AGENTS.md` 지침 문서 동기화.
 * **검증 결과**: 미등록 251대 스캔 수집 시 제조사(Fujifilm), MAC, 카운터, 토너 잔량 % 정보 100% 저장 성공 및 백엔드 테스트 9/9 PASS.
+
+### 32. [TC-032] PostgreSQL ON CONFLICT CardinalityViolation 에러 방지 IP 중복 제거
+* **발생 원인/배경**: 단일 수집 패킷 내에 동일 IP가 중복 수집될 경우 PostgreSQL `ON CONFLICT DO UPDATE` 카디널리티 위반 500 에러 발생.
+* **조치 내용**: `AgentIngestBatchView`에서 미등록 장비 `bulk_create` 전 IP 기준 Dict (`unregistered_printer_map`) 사전 중복 제거 방어 구조 탑재.
+* **검증 결과**: 동일 IP 중복 수집 배치 패킷 업로드 시 500 에러 없이 HTTP 200 OK 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 
