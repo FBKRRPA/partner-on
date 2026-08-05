@@ -105,9 +105,9 @@ export default function AssetDevicesPage() {
         {/* Breadcrumb & Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#5C5C5C] mb-2">
-            <span>자산 및 입출고</span>
+            <span>자산/수집</span>
             <span>&rsaquo;</span>
-            <span className="text-[#01916D] font-bold">기기 관리</span>
+            <span className="text-[#01916D] font-bold">장비 현황</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
