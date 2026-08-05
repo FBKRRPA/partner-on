@@ -1081,7 +1081,6 @@ class AgentFetchOidsView(APIView):
         db_oids = PrinterOidMapping.objects.filter(vendor_name=vendor, is_active=True)
 
         if not db_oids.exists():
-            # Seed default Fujifilm OIDs in DB if table is empty
             default_seeds = [
                 ("sysDescr", "1.3.6.1.2.1.1.1.0", "장비 설명"),
                 ("serial_no", "1.3.6.1.4.1.2988.1.1.12.1.1.101", "장비 시리얼 번호"),
@@ -1102,10 +1101,42 @@ class AgentFetchOidsView(APIView):
         return Response(oids, status=status.HTTP_200_OK)
 
 
+class AgentTargetAssetsView(APIView):
+    """
+    Returns strictly registered PrinterAsset target IPs & Serials for Agent pinpoint scanning
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def get(self, request) -> Response:
+        auth_header = request.headers.get("Authorization", "")
+        token = auth_header.replace("Bearer ", "").strip()
+        auth_code = token.replace("token_agent_", "")
+
+        collector = AgentCollector.objects.filter(auth_code=auth_code).first()
+        if not collector:
+            collector = AgentCollector.objects.filter(agent_token=token).first()
+        if not collector or not collector.workplace:
+            return Response({"target_ips": [], "target_serials": []}, status=status.HTTP_200_OK)
+
+        assets = PrinterAsset.objects.filter(workplace=collector.workplace)
+        target_ips = [a.ip_address for a in assets if a.ip_address]
+        target_serials = [a.serial_no for a in assets if a.serial_no]
+
+        return Response(
+            {
+                "target_ips": target_ips,
+                "target_serials": target_serials,
+                "count": len(assets),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class AgentIngestBatchView(APIView):
     """
-    Receives Batch Ingestion dataset from Windows Agent (1,000 printers per batch)
-    Updates AgentCollector DB model & PrinterAsset DB model
+    High-Performance Bulk Ingestion Engine for REGISTERED PrinterAsset devices only
+    Completely blocks and ignores any unregistered network devices
     """
     authentication_classes: list = []
     permission_classes: list = []
@@ -1128,7 +1159,7 @@ class AgentIngestBatchView(APIView):
             collector.status = AgentCollector.Status.ONLINE
             collector.save()
 
-        # 2. High-Performance In-Memory Bulk Ingestion Engine (1,000 ~ 10,000 Devices Capacity)
+        # 2. High-Performance Bulk Ingestion for REGISTERED Devices ONLY
         matched_asset_ids = set()
         workplace = collector.workplace if collector else Workplace.objects.first()
         today_str = now.strftime("%Y%m%d")
@@ -1137,7 +1168,7 @@ class AgentIngestBatchView(APIView):
         if not workplace:
             return Response({"detail": "사업장 정보가 없습니다.", "processed_count": 0}, status=status.HTTP_400_BAD_REQUEST)
 
-        # A. Pre-fetch all Workplace Registered PrinterAssets & First Monthly Records into O(1) In-Memory Maps (1 DB Query each)
+        # Pre-fetch registered assets map (1 DB Query)
         registered_assets = list(PrinterAsset.objects.filter(workplace=workplace))
         asset_serial_map = {a.serial_no.strip().upper(): a for a in registered_assets if a.serial_no}
         asset_ip_map = {a.ip_address.strip(): a for a in registered_assets if a.ip_address}
@@ -1157,15 +1188,13 @@ class AgentIngestBatchView(APIView):
             mp.serial_no: mp for mp in MonitoringPrinter.objects.filter(workplace=workplace)
         }
 
-        # Prepared Bulk Objects
+        # Prepared Bulk Objects (Only for REGISTERED Assets)
         assets_to_update = []
         m_printer_updates = []
         m_data_updates = []
         m_record_updates = []
         supplies_alert_updates = []
-        unregistered_printer_updates = []
 
-        # In-Memory Batch Processing Loop (Zero DB Queries inside Loop)
         for item in devices:
             s_no = item.get("serial_no")
             if not s_no:
@@ -1173,6 +1202,14 @@ class AgentIngestBatchView(APIView):
 
             clean_sno = str(s_no).strip()
             upper_sno = clean_sno.upper()
+            ip_addr = item.get("ip_address", "127.0.0.1")
+
+            # STRICT CHECK: Process ONLY if the device is registered in PrinterAsset
+            asset = asset_serial_map.get(upper_sno) or asset_ip_map.get(ip_addr)
+            if not asset:
+                # Completely ignore unregistered devices
+                continue
+
             c_color = item.get("count_color", 0)
             c_mono = item.get("count_mono", 0)
             c_total = item.get("count_total", 0)
@@ -1181,122 +1218,106 @@ class AgentIngestBatchView(APIView):
             t_y = item.get("toner_y", 100)
             t_k = item.get("toner_k", 100)
             d_k = item.get("drum_k", 100)
-            ip_addr = item.get("ip_address", "127.0.0.1")
-            m_name = item.get("model_name", "Standard MFP")
+            m_name = item.get("model_name", asset.model_name or "Standard MFP")
 
-            asset = asset_serial_map.get(upper_sno) or asset_ip_map.get(ip_addr)
+            matched_asset_ids.add(asset.id)
+            first_rec = first_record_map.get(clean_sno)
+            if first_rec:
+                calc_monthly_color = max(0, c_color - first_rec.count1)
+                calc_monthly_mono = max(0, c_mono - first_rec.count2)
+            else:
+                calc_monthly_color = max(0, c_color - (asset.count_color or c_color))
+                calc_monthly_mono = max(0, c_mono - (asset.count_mono or c_mono))
+                if calc_monthly_color == 0 and c_color > 0:
+                    calc_monthly_color = int(c_color * 0.08)
+                if calc_monthly_mono == 0 and c_mono > 0:
+                    calc_monthly_mono = int(c_mono * 0.12)
 
-            if asset:
-                matched_asset_ids.add(asset.id)
-                first_rec = first_record_map.get(clean_sno)
-                if first_rec:
-                    calc_monthly_color = max(0, c_color - first_rec.count1)
-                    calc_monthly_mono = max(0, c_mono - first_rec.count2)
-                else:
-                    calc_monthly_color = max(0, c_color - (asset.count_color or c_color))
-                    calc_monthly_mono = max(0, c_mono - (asset.count_mono or c_mono))
-                    if calc_monthly_color == 0 and c_color > 0:
-                        calc_monthly_color = int(c_color * 0.08)
-                    if calc_monthly_mono == 0 and c_mono > 0:
-                        calc_monthly_mono = int(c_mono * 0.12)
+            asset.count_color = c_color
+            asset.count_mono = c_mono
+            asset.count_total = c_total
+            asset.monthly_usage_color = calc_monthly_color
+            asset.monthly_usage_mono = calc_monthly_mono
+            asset.toner_c = t_c
+            asset.toner_m = t_m
+            asset.toner_y = t_y
+            asset.toner_k = t_k
+            asset.drum_k = d_k
+            asset.last_scanned_at = now
+            assets_to_update.append(asset)
 
-                asset.count_color = c_color
-                asset.count_mono = c_mono
-                asset.count_total = c_total
-                asset.monthly_usage_color = calc_monthly_color
-                asset.monthly_usage_mono = calc_monthly_mono
-                asset.toner_c = t_c
-                asset.toner_m = t_m
-                asset.toner_y = t_y
-                asset.toner_k = t_k
-                asset.drum_k = d_k
-                asset.last_scanned_at = now
-                assets_to_update.append(asset)
-
-                # Prepare MonitoringPrinter Bulk Object
-                m_printer = existing_m_printers.get(clean_sno)
-                if not m_printer:
-                    m_printer = MonitoringPrinter(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        printer_model=m_name,
-                        scanned_model=m_name,
-                        ip=ip_addr,
-                        state="active",
-                        updated_at=now,
-                    )
-                else:
-                    m_printer.printer_model = m_name
-                    m_printer.scanned_model = m_name
-                    m_printer.ip = ip_addr
-                    m_printer.state = "active"
-                    m_printer.updated_at = now
-                m_printer_updates.append(m_printer)
-
-                # Prepare MonitoringData Bulk Object
-                m_data_updates.append(
-                    MonitoringData(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        monitoring_printer=m_printer if m_printer.pk else None,
-                        count1=c_color,
-                        count2=c_mono,
-                        count4=c_total,
-                        toner_c=t_c,
-                        toner_m=t_m,
-                        toner_y=t_y,
-                        toner_k=t_k,
-                        drum_k=d_k,
-                        agent_updated_at=now,
-                        updated_at=now,
-                    )
-                )
-
-                # Prepare MonitoringDataRecord Bulk Object
-                m_record_updates.append(
-                    MonitoringDataRecord(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        monitoring_printer=m_printer if m_printer.pk else None,
-                        yyyymmdd=today_str,
-                        count1=c_color,
-                        count2=c_mono,
-                        count4=c_total,
-                        toner_c=t_c,
-                        toner_m=t_m,
-                        toner_y=t_y,
-                        toner_k=t_k,
-                        drum_k=d_k,
-                        agent_updated_at=now,
-                        updated_at=now,
-                    )
-                )
-
-                # Prepare SuppliesAlert Bulk Object
-                supplies_alert_updates.append(
-                    SuppliesAlert(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        toner_c=t_c,
-                        toner_m=t_m,
-                        toner_y=t_y,
-                        toner_k=t_k,
-                        drum_k=d_k,
-                        updated_at=now,
-                    )
+            # Prepare MonitoringPrinter Bulk Object
+            m_printer = existing_m_printers.get(clean_sno)
+            if not m_printer:
+                m_printer = MonitoringPrinter(
+                    workplace=workplace,
+                    serial_no=clean_sno,
+                    printer_model=m_name,
+                    scanned_model=m_name,
+                    ip=ip_addr,
+                    state="active",
+                    updated_at=now,
                 )
             else:
-                # Prepare UnregisteredPrinter Bulk Object for auto-discovered unregistered devices
-                unregistered_printer_updates.append(
-                    UnregisteredPrinter(
-                        workplace=workplace,
-                        serial_no=clean_sno,
-                        scanned_model=m_name,
-                        ip=ip_addr,
-                        registered=False,
-                        updated_at=now,
-                    )
+                m_printer.printer_model = m_name
+                m_printer.scanned_model = m_name
+                m_printer.ip = ip_addr
+                m_printer.state = "active"
+                m_printer.updated_at = now
+            m_printer_updates.append(m_printer)
+
+            # Prepare MonitoringData Bulk Object
+            m_data_updates.append(
+                MonitoringData(
+                    workplace=workplace,
+                    serial_no=clean_sno,
+                    monitoring_printer=m_printer if m_printer.pk else None,
+                    count1=c_color,
+                    count2=c_mono,
+                    count4=c_total,
+                    toner_c=t_c,
+                    toner_m=t_m,
+                    toner_y=t_y,
+                    toner_k=t_k,
+                    drum_k=d_k,
+                    agent_updated_at=now,
+                    updated_at=now,
                 )
+            )
+
+            # Prepare MonitoringDataRecord Bulk Object
+            m_record_updates.append(
+                MonitoringDataRecord(
+                    workplace=workplace,
+                    serial_no=clean_sno,
+                    monitoring_printer=m_printer if m_printer.pk else None,
+                    yyyymmdd=today_str,
+                    count1=c_color,
+                    count2=c_mono,
+                    count4=c_total,
+                    toner_c=t_c,
+                    toner_m=t_m,
+                    toner_y=t_y,
+                    toner_k=t_k,
+                    drum_k=d_k,
+                    agent_updated_at=now,
+                    updated_at=now,
+                )
+            )
+
+            # Prepare SuppliesAlert Bulk Object
+            supplies_alert_updates.append(
+                SuppliesAlert(
+                    workplace=workplace,
+                    serial_no=clean_sno,
+                    toner_c=t_c,
+                    toner_m=t_m,
+                    toner_y=t_y,
+                    toner_k=t_k,
+                    drum_k=d_k,
+                    updated_at=now,
+                )
+            )
 
         # B. Bulk Execute Database Transactions (Only 5 Single SQL Statements for 10,000 items!)
         if assets_to_update:

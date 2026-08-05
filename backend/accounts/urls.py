@@ -4,6 +4,7 @@ from .views import (
     AgentFetchOidsView,
     AgentIngestBatchView,
     AgentStatusUpdateView,
+    AgentTargetAssetsView,
     CollectorCodeGenerateView,
     CollectorListView,
     DeviceActionView,
@@ -67,5 +68,6 @@ urlpatterns = [
     path("agent/authenticate/", AgentAuthView.as_view(), name="agent-authenticate"),
     path("agent/status/", AgentStatusUpdateView.as_view(), name="agent-status"),
     path("agent/oids/", AgentFetchOidsView.as_view(), name="agent-oids"),
+    path("agent/target-assets/", AgentTargetAssetsView.as_view(), name="agent-target-assets"),
     path("agent/ingest/", AgentIngestBatchView.as_view(), name="agent-ingest"),
 ]

@@ -50,6 +50,23 @@ class ApiClient:
             # Safe Fallback to default built-in OID map if server connection delayed
             return {}
 
+    def fetch_target_assets(self, agent_token: str) -> Dict[str, Any]:
+        """Downloads strictly registered PrinterAsset target IPs & Serials for pinpoint scanning"""
+        url = f"{self.server_url}/api/v1/agent/target-assets/"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {agent_token}",
+            },
+            method="GET",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return {"target_ips": [], "target_serials": []}
+
     def upload_batch_data(self, agent_token: str, scanned_devices: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Batch uploads scanned printer dataset to Server in 1 HTTPS request"""
         url = f"{self.server_url}/api/v1/agent/ingest/"

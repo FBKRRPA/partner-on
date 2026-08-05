@@ -73,20 +73,24 @@ def main():
     # 3. Main Ingestion Loop
     while True:
         try:
-            print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 최신 OID 다운로드 및 LAN 스캔 시작...")
+            print(f"\n[{time.strftime('%Y-%m-%d %H:%M:%S')}] 등록 자산 목록 및 최신 OID 다운로드 중...")
             
-            # Fetch dynamic OIDs from Server
+            # Fetch dynamic OIDs and Strictly Registered Target IPs from Server
             oid_map = api_client.fetch_latest_oids(agent_token)
+            target_res = api_client.fetch_target_assets(agent_token)
+            target_ips = target_res.get("target_ips", [])
+
+            print(f"[INFO] 서버에 정식 등록된 스캔 대상 자산: {len(target_ips)}대 IP ({', '.join(target_ips) if target_ips else '없음'})")
             
-            # Perform multi-threaded SNMP scan with chosen mode (AUTO / GET / WALK)
-            scanner = SNMPScanner(custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
+            # Perform pinpoint SNMP scan strictly for REGISTERED Target IPs
+            scanner = SNMPScanner(target_ips=target_ips, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
             scanned_devices = scanner.scan_all()
 
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 복합기/프린터 감지됨.")
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 등록 복합기 감지됨.")
 
-            # Always Upload Batch Packet to Server to update last_scanned_at and ONLINE status
+            # Upload Batch Packet to Server
             upload_res = api_client.upload_batch_data(agent_token, scanned_devices)
-            print(f"[SUCCESS] 클라우드 배치 업로드 완료 (감지 장비: {len(scanned_devices)}대): {upload_res.get('detail', '성공')}")
+            print(f"[SUCCESS] 클라우드 배치 업로드 완료 (수집 장비: {len(scanned_devices)}대): {upload_res.get('detail', '성공')}")
 
         except KeyboardInterrupt:
             print("\n[INFO] 사용자에 의해 에이전트가 종료됩니다. 서버에 오프라인 상태를 통보합니다...")

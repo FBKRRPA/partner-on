@@ -25,6 +25,7 @@
 | **TC-015** | 구성원 관리 | 8자리 구성원 초대 코드 생성 및 회원가입 연동 | Invite Code System | ✅ PASS |
 | **TC-016** | SNMP/OID | 복합기 제조사별 OID 동적 맵 매핑 | PrinterOidMapping Master | ✅ PASS |
 | **TC-017** | 수집 API | Agent 배치 업로드 `SuppliesAlert` 필드 500 에러 해결 | DRF Ingest API | ✅ PASS |
+| **TC-018** | Agent/보안 | 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제 | Agent Pinpoint Scan & DB Purge | ✅ PASS |
 
 ---
 
@@ -116,4 +117,13 @@
 * **발생 원인/배경**: Agent 실행 후 수집 데이터 배치 전송 시 `TypeError: SuppliesAlert() got unexpected keyword arguments: 'status_alert', 'alert_message'`로 인해 백엔드에서 500 Internal Server Error 발생.
 * **조치 내용**: `backend/accounts/views.py`에서 `SuppliesAlert` 모델 객체 생성 파라미터 중 DB에 존재하지 않는 불필요 키워드 인자를 제거하고 실제 소모품 필드만 일괄 매핑.
 * **검증 결과**: Agent 실행 후 수집 배치 전송 시 HTTP 200 OK 정상 수집 및 백엔드 테스트 100% 통과.
+
+### 18. [TC-018] 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제
+* **발생 원인/배경**: Agent가 로컬 C-class 서브넷 대역(.1~.254) 전체를 무차별 스캔하여 미등록 기기 250여 대가 백엔드로 지속 유입되고 DB에 보관되던 현상 발생.
+* **조치 내용**:
+  1. Agent 수집기(`main.py`, `snmp_scanner.py`, `api_client.py`)를 개정하여 클라우드 서버 API(`GET /api/v1/agent/target-assets/`)에서 정식 등록된 `PrinterAsset` 장비 IP 목록만 받아와 핀포인트로 전용 스캔하도록 변경.
+  2. 백엔드 `AgentIngestBatchView`에서 미등록 기기를 `UnregisteredPrinter`로 보관하던 수집 로직을 완전 제거하여 등록 장비 이외 데이터 전송을 원천 차단.
+  3. DB에 축적된 미등록 기기 데이터 10,253건을 일괄 완전 삭제.
+* **검증 결과**: DB 미등록 레코드 0건 완벽 청제 및 Agent 실행 시 정식 등록된 2대 복합기만 핀포인트 전용 수집 성공.
+
 

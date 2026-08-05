@@ -35,8 +35,9 @@ def get_local_ip_subnet() -> str:
         return "192.168.1"
 
 class SNMPScanner:
-    def __init__(self, custom_ips: List[str] = None, oid_map: Dict[str, str] = None, mode: str = "auto"):
+    def __init__(self, target_ips: List[str] = None, custom_ips: List[str] = None, oid_map: Dict[str, str] = None, mode: str = "auto"):
         self.subnet = get_local_ip_subnet()
+        self.target_ips = target_ips or []
         self.custom_ips = custom_ips or []
         self.oid_map = oid_map or DEFAULT_OIDS
         self.mode = mode.lower()  # "get", "walk", or "auto"
@@ -157,16 +158,20 @@ class SNMPScanner:
 
     def scan_all(self, max_workers: int = 50) -> List[Dict[str, Any]]:
         """
-        Multi-threaded parallel scan supporting SNMP Get & SNMP Walk modes
+        Multi-threaded parallel scan strictly for REGISTERED Target IPs
         """
-        target_ips = [f"{self.subnet}.{i}" for i in range(1, 255)]
+        scan_targets = list(self.target_ips)
         for c_ip in self.custom_ips:
-            if c_ip not in target_ips:
-                target_ips.append(c_ip)
+            if c_ip not in scan_targets:
+                scan_targets.append(c_ip)
+
+        # Fallback to local subnet discovery only if no registered target IPs provided
+        if not scan_targets:
+            scan_targets = [f"{self.subnet}.{i}" for i in range(1, 255)]
 
         results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_ip = {executor.submit(self.scan_ip_snmp, ip): ip for ip in target_ips}
+            future_to_ip = {executor.submit(self.scan_ip_snmp, ip): ip for ip in scan_targets}
             for future in concurrent.futures.as_completed(future_to_ip):
                 res = future.result()
                 if res:
