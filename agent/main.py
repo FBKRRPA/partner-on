@@ -90,7 +90,12 @@ def main():
                 print(f"[SUCCESS] 클라우드 배치 업로드 완료: {upload_res.get('detail', '성공')}")
 
         except KeyboardInterrupt:
-            print("\n[INFO] 사용자에 의해 에이전트가 종료되었습니다.")
+            print("\n[INFO] 사용자에 의해 에이전트가 종료됩니다. 서버에 오프라인 상태를 통보합니다...")
+            try:
+                api_client.update_status(agent_token, "OFFLINE")
+            except Exception:
+                pass
+            print("[INFO] 에이전트가 안전하게 종료되었습니다.")
             break
         except Exception as e:
             print(f"[WARNING] 주기 수집 중 오류 발생 (다음 주기에 재시도): {e}")

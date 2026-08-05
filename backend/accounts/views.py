@@ -1048,6 +1048,27 @@ class AgentAuthView(APIView):
         )
 
 
+class AgentStatusUpdateView(APIView):
+    """
+    Updates AgentCollector status (e.g. OFFLINE on graceful agent shutdown)
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        auth_header = request.headers.get("Authorization", "")
+        token = auth_header.replace("Bearer ", "").strip()
+        status_val = request.data.get("status", "OFFLINE")
+
+        collector = AgentCollector.objects.filter(agent_token=token).first()
+        if collector:
+            collector.status = status_val
+            collector.save(update_fields=["status"])
+            return Response({"detail": f"수집기 상태가 [{status_val}]로 변경되었습니다."}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "수집기를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+
 class AgentFetchOidsView(APIView):
     """
     Dynamic OID Downloader for Agent reading directly from PrinterOidMapping DB model
@@ -1382,21 +1403,29 @@ class CollectorListView(APIView):
         if not workplace:
             return Response([], status=status.HTTP_200_OK)
 
+        now = timezone.now()
         collectors = AgentCollector.objects.filter(workplace=workplace)
-        data = [
-            {
-                "id": c.id,
-                "auth_code": c.auth_code,
-                "name": c.name,
-                "customer_name": c.customer_name,
-                "ip_range": c.ip_range,
-                "custom_ips": c.custom_ips,
-                "status": c.status,
-                "last_scanned_at": timezone.localtime(c.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
-                "detected_count": c.detected_count,
-            }
-            for c in collectors
-        ]
+        data = []
+        for c in collectors:
+            # Heartbeat check: If last_scanned_at is older than 3 minutes (180s) or missing, set OFFLINE
+            if not c.last_scanned_at or (now - c.last_scanned_at > timedelta(minutes=3)):
+                if c.status != AgentCollector.Status.OFFLINE:
+                    c.status = AgentCollector.Status.OFFLINE
+                    c.save(update_fields=["status"])
+
+            data.append(
+                {
+                    "id": c.id,
+                    "auth_code": c.auth_code,
+                    "name": c.name,
+                    "customer_name": c.customer_name,
+                    "ip_range": c.ip_range,
+                    "custom_ips": c.custom_ips,
+                    "status": c.status,
+                    "last_scanned_at": timezone.localtime(c.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
+                    "detected_count": c.detected_count,
+                }
+            )
         return Response(data, status=status.HTTP_200_OK)
 
 

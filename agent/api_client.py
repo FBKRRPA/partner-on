@@ -65,3 +65,22 @@ class ApiClient:
                 return json.loads(resp.read().decode("utf-8"))
         except Exception as e:
             raise Exception(f"데이터 업로드 실패: {e}")
+
+    def update_status(self, agent_token: str, status: str = "OFFLINE") -> Dict[str, Any]:
+        """Notifies Server of Agent status change (e.g. OFFLINE on shutdown)"""
+        url = f"{self.server_url}/api/v1/agent/status/"
+        payload = json.dumps({"status": status}).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {agent_token}",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return {}

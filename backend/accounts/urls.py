@@ -3,6 +3,7 @@ from .views import (
     AgentAuthView,
     AgentFetchOidsView,
     AgentIngestBatchView,
+    AgentStatusUpdateView,
     CollectorCodeGenerateView,
     CollectorListView,
     DeviceActionView,
@@ -64,6 +65,7 @@ urlpatterns = [
 
     # Agent REST APIs
     path("agent/authenticate/", AgentAuthView.as_view(), name="agent-authenticate"),
+    path("agent/status/", AgentStatusUpdateView.as_view(), name="agent-status"),
     path("agent/oids/", AgentFetchOidsView.as_view(), name="agent-oids"),
     path("agent/ingest/", AgentIngestBatchView.as_view(), name="agent-ingest"),
 ]
