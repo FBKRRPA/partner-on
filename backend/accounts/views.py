@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Device, Workplace, RoleMenuPermission
+from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset
 from .permissions import IsOwnerPermission
 from .serializers import (
     DeviceDtoSerializer,
@@ -1007,6 +1007,7 @@ class AgentFetchOidsView(APIView):
 class AgentIngestBatchView(APIView):
     """
     Receives Batch Ingestion dataset from Windows Agent (1,000 printers per batch)
+    Matches ingested devices with PrinterAsset DB records by serial_no
     """
     authentication_classes: list = []
     permission_classes: list = []
@@ -1018,20 +1019,121 @@ class AgentIngestBatchView(APIView):
         token = auth_header.replace("Bearer ", "").strip()
         auth_code = token.replace("token_agent_", "")
 
-        # Update scanned count in registry
-        now_str = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 1. Update active collector registry
+        now = timezone.now()
+        now_str = now.strftime("%Y-%m-%d %H:%M:%S")
         for agent in ACTIVE_AGENT_REGISTRY:
             if agent["auth_code"] == auth_code or token.endswith(agent["auth_code"]):
                 agent["detected_count"] = device_count
                 agent["last_scanned_at"] = now_str
                 agent["status"] = "ONLINE"
 
+        # 2. Real DB Ingestion Matching by serial_no
+        matched_count = 0
+        for item in devices:
+            s_no = item.get("serial_no")
+            if not s_no:
+                continue
+
+            asset = PrinterAsset.objects.filter(serial_no=s_no).first()
+            if asset:
+                asset.count_color = item.get("count_color", asset.count_color)
+                asset.count_mono = item.get("count_mono", asset.count_mono)
+                asset.count_total = item.get("count_total", asset.count_total)
+                asset.toner_c = item.get("toner_c", asset.toner_c)
+                asset.toner_m = item.get("toner_m", asset.toner_m)
+                asset.toner_y = item.get("toner_y", asset.toner_y)
+                asset.toner_k = item.get("toner_k", asset.toner_k)
+                asset.drum_k = item.get("drum_k", asset.drum_k)
+                asset.last_scanned_at = now
+                asset.save()
+                matched_count += 1
+
         return Response(
             {
-                "detail": f"총 {device_count}대의 장비 배치 데이터 수집이 완료되었습니다.",
+                "detail": f"총 {device_count}대 스캔 완료 (DB 수동 등록 매칭 장비: {matched_count}대)",
                 "processed_count": device_count,
+                "matched_count": matched_count,
             },
             status=status.HTTP_200_OK,
+        )
+
+
+class PrinterAssetListCreateView(APIView):
+    """
+    List & Create Printer Assets manually in /operations/assets/devices
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response([], status=status.HTTP_200_OK)
+
+        printers = PrinterAsset.objects.filter(workplace=workplace)
+        data = [
+            {
+                "id": p.id,
+                "serial_no": p.serial_no,
+                "model_name": p.model_name,
+                "customer_name": p.customer_name,
+                "location": p.location,
+                "ip_address": p.ip_address,
+                "status": p.status,
+                "count_color": p.count_color,
+                "count_mono": p.count_mono,
+                "count_total": p.count_total,
+                "toner_c": p.toner_c,
+                "toner_m": p.toner_m,
+                "toner_y": p.toner_y,
+                "toner_k": p.toner_k,
+                "drum_k": p.drum_k,
+                "last_scanned_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "-",
+            }
+            for p in printers
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serial_no = str(request.data.get("serial_no", "")).strip()
+        model_name = str(request.data.get("model_name", "복합기 표준 모델")).strip()
+        customer_name = str(request.data.get("customer_name", "자사 본사")).strip()
+        location = str(request.data.get("location", "사무실")).strip()
+        ip_address = request.data.get("ip_address", None)
+
+        if not serial_no:
+            return Response({"detail": "시리얼 번호(serial_no)는 필수 항목입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        printer, created = PrinterAsset.objects.get_or_create(
+            serial_no=serial_no,
+            defaults={
+                "workplace": workplace,
+                "model_name": model_name,
+                "customer_name": customer_name,
+                "location": location,
+                "ip_address": ip_address,
+                "status": PrinterAsset.Status.APPROVED,
+            },
+        )
+        if not created:
+            printer.model_name = model_name
+            printer.customer_name = customer_name
+            printer.location = location
+            if ip_address:
+                printer.ip_address = ip_address
+            printer.save()
+
+        return Response(
+            {
+                "detail": "장비가 등록되었습니다. Agent 수집 시 시리얼 번호 매칭으로 실시간 관제됩니다.",
+                "id": printer.id,
+                "serial_no": printer.serial_no,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -1066,99 +1168,79 @@ class CollectorListView(APIView):
 
 class MonitoringUsageView(APIView):
     """
-    Returns device SNMP counter usage data for monitoring
+    Returns real PrinterAsset SNMP counter usage data from DB
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response([], status=status.HTTP_200_OK)
+
+        printers = PrinterAsset.objects.filter(workplace=workplace)
         usage_data = [
             {
-                "id": 1,
-                "customer_name": "(주)파트너온 본사",
-                "serial_no": "FX-721495-192168155",
-                "model_name": "ApeosPort-VII C3373",
-                "location": "2층 경영지원팀",
-                "count_color": 15420,
-                "count_mono": 48900,
-                "count_large_color": 120,
-                "count_total": 64440,
-                "monthly_usage_color": 1240,
-                "monthly_usage_mono": 3500,
-                "last_updated_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
-            },
-            {
-                "id": 2,
-                "customer_name": "한국금융 렌탈사업부",
-                "serial_no": "FX-839102-1010522",
-                "model_name": "DocuCentre-V C2275",
-                "location": "3층 영원영업부",
-                "count_color": 8920,
-                "count_mono": 124500,
-                "count_large_color": 450,
-                "count_total": 133870,
-                "monthly_usage_color": 890,
-                "monthly_usage_mono": 8200,
-                "last_updated_at": (timezone.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
-            },
+                "id": p.id,
+                "customer_name": p.customer_name,
+                "serial_no": p.serial_no,
+                "model_name": p.model_name,
+                "location": p.location,
+                "count_color": p.count_color,
+                "count_mono": p.count_mono,
+                "count_large_color": p.count_large_color,
+                "count_total": p.count_total,
+                "monthly_usage_color": p.monthly_usage_color,
+                "monthly_usage_mono": p.monthly_usage_mono,
+                "last_updated_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
+            }
+            for p in printers
         ]
         return Response(usage_data, status=status.HTTP_200_OK)
 
 
 class MonitoringSuppliesView(APIView):
     """
-    Returns toner & drum remaining status (%) for monitoring
+    Returns real PrinterAsset toner & drum remaining status (%) from DB
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
-        supplies_data = [
-            {
-                "id": 1,
-                "customer_name": "(주)파트너온 본사",
-                "serial_no": "FX-721495-192168155",
-                "model_name": "ApeosPort-VII C3373",
-                "location": "2층 경영지원팀",
-                "toner_c": 85,
-                "toner_m": 12,  # WARNING
-                "toner_y": 92,
-                "toner_k": 45,
-                "drum_k": 78,
-                "status_alert": "WARNING",  # CRITICAL / WARNING / NORMAL
-                "alert_message": "마젠타(M) 토너 잔량 15% 이하 (교체 필요)",
-                "last_updated_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
-            },
-            {
-                "id": 2,
-                "customer_name": "한국금융 렌탈사업부",
-                "serial_no": "FX-839102-1010522",
-                "model_name": "DocuCentre-V C2275",
-                "location": "3층 영업부",
-                "toner_c": 90,
-                "toner_m": 88,
-                "toner_y": 75,
-                "toner_k": 5,  # CRITICAL
-                "drum_k": 40,
-                "status_alert": "CRITICAL",
-                "alert_message": "블랙(K) 토너 잔량 5% 미만 (즉시 교체)",
-                "last_updated_at": (timezone.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S"),
-            },
-            {
-                "id": 3,
-                "customer_name": "미래아이티 연구소",
-                "serial_no": "CAN-994812-1921681100",
-                "model_name": "imageRUNNER ADV C3530",
-                "location": "1층 연구실",
-                "toner_c": 95,
-                "toner_m": 90,
-                "toner_y": 88,
-                "toner_k": 82,
-                "drum_k": 95,
-                "status_alert": "NORMAL",
-                "alert_message": "모든 소모품 정상",
-                "last_updated_at": (timezone.now() - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S"),
-            },
-        ]
+        workplace = request.user.workplace
+        if not workplace:
+            return Response([], status=status.HTTP_200_OK)
+
+        printers = PrinterAsset.objects.filter(workplace=workplace)
+        supplies_data = []
+        for p in printers:
+            min_toner = min(p.toner_c, p.toner_m, p.toner_y, p.toner_k)
+            if min_toner <= 5:
+                alert_level = "CRITICAL"
+                msg = f"토너 잔량 {min_toner}% 미만 (즉시 교체 필요)"
+            elif min_toner <= 15:
+                alert_level = "WARNING"
+                msg = f"토너 잔량 {min_toner}% 이하 (교체 준비)"
+            else:
+                alert_level = "NORMAL"
+                msg = "모든 소모품 정상"
+
+            supplies_data.append({
+                "id": p.id,
+                "customer_name": p.customer_name,
+                "serial_no": p.serial_no,
+                "model_name": p.model_name,
+                "location": p.location,
+                "toner_c": p.toner_c,
+                "toner_m": p.toner_m,
+                "toner_y": p.toner_y,
+                "toner_k": p.toner_k,
+                "drum_k": p.drum_k,
+                "status_alert": alert_level,
+                "alert_message": msg,
+                "last_updated_at": p.last_scanned_at.strftime("%Y-%m-%d %H:%M:%S") if p.last_scanned_at else "미수집",
+            })
+
         return Response(supplies_data, status=status.HTTP_200_OK)
+
 
 
 

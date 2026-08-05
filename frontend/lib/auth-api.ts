@@ -596,6 +596,61 @@ export async function getMonitoringSupplies(token: string): Promise<MonitoringSu
   return body as MonitoringSupplyDto[];
 }
 
+export interface PrinterAssetDto {
+  id: number;
+  serial_no: string;
+  model_name: string;
+  customer_name: string;
+  location: string;
+  ip_address?: string;
+  status: string;
+  count_color: number;
+  count_mono: number;
+  count_total: number;
+  toner_c: number;
+  toner_m: number;
+  toner_y: number;
+  toner_k: number;
+  drum_k: number;
+  last_scanned_at: string;
+}
+
+export async function getPrinterAssets(token: string): Promise<PrinterAssetDto[]> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/printers/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "복합기 자산 목록을 불러오지 못했습니다."));
+  }
+  return body as PrinterAssetDto[];
+}
+
+export async function createPrinterAsset(
+  token: string,
+  payload: {
+    serial_no: string;
+    model_name: string;
+    customer_name: string;
+    location: string;
+    ip_address?: string;
+  }
+): Promise<{ detail: string; id: number; serial_no: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/printers/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "장비 수동 등록에 실패했습니다."));
+  }
+  return body as { detail: string; id: number; serial_no: string };
+}
+
 export async function signUpWithInvite(payload: {
   email: string;
   invite_code: string;

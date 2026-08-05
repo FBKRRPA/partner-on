@@ -164,6 +164,18 @@
   * `device_name`: `CharField(max_length=150)` - 디바이스/OS 명칭
   * `ip_address`: `GenericIPAddressField` - 접속 IP 주소 (Nginx 프록시 전달)
   * `status`: Enum (`PENDING`, `APPROVED`, `REJECTED`) - 접속 승인 상태
+* **`accounts_printerasset` (PrinterAsset 모델)**:
+  * `id`: Primary Key
+  * `workplace_id`: ForeignKey (`Workplace` 참조)
+  * `serial_no`: `CharField(max_length=120, unique=True)` - 장비 고유 시리얼 번호
+  * `model_name`: `CharField(max_length=120)` - 복합기 모델명
+  * `customer_name`: `CharField(max_length=120)` - 설치 고객사명
+  * `location`: `CharField(max_length=150)` - 설치 위치
+  * `ip_address`: `GenericIPAddressField` - 기기 IP 주소
+  * `status`: Enum (`APPROVED`, `PENDING`, `INACTIVE`) - 장비 수집 승인 상태
+  * `count_color` / `count_mono` / `count_total`: IntegerField - 누적 SNMP 카운터
+  * `toner_c` / `toner_m` / `toner_y` / `toner_k` / `drum_k`: IntegerField - 토너/드럼 잔량 (%)
+  * `last_scanned_at`: DateTimeField - 최근 Agent 수집 시각
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블

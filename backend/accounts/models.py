@@ -137,3 +137,46 @@ class Device(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user.email} - {self.device_name} ({self.status})"
+
+
+class PrinterAsset(models.Model):
+    """
+    Printer/Multifunction Printer Asset Model matched with Agent SNMP Ingestion
+    """
+    class Status(models.TextChoices):
+        APPROVED = "APPROVED", "등록 승인"
+        PENDING = "PENDING", "수집 대기"
+        INACTIVE = "INACTIVE", "비활성"
+
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="printers")
+    serial_no = models.CharField(max_length=120, unique=True, help_text="장비 고유 시리얼 번호")
+    model_name = models.CharField(max_length=120, default="복합기 표준 모델")
+    customer_name = models.CharField(max_length=120, default="자사 본사")
+    location = models.CharField(max_length=150, blank=True, default="사무실")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.APPROVED)
+
+    # Counter Metrics
+    count_color = models.IntegerField(default=0)
+    count_mono = models.IntegerField(default=0)
+    count_large_color = models.IntegerField(default=0)
+    count_total = models.IntegerField(default=0)
+    monthly_usage_color = models.IntegerField(default=0)
+    monthly_usage_mono = models.IntegerField(default=0)
+
+    # Toner & Drum Supplies (%)
+    toner_c = models.IntegerField(default=100)
+    toner_m = models.IntegerField(default=100)
+    toner_y = models.IntegerField(default=100)
+    toner_k = models.IntegerField(default=100)
+    drum_k = models.IntegerField(default=100)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_scanned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"[{self.serial_no}] {self.model_name} - {self.customer_name}"
+
