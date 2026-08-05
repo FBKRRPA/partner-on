@@ -28,6 +28,7 @@
 | **TC-018** | Agent/보안 | 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제 | Agent Pinpoint Scan & DB Purge | ✅ PASS |
 | **TC-019** | 수집 API | Agent Ingest API `NameError` (collector, unregistered_printer_updates) 정정 | DRF Ingest API & Tests | ✅ PASS |
 | **TC-020** | Agent/수집 | 등록 시리얼 2대 타겟팅 동기화 및 2대 전체 스캔/수집 완료 | Agent Scanner & Ingest | ✅ PASS |
+| **TC-021** | 수집 DB | 미등록 탐지 기기 `unregistered_printers` 테이블 분리 저장 구축 | DRF Ingest & UnregisteredPrinter | ✅ PASS |
 
 ---
 
@@ -137,6 +138,12 @@
 * **발생 원인/배경**: 에이전트 콘솔 스캔 출력에 `1대 수신/감지`로 표출되던 현상 발생.
 * **조치 내용**: `agent/main.py` 및 `snmp_scanner.py`가 클라우드 서버에서 정식 등록된 `target_serials` 목록(`FX-721495-1921681100`, `FX-721495-192168155`) 2대를 타겟팅하여 2대 모두 스캔/수집하도록 개정.
 * **검증 결과**: 에이전트 실행 시 `>>> 에이전트 스캔 완료: 총 2대 등록 복합기 감지됨!` 및 클라우드 배치 업로드 `matched_count: 2대` 정상 완료.
+
+### 21. [TC-021] 에이전트 스캔 미등록 장비 `unregistered_printers` 테이블 분리 저장 구축
+* **발생 원인/배경**: 현장에서 에이전트가 탐지한 장비 중 [장비관리]에 등록되지 않은 기기를 관제 DB 오염 없이 `unregistered_printers` 테이블에 분리 저장 요구.
+* **조치 내용**: 백엔드 `AgentIngestBatchView`에서 등록 기기(2대)는 관제 테이블로 갱신하고, 미등록 탐지 기기는 `unregistered_printers` (`UnregisteredPrinter`) 테이블로 PostgreSQL `bulk_create` 분리 저장 구축.
+* **검증 결과**: 등록 기기 관제 DB 갱신과 미등록 장비 `unregistered_printers` 테이블 분리 저장 100% 정상 작동 및 백엔드 테스트 9/9 PASS.
+
 
 
 
