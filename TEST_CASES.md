@@ -41,6 +41,7 @@
 | **TC-031** | DB/미등록 | 미등록 기기 DB 테이블 상세 스캔 정보 컬럼 10종 확장 구축 | UnregisteredPrinter Rich Columns Expansion | ✅ PASS |
 | **TC-032** | 수집 API | PostgreSQL ON CONFLICT CardinalityViolation 에러 방지 IP 중복 제거 | Ingest IP Deduplication Defense | ✅ PASS |
 | **TC-033** | DB/재생성 | PostgreSQL unregistered_printers DB 테이블 완전 삭제 및 재생성 | UnregisteredPrinter Table Re-creation | ✅ PASS |
+| **TC-034** | Agent/네트워크 | 현장 동적 IP 서브넷 대역 자동 감지 탑재 | Dynamic IP Subnet Auto Detection | ✅ PASS |
 
 ---
 
@@ -215,6 +216,12 @@
 * **발생 원인/배경**: 미등록 기기 상세 스캔 정보 컬럼 10종 확장 및 DB 마이그레이션 이력 스킴 일괄 갱신 지침.
 * **조치 내용**: PostgreSQL `DROP TABLE IF EXISTS unregistered_printers CASCADE;` 수행 및 23개 최신 규격 컬럼 스킴으로 재생성 완료.
 * **검증 결과**: PostgreSQL 총 23개 최신 컬럼 정상 렌더링 확인 및 백엔드 테스트 9/9 PASS.
+
+### 34. [TC-034] 현장 동적 IP 서브넷 대역 자동 감지 탑재
+* **발생 원인/배경**: 풀 스캔 모드 가동 시 특정 서브넷 하드코딩으로 인해 현장 실제 IP 대역 장비 탐지 불가 현상 해결 요구.
+* **조치 내용**: `agent/main.py` 풀 스캔 모드 가동 부에 `get_local_ip_subnet()` 지능형 자동 감지 엔진 연동 (로컬 IP 기반 서브넷 대역 자동 생성).
+* **검증 결과**: 현장 네트워크 서브넷 대역 자동 감지 및 전체 탐지 스캔 100% 성공, 백엔드 테스트 9/9 PASS.
+
 
 
 

@@ -88,8 +88,10 @@ def main():
             # Condition 2: Parameter/Query scan_unregistered is True -> Full Subnet Scan
             # Condition 3: Existing registered assets present -> Pinpoint Scan for Registered Assets Only
             if not target_serials or scan_unregistered_flag:
-                print(f"[INFO] [FULL SCAN MODE] (Reason: {'Initial Setup' if not target_serials else 'Scan Unregistered Flag Received'}) - Scanning Subnet .1~.254...")
-                full_subnets = [f"192.168.1.{i}" for i in range(1, 255)]
+                from snmp_scanner import get_local_ip_subnet
+                detected_subnet = get_local_ip_subnet()
+                print(f"[INFO] [FULL SCAN MODE] (Reason: {'Initial Setup' if not target_serials else 'Scan Unregistered Flag Received'}) - Scanning Subnet {detected_subnet}.1~.254...")
+                full_subnets = [f"{detected_subnet}.{i}" for i in range(1, 255)]
                 scanner = SNMPScanner(target_ips=full_subnets, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
             else:
                 print(f"[INFO] [PINPOINT SCAN MODE] (Registered Serials: {len(target_serials)} devices)")
