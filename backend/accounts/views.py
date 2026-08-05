@@ -1019,29 +1019,8 @@ class CollectorListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
-        # Mock active collector dataset for demonstration
-        collectors = [
-            {
-                "id": 1,
-                "name": "강남 지점 메인 에이전트",
-                "customer_name": "(주)파트너온 본사",
-                "ip_range": "192.168.1.1/24",
-                "custom_ips": ["192.168.10.55", "192.168.10.60"],
-                "status": "ONLINE",
-                "last_scanned_at": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "detected_count": 14,
-            },
-            {
-                "id": 2,
-                "name": "여의도 지서 수집기",
-                "customer_name": "한국금융 렌탈사업부",
-                "ip_range": "10.10.5.1/24",
-                "custom_ips": [],
-                "status": "OFFLINE",
-                "last_scanned_at": (timezone.now() - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S"),
-                "detected_count": 8,
-            },
-        ]
+        # Returns empty list for fresh initial state
+        collectors: list = []
         return Response(collectors, status=status.HTTP_200_OK)
 
 
