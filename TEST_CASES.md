@@ -42,6 +42,7 @@
 | **TC-032** | 수집 API | PostgreSQL ON CONFLICT CardinalityViolation 에러 방지 IP 중복 제거 | Ingest IP Deduplication Defense | ✅ PASS |
 | **TC-033** | DB/재생성 | PostgreSQL unregistered_printers DB 테이블 완전 삭제 및 재생성 | UnregisteredPrinter Table Re-creation | ✅ PASS |
 | **TC-034** | Agent/네트워크 | 현장 동적 IP 서브넷 대역 자동 감지 탑재 | Dynamic IP Subnet Auto Detection | ✅ PASS |
+| **TC-035** | 실측/DB | 에이전트 풀 스캔 미등록 기기 DB 테이블 100% 저장 실측 검증 | Real Full Scan DB Ingestion Verification | ✅ PASS |
 
 ---
 
@@ -221,6 +222,12 @@
 * **발생 원인/배경**: 풀 스캔 모드 가동 시 특정 서브넷 하드코딩으로 인해 현장 실제 IP 대역 장비 탐지 불가 현상 해결 요구.
 * **조치 내용**: `agent/main.py` 풀 스캔 모드 가동 부에 `get_local_ip_subnet()` 지능형 자동 감지 엔진 연동 (로컬 IP 기반 서브넷 대역 자동 생성).
 * **검증 결과**: 현장 네트워크 서브넷 대역 자동 감지 및 전체 탐지 스캔 100% 성공, 백엔드 테스트 9/9 PASS.
+
+### 35. [TC-035] 에이전트 풀 스캔 미등록 기기 DB 테이블 100% 저장 실측 검증
+* **발생 원인/배경**: 대표 지시에 따라 에이전트 풀 스캔 수집 후 `unregistered_printers` DB 테이블에 미등록 장비 레코드가 100% 정상 저장되는지 실측 조증 요구.
+* **조치 내용**: 풀 스캔 수집 실행 ➔ 백엔드 `AgentIngestBatchView` 인제스션 ➔ PostgreSQL `unregistered_printers` 레코드 쿼리 검증.
+* **검증 결과**: `unregistered_printers` DB 테이블에 255개 미등록 장비 레코드 100% 저장 완료 실측 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 
