@@ -1308,11 +1308,20 @@ class PrinterAssetListCreateView(APIView):
             return Response([], status=status.HTTP_200_OK)
 
         now = timezone.now()
+        # Check if there is at least 1 ONLINE AgentCollector for this workplace
+        has_online_collector = AgentCollector.objects.filter(
+            workplace=workplace, status=AgentCollector.Status.ONLINE
+        ).exists()
+
         printers = PrinterAsset.objects.filter(workplace=workplace)
         data = []
         for p in printers:
-            # Real-time online determination: Scanned within 3 minutes (180s)
-            is_online = bool(p.last_scanned_at and (now - p.last_scanned_at <= timedelta(minutes=3)))
+            # Real-time online determination: Scanned within 3 minutes (180s) AND active collector exists
+            is_online = bool(
+                has_online_collector
+                and p.last_scanned_at
+                and (now - p.last_scanned_at <= timedelta(minutes=3))
+            )
             data.append(
                 {
                     "id": p.id,
