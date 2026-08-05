@@ -1148,17 +1148,6 @@ class AgentIngestBatchView(APIView):
         token = auth_header.replace("Bearer ", "").strip()
         auth_code = token.replace("token_agent_", "")
 
-        # 1. Update AgentCollector DB Record
-        now = timezone.now()
-        collector = AgentCollector.objects.filter(auth_code=auth_code).first()
-        if not collector:
-            collector = AgentCollector.objects.filter(agent_token=token).first()
-        if collector:
-            collector.detected_count = device_count
-            collector.last_scanned_at = now
-            collector.status = AgentCollector.Status.ONLINE
-            collector.save()
-
         # 2. High-Performance Bulk Ingestion for REGISTERED Devices ONLY
         matched_asset_ids = set()
         workplace = collector.workplace if collector else Workplace.objects.first()
@@ -1318,6 +1307,15 @@ class AgentIngestBatchView(APIView):
                     updated_at=now,
                 )
             )
+
+        matched_count = len(matched_asset_ids)
+
+        # Update AgentCollector DB Record strictly with REGISTERED matched count
+        if collector:
+            collector.detected_count = matched_count
+            collector.last_scanned_at = now
+            collector.status = AgentCollector.Status.ONLINE
+            collector.save(update_fields=["detected_count", "last_scanned_at", "status"])
 
         # B. Bulk Execute Database Transactions (Only 5 Single SQL Statements for 10,000 items!)
         if assets_to_update:

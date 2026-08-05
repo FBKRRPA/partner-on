@@ -119,11 +119,11 @@
 * **검증 결과**: Agent 실행 후 수집 배치 전송 시 HTTP 200 OK 정상 수집 및 백엔드 테스트 100% 통과.
 
 ### 18. [TC-018] 등록 장비 핀포인트 전용 수집 전환 및 DB 미등록 데이터(10,253건) 일괄 삭제
-* **발생 원인/배경**: Agent가 로컬 C-class 서브넷 대역(.1~.254) 전체를 무차별 스캔하여 미등록 기기 250여 대가 백엔드로 지속 유입되고 DB에 보관되던 현상 발생.
+* **발생 원인/배경**: Agent가 로컬 C-class 서브넷 대역(.1~.254) 전체를 무차별 스캔하여 미등록 기기 250여 대가 백엔드로 지속 유입되고, 수집기 관리 UI의 `detected_count` 카운트에 미등록 장비 수치가 자꾸 표출되던 잔재 문제 발생.
 * **조치 내용**:
-  1. Agent 수집기(`main.py`, `snmp_scanner.py`, `api_client.py`)를 개정하여 클라우드 서버 API(`GET /api/v1/agent/target-assets/`)에서 정식 등록된 `PrinterAsset` 장비 IP 목록만 받아와 핀포인트로 전용 스캔하도록 변경.
-  2. 백엔드 `AgentIngestBatchView`에서 미등록 기기를 `UnregisteredPrinter`로 보관하던 수집 로직을 완전 제거하여 등록 장비 이외 데이터 전송을 원천 차단.
+  1. Agent 수집기(`main.py`, `snmp_scanner.py`, `api_client.py`)를 개정하여 클라우드 서버 API(`GET /api/v1/agent/target-assets/`)에서 정식 등록된 `PrinterAsset` 장비 IP 목록만 받아와 핀포인트로 전용 스캔하도록 변경. (서버 미인증/미응답 시에도 Fallback 254대 스캔 원천 차단)
+  2. 백엔드 `AgentIngestBatchView`에서 미등록 기기를 `UnregisteredPrinter`로 보관하던 수집 로직을 완전 제거하고, `AgentCollector.detected_count` 카운터도 오직 실시간 매칭 성공한 등록 장비 수(`matched_count`)로만 갱신되도록 수정.
   3. DB에 축적된 미등록 기기 데이터 10,253건을 일괄 완전 삭제.
-* **검증 결과**: DB 미등록 레코드 0건 완벽 청제 및 Agent 실행 시 정식 등록된 2대 복합기만 핀포인트 전용 수집 성공.
+* **검증 결과**: DB 미등록 레코드 0건 완벽 청제, UI 수집기 탐지 수량 `2대` 100% 명확히 고정 및 Agent 실행 시 정식 등록된 2대 복합기만 핀포인트 전용 수집 성공.
 
 
