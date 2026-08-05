@@ -1199,8 +1199,62 @@ class AgentIngestBatchView(APIView):
                 asset.drum_k = d_k
                 asset.last_scanned_at = now
                 asset.save()
-                # B. Record Unregistered Printer if not registered
-                if workplace:
+
+            if workplace:
+                if asset:
+                    # C. Update or Create MonitoringPrinter ONLY for registered PrinterAsset
+                    m_printer, _ = MonitoringPrinter.objects.update_or_create(
+                        workplace=workplace,
+                        serial_no=s_no,
+                        defaults={
+                            "printer_model": m_name,
+                            "scanned_model": m_name,
+                            "ip": ip_addr,
+                            "state": "active",
+                            "updated_at": now,
+                        },
+                    )
+
+                    # D. Update Real-time MonitoringData ONLY for registered PrinterAsset
+                    MonitoringData.objects.update_or_create(
+                        workplace=workplace,
+                        serial_no=s_no,
+                        defaults={
+                            "monitoring_printer": m_printer,
+                            "count1": c_color,
+                            "count2": c_mono,
+                            "count4": c_total,
+                            "toner_c": t_c,
+                            "toner_m": t_m,
+                            "toner_y": t_y,
+                            "toner_k": t_k,
+                            "drum_k": d_k,
+                            "agent_updated_at": now,
+                            "updated_at": now,
+                        },
+                    )
+
+                    # E. Accumulate Daily History in MonitoringDataRecord ONLY for registered PrinterAsset
+                    MonitoringDataRecord.objects.update_or_create(
+                        monitoring_printer=m_printer,
+                        yyyymmdd=today_str,
+                        defaults={
+                            "workplace": workplace,
+                            "serial_no": s_no,
+                            "count1": c_color,
+                            "count2": c_mono,
+                            "count4": c_total,
+                            "toner_c": t_c,
+                            "toner_m": t_m,
+                            "toner_y": t_y,
+                            "toner_k": t_k,
+                            "drum_k": d_k,
+                            "agent_updated_at": now,
+                            "updated_at": now,
+                        },
+                    )
+                else:
+                    # Record in UnregisteredPrinter for auto-discovered unregistered devices
                     UnregisteredPrinter.objects.update_or_create(
                         workplace=workplace,
                         serial_no=s_no,
@@ -1211,59 +1265,6 @@ class AgentIngestBatchView(APIView):
                             "updated_at": now,
                         },
                     )
-
-            if workplace:
-                # C. Update or Create MonitoringPrinter
-                m_printer, _ = MonitoringPrinter.objects.update_or_create(
-                    workplace=workplace,
-                    serial_no=s_no,
-                    defaults={
-                        "printer_model": m_name,
-                        "scanned_model": m_name,
-                        "ip": ip_addr,
-                        "state": "active",
-                        "updated_at": now,
-                    },
-                )
-
-                # D. Update Real-time MonitoringData
-                MonitoringData.objects.update_or_create(
-                    workplace=workplace,
-                    serial_no=s_no,
-                    defaults={
-                        "monitoring_printer": m_printer,
-                        "count1": c_color,
-                        "count2": c_mono,
-                        "count4": c_total,
-                        "toner_c": t_c,
-                        "toner_m": t_m,
-                        "toner_y": t_y,
-                        "toner_k": t_k,
-                        "drum_k": d_k,
-                        "agent_updated_at": now,
-                        "updated_at": now,
-                    },
-                )
-
-                # E. Accumulate Daily History in MonitoringDataRecord
-                MonitoringDataRecord.objects.update_or_create(
-                    monitoring_printer=m_printer,
-                    yyyymmdd=today_str,
-                    defaults={
-                        "workplace": workplace,
-                        "serial_no": s_no,
-                        "count1": c_color,
-                        "count2": c_mono,
-                        "count4": c_total,
-                        "toner_c": t_c,
-                        "toner_m": t_m,
-                        "toner_y": t_y,
-                        "toner_k": t_k,
-                        "drum_k": d_k,
-                        "agent_updated_at": now,
-                        "updated_at": now,
-                    },
-                )
 
                 # F. Update SuppliesAlert
                 SuppliesAlert.objects.update_or_create(
