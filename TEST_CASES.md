@@ -30,6 +30,7 @@
 | **TC-020** | Agent/수집 | 등록 시리얼 2대 타겟팅 동기화 및 2대 전체 스캔/수집 완료 | Agent Scanner & Ingest | ✅ PASS |
 | **TC-021** | 수집 DB | 미등록 탐지 기기 `unregistered_printers` 테이블 분리 저장 구축 | DRF Ingest & UnregisteredPrinter | ✅ PASS |
 | **TC-022** | 수집 DB | 미등록 장비 시리얼 미반환 시 대체 식별자(`UNREG-IP-xxx`) 자동 생성 | DRF Ingest Serial Fallback | ✅ PASS |
+| **TC-023** | 수집 DB | 동일 IP 기기의 시리얼 번호 재스캔 시 실시간 자동 갱신(Update) 구축 | UnregisteredPrinter Unique (workplace, ip) | ✅ PASS |
 
 ---
 
@@ -149,6 +150,12 @@
 * **발생 원인/배경**: 미등록 기기 252대의 시리얼 번호가 비어 보이는 현상에 대한 정밀 기술 분석 및 원본 데이터 유지 요구.
 * **조치 내용**: 임의의 대체 식별자 생성 로직을 제거하고, 현장 에이전트 SNMP 스캔 원본 데이터 그대로 `unregistered_printers` 테이블에 무결하게 보존.
 * **검증 결과**: 현장 SNMP 원본 데이터 100% 보존 및 백엔드 테스트 9/9 PASS.
+
+### 23. [TC-023] 동일 IP 기반 미등록 장비 시리얼 번호 실시간 자동 갱신(Update) 시스템 구축
+* **발생 원인/배경**: 동일 IP의 미등록 기기가 추후 스캔 시 시리얼 번호를 취득했을 때 기존 DB 레코드의 시리얼 번호가 갱신되지 않고 누락되는 것 방지 요구.
+* **조치 내용**: `UnregisteredPrinter` DB 모델 유니크 식별자를 `unique_together = ("workplace", "ip")`로 개정 및 DB 마이그레이션(`0013`) 수행. `AgentIngestBatchView`에서 동일 IP 기기의 `serial_no`가 재탐지 시 실시간으로 덮어쓰기 업데이트되도록 엔진 개정.
+* **검증 결과**: 시리얼 비어있던 1차 스캔 기기가 2차 스캔에서 시리얼 취득 시 기존 DB 레코드 시리얼 번호로 실시간 갱신 100% 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

@@ -1444,8 +1444,8 @@ class AgentIngestBatchView(APIView):
             UnregisteredPrinter.objects.bulk_create(
                 unregistered_printer_updates,
                 update_conflicts=True,
-                unique_fields=["workplace", "serial_no"],
-                update_fields=["scanned_model", "ip", "registered", "updated_at"],
+                unique_fields=["workplace", "ip"],
+                update_fields=["serial_no", "scanned_model", "registered", "updated_at"],
             )
 
         return Response(

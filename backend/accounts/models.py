@@ -551,7 +551,7 @@ class UnregisteredPrinter(models.Model):
 
     class Meta:
         db_table = "unregistered_printers"
-        unique_together = ("workplace", "serial_no")
+        unique_together = ("workplace", "ip")
 
     def __str__(self) -> str:
         return f"UnregisteredPrinter([{self.serial_no}] {self.scanned_model})"
