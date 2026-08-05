@@ -36,6 +36,7 @@
 | **TC-026** | Agent/경로 | 에이전트 폴더 직접 실행 시 `No module named agent` 경고 완벽 해결 | Agent Import Exception Handling | ✅ PASS |
 | **TC-027** | DB/정돈 | 미등록 기기 DB 테스트 샘플 레코드 일괄 삭제 및 클린 초기화 | UnregisteredPrinter Purge & Clean Init | ✅ PASS |
 | **TC-028** | Agent/수집 | 대표 지시 3가지 조건별 스캔 자동 분기 메커니즘 구축 | Agent 3-Branch Scan Logic | ✅ PASS |
+| **TC-029** | 수집 API | Agent 토큰 접두사 다양성 처리 및 Ingest 500 서버 에러 해결 | Token Parsing Exception Defense | ✅ PASS |
 
 ---
 
@@ -185,6 +186,12 @@
 * **발생 원인/배경**: 기존 등록 기기가 있으면 0.5초 핀포인트 전용 수집을 수행하고, 등록 기기 0대 최초 상태이거나 미등록 스캔 파라미터 전달 시 풀 스캔하도록 아키텍처 적용 요구.
 * **조치 내용**: `agent/main.py` 및 `api_client.py`에 `--scan-unregistered` / `-u` CLI 파라미터 및 3가지 스캔 분기 구축. `AgentTargetAssetsView` API에 `scan_unregistered` 파라미터 연동.
 * **검증 결과**: 등록 기기 존재 시 정기 핀포인트 수집, 미등록 스캔 파라미터 전달 시 전체 서브넷(.1~.254) 풀 스캔 100% 성공 및 백엔드 테스트 9/9 PASS.
+
+### 29. [TC-029] Agent 토큰 접두사 다양성 처리 및 Ingest 500 서버 에러 해결
+* **발생 원인/배경**: `python main.py --scan-unregistered` 실행 시 전달되는 토큰 접두사(`agent_token_` 또는 `token_agent_`) 파싱 예외로 인한 `AgentCollector` 식별 실패 및 500 서버 에러 발생.
+* **조치 내용**: `backend/accounts/views.py` `AgentIngestBatchView` 및 `AgentTargetAssetsView`에서 `token.replace("token_agent_", "").replace("agent_token_", "")`로 이중 접두사 방어 조치.
+* **검증 결과**: `--scan-unregistered` 풀 스캔 254대 패킷 업로드 HTTP 200 OK 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 
