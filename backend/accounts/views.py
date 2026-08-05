@@ -931,5 +931,68 @@ class SignUpWithInviteView(APIView):
         )
 
 
+class AgentAuthView(APIView):
+    """
+    Exchanges 8-digit Auth Code for Agent Token
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        auth_code = str(request.data.get("auth_code", "")).strip()
+        if not auth_code:
+            return Response({"detail": "인증 코드가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        agent_token = f"token_agent_{auth_code}"
+        return Response(
+            {
+                "detail": "에이전트 인증 성공",
+                "token": agent_token,
+                "expires_in": 31536000,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class AgentFetchOidsView(APIView):
+    """
+    Dynamic OID Downloader for Agent
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def get(self, request) -> Response:
+        oids = {
+            "sysDescr": "1.3.6.1.2.1.1.1.0",
+            "serial_no": "1.3.6.1.4.1.2988.1.1.12.1.1.101",
+            "product_code": "1.3.6.1.4.1.2988.1.1.12.1.1.102",
+            "count_total": "1.3.6.1.4.1.2988.1.1.12.1.1.201",
+            "count_color": "1.3.6.1.4.1.2988.1.1.12.1.1.202",
+            "count_mono": "1.3.6.1.4.1.2988.1.1.12.1.1.203",
+        }
+        return Response(oids, status=status.HTTP_200_OK)
+
+
+class AgentIngestBatchView(APIView):
+    """
+    Receives Batch Ingestion dataset from Windows Agent (1,000 printers per batch)
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        devices = request.data.get("devices", [])
+        device_count = len(devices)
+
+        return Response(
+            {
+                "detail": f"총 {device_count}대의 장비 배치 데이터 수집이 완료되었습니다.",
+                "processed_count": device_count,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+
 
 

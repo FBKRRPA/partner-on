@@ -1,5 +1,8 @@
 from django.urls import path
 from .views import (
+    AgentAuthView,
+    AgentFetchOidsView,
+    AgentIngestBatchView,
     DeviceActionView,
     DeviceDetailView,
     DeviceListApprovalView,
@@ -39,4 +42,9 @@ urlpatterns = [
     path("workplace/devices/<int:pk>/<str:action>/", DeviceActionView.as_view(), name="device-action"),
     path("workplace/2fa-policy/", Workplace2FAPolicyView.as_view(), name="2fa-policy"),
     path("workplace/permissions/", RoleMenuPermissionView.as_view(), name="menu-permissions"),
+    
+    # Agent REST APIs
+    path("agent/authenticate/", AgentAuthView.as_view(), name="agent-authenticate"),
+    path("agent/oids/", AgentFetchOidsView.as_view(), name="agent-oids"),
+    path("agent/ingest/", AgentIngestBatchView.as_view(), name="agent-ingest"),
 ]
