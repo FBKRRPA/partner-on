@@ -65,18 +65,28 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
 
   const [userRole, setUserRole] = useState<string>("");
   const [permissions, setPermissions] = useState<RoleMenuPermissionDto[]>([]);
+  const [isLoggedInState, setIsLoggedInState] = useState<boolean>(false);
+  const [detectedWorkplace, setDetectedWorkplace] = useState<string>("");
 
   useEffect(() => {
-    const rawUser = sessionStorage.getItem("user");
-    const token = sessionStorage.getItem("accessToken") || "";
+    const rawUser = sessionStorage.getItem("user") || localStorage.getItem("user");
+    const token = sessionStorage.getItem("accessToken") || localStorage.getItem("accessToken") || "";
+    
+    if (token) {
+      setIsLoggedInState(true);
+    }
+
     if (rawUser) {
       try {
         const u = JSON.parse(rawUser);
         if (u.role) setUserRole(u.role);
+        const wpName = u.workplace_name || (u.workplace && u.workplace.name) || "";
+        if (wpName) setDetectedWorkplace(wpName);
       } catch (e) {
         console.error(e);
       }
     }
+    
     if (token) {
       getMenuPermissions(token)
         .then((perms) => {
@@ -86,6 +96,18 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         .catch(() => {});
     }
   }, []);
+
+  const activeWorkplaceName = workplaceName || detectedWorkplace;
+
+  const handleLogoutAction = () => {
+    if (onLogout) {
+      onLogout();
+      return;
+    }
+    sessionStorage.clear();
+    localStorage.clear();
+    window.location.href = "/login";
+  };
 
   const masterMenuTree: MenuItem[] = [
     {
@@ -319,15 +341,15 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
             {/* PWA Install Button */}
             <PwaInstallPrompt />
 
-            {workplaceName && (
+            {activeWorkplaceName && (
               <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-[#5C5C5C] border border-slate-200">
-                🏢 {workplaceName}
+                🏢 {activeWorkplaceName}
               </span>
             )}
 
-            {onLogout ? (
+            {(onLogout || isLoggedInState) ? (
               <button
-                onClick={onLogout}
+                onClick={handleLogoutAction}
                 className="px-3.5 py-2 text-xs font-semibold text-[#5C5C5C] hover:text-[#E01E35] hover:bg-rose-50 rounded-xl transition-all border border-slate-200 hover:border-rose-200 cursor-pointer"
               >
                 로그아웃
