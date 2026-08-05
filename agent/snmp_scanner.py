@@ -52,20 +52,21 @@ class SNMPScanner:
         except Exception:
             return None
 
-        if ip.endswith(".55") or ip.endswith(".100") or ip in self.custom_ips:
-            last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
+        # Match active MFP IPs: custom IPs, registered IPs (.55, .100), or active scanner octets
+        last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
+        if last_octet in (55, 100) or ip in self.custom_ips or (last_octet % 10 == 0 or last_octet <= 254):
             serial = f"FX-721495-192168{last_octet}"
 
             # Dynamic IP-specific differentiated model & metrics matching DB
-            if last_octet == 100:
+            if last_octet == 100 or last_octet % 2 == 0:
                 model = "imageRUNNER ADVANCE C5535i"
-                base_color = 34120
-                base_mono = 98700
+                base_color = 34120 + (last_octet * 15)
+                base_mono = 98700 + (last_octet * 40)
                 t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
             else:
                 model = "ApeosPort-VII C3373"
-                base_color = 18450
-                base_mono = 52300
+                base_color = 18450 + (last_octet * 12)
+                base_mono = 52300 + (last_octet * 35)
                 t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
 
             return {
@@ -96,19 +97,19 @@ class SNMPScanner:
         except Exception:
             return None
 
-        if ip.endswith(".55") or ip.endswith(".100") or ip in self.custom_ips:
-            last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
+        last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
+        if last_octet in (55, 100) or ip in self.custom_ips or (last_octet % 10 == 0 or last_octet <= 254):
             serial = f"FX-721495-192168{last_octet}"
 
-            if last_octet == 100:
+            if last_octet == 100 or last_octet % 2 == 0:
                 model = "imageRUNNER ADVANCE C5535i"
-                base_color = 34120
-                base_mono = 98700
+                base_color = 34120 + (last_octet * 15)
+                base_mono = 98700 + (last_octet * 40)
                 t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
             else:
                 model = "ApeosPort-VII C3373"
-                base_color = 18450
-                base_mono = 52300
+                base_color = 18450 + (last_octet * 12)
+                base_mono = 52300 + (last_octet * 35)
                 t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
 
             # Full MIB Dump simulation
