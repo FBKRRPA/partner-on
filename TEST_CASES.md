@@ -31,6 +31,7 @@
 | **TC-021** | 수집 DB | 미등록 탐지 기기 `unregistered_printers` 테이블 분리 저장 구축 | DRF Ingest & UnregisteredPrinter | ✅ PASS |
 | **TC-022** | 수집 DB | 미등록 장비 시리얼 미반환 시 대체 식별자(`UNREG-IP-xxx`) 자동 생성 | DRF Ingest Serial Fallback | ✅ PASS |
 | **TC-023** | 수집 DB | 동일 IP 기기의 시리얼 번호 재스캔 시 실시간 자동 갱신(Update) 구축 | UnregisteredPrinter Unique (workplace, ip) | ✅ PASS |
+| **TC-024** | OID/수집 | 지능형 OID 유추 엔진 (`OidInferenceEngine`) 구축 (모델명/카운터/소모품 유추) | OidInferenceEngine & Agent Ingest | ✅ PASS |
 
 ---
 
@@ -155,6 +156,12 @@
 * **발생 원인/배경**: 동일 IP의 미등록 기기가 추후 스캔 시 시리얼 번호를 취득했을 때 기존 DB 레코드의 시리얼 번호가 갱신되지 않고 누락되는 것 방지 요구.
 * **조치 내용**: `UnregisteredPrinter` DB 모델 유니크 식별자를 `unique_together = ("workplace", "ip")`로 개정 및 DB 마이그레이션(`0013`) 수행. `AgentIngestBatchView`에서 동일 IP 기기의 `serial_no`가 재탐지 시 실시간으로 덮어쓰기 업데이트되도록 엔진 개정.
 * **검증 결과**: 시리얼 비어있던 1차 스캔 기기가 2차 스캔에서 시리얼 취득 시 기존 DB 레코드 시리얼 번호로 실시간 갱신 100% 성공 및 백엔드 테스트 9/9 PASS.
+
+### 24. [TC-024] 지능형 OID 유추 엔진 (`OidInferenceEngine`) 구축 (모델명/카운터/소모품 유추)
+* **발생 원인/배경**: 미등록 기기 `scanned_model` 및 등록 기기 카운터/소모품 잔량 OID가 응답하지 않거나 빠진 경우 지능적으로 자동 유추/보완 요구.
+* **조치 내용**: `backend/accounts/oid_inference.py` 및 `agent/oid_inference.py` 지능형 OID 유추 엔진 모듈 탑재. 브랜드(Fujifilm, Canon, Ricoh, HP, Standard) 자동 판별 및 `sysDescr` 정제, 누락 카운터/소모품 비율 유추 자동 보완.
+* **검증 결과**: 미등록 기기 모델명 정제(`"Canon imageRUNNER ADVANCE C3525i"`) 및 등록 기기 누락 총카운터(79,000) 자동 유추 보완 100% 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

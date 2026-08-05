@@ -124,22 +124,25 @@ class SNMPScanner:
                 "1.3.6.1.4.1.2988.1.1.12.1.1.301": t_c,
                 "1.3.6.1.4.1.2988.1.1.12.1.1.304": t_k,
             }
-            return {
+            from agent.oid_inference import OidInferenceEngine
+            raw_res = {
                 "ip": ip,
-                "scan_method": "SNMP_WALK",
+                "scan_method": "SNMP_WALK" if self.mode == "walk" else "SNMP_GET",
+                "sysDescr": f"Multi-Function Printer {model}",
                 "serial_no": serial,
                 "product_code": "721495",
                 "model_name": f"{model} (Auto Walk Discovered)",
+                "count_total": base_color + base_mono,
                 "count_color": base_color,
                 "count_mono": base_mono,
-                "count_total": base_color + base_mono,
                 "toner_c": t_c,
                 "toner_m": t_m,
                 "toner_y": t_y,
                 "toner_k": t_k,
                 "drum_k": d_k,
-                "raw_walk_tree": walk_dump,
+                "raw_walk_tree": walk_dump if self.mode == "walk" else {},
             }
+            return OidInferenceEngine.infer_device_data(raw_res)
         return None
 
     def scan_ip_snmp(self, ip: str) -> Dict[str, Any] | None:
@@ -163,13 +166,15 @@ class SNMPScanner:
         """
         # If registered target serials are specified, return pinpoint scanned devices for all registered serials
         if self.target_serials:
+            from agent.oid_inference import OidInferenceEngine
             results = []
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()
                 if "1100" in clean_sno:
-                    results.append({
+                    raw_dev = {
                         "ip": "192.168.1.100",
                         "scan_method": "SNMP_GET",
+                        "sysDescr": "Canon imageRUNNER ADVANCE C5535i Multi-Function Printer",
                         "serial_no": clean_sno,
                         "product_code": "721495",
                         "model_name": "imageRUNNER ADVANCE C5535i",
@@ -181,11 +186,12 @@ class SNMPScanner:
                         "toner_y": 15,
                         "toner_k": 78,
                         "drum_k": 85,
-                    })
+                    }
                 else:
-                    results.append({
+                    raw_dev = {
                         "ip": "192.168.1.55",
                         "scan_method": "SNMP_GET",
+                        "sysDescr": "FujiXerox ApeosPort-VII C3373 Multi-Function Printer",
                         "serial_no": clean_sno,
                         "product_code": "721495",
                         "model_name": "ApeosPort-VII C3373",
@@ -197,7 +203,8 @@ class SNMPScanner:
                         "toner_y": 92,
                         "toner_k": 45,
                         "drum_k": 90,
-                    })
+                    }
+                results.append(OidInferenceEngine.infer_device_data(raw_dev))
             return results
 
         scan_targets = list(self.target_ips)

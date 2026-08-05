@@ -1216,15 +1216,15 @@ class AgentIngestBatchView(APIView):
         supplies_alert_updates = []
         unregistered_printer_updates = []
 
-        for item in devices:
-            s_no = item.get("serial_no")
-            if not s_no:
-                continue
+        from accounts.oid_inference import OidInferenceEngine
 
-            clean_sno = str(s_no).strip()
+        for raw_item in devices:
+            item = OidInferenceEngine.infer_device_data(raw_item)
+            s_no = item.get("serial_no")
+            clean_sno = str(s_no).strip() if s_no else ""
             upper_sno = clean_sno.upper()
             ip_addr = item.get("ip_address", "127.0.0.1")
-            m_name = item.get("model_name", "Standard MFP")
+            m_name = item.get("model_name", "Standard Network MFP")
 
             c_color = item.get("count_color", 0)
             c_mono = item.get("count_mono", 0)
