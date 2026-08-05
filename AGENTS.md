@@ -189,6 +189,15 @@
   * `oid_key`: `CharField(max_length=60)` - OID 키 (serial_no, count_color, count_mono, toner_c 등)
   * `oid_value`: `CharField(max_length=150)` - SNMP OID 주소 문자열
   * `is_active`: Boolean - OID 수집 활성화 여부
+* **`oid_lists` (OidListMaster 모델)**: 제조사/모델별 OID 상세 맵
+* **`printers` (PrinterModelMaster 모델)**: 프린터 및 복합기 모델 마스터
+* **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사
+* **`monitoring_printers` (MonitoringPrinter 모델)**: 실시간 관제 대상 복합기/프린터 장비
+* **`monitoring_data` (MonitoringData 모델)**: 최신 실시간 관제 데이터 (카운터 4종 + 소모품 잔량)
+* **`monitoring_data_records` (MonitoringDataRecord 모델)**: 관제 데이터 일별/월별 누적 이력
+* **`supplies` (SuppliesAlert 모델)**: 소모품 잔량 경고 및 상태
+* **`supply_usages` (SupplyUsage 모델)**: 소모품 수동/시스템 교체 사용 이력
+* **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 목록
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블

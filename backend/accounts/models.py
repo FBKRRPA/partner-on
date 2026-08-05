@@ -228,4 +228,333 @@ class PrinterOidMapping(models.Model):
         return f"[{self.vendor_name}] {self.oid_key} -> {self.oid_value}"
 
 
+class OidListMaster(models.Model):
+    """
+    oid_lists: 제조사 및 모델별 OID 세부 목록 마스터
+    """
+    manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
+    printer_model = models.CharField(max_length=256, blank=True, null=True, help_text="프린터 모델")
+    serial_no = models.CharField(max_length=256, blank=True, null=True, help_text="시리얼번호 OID")
+    count1 = models.CharField(max_length=256, blank=True, null=True, help_text="컬러 카운트 OID")
+    count2 = models.CharField(max_length=256, blank=True, null=True, help_text="흑백 카운트 OID")
+    count3 = models.CharField(max_length=256, blank=True, null=True, help_text="큰컬러 카운트 OID")
+    count3_k = models.CharField(max_length=256, blank=True, null=True, help_text="큰흑백 카운트 OID")
+    count4 = models.CharField(max_length=256, blank=True, null=True, help_text="전체 카운트 OID")
+    toner_c = models.CharField(max_length=256, blank=True, null=True, help_text="시안 토너 OID")
+    toner_m = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 토너 OID")
+    toner_y = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 토너 OID")
+    toner_k = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 토너 OID")
+    toner_k2 = models.CharField(max_length=256, blank=True, null=True, help_text="블랙2 토너 OID")
+    toner_c_max = models.CharField(max_length=256, blank=True, null=True, help_text="시안 토너 최대값 OID")
+    toner_m_max = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 토너 최대값 OID")
+    toner_y_max = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 토너 최대값 OID")
+    toner_k_max = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 토너 최대값 OID")
+    toner_k2_max = models.CharField(max_length=256, blank=True, null=True, help_text="블랙2 토너 최대값 OID")
+    toner_recovery = models.CharField(max_length=256, blank=True, null=True, help_text="회수 토너 OID")
+    toner_recovery_max = models.CharField(max_length=256, blank=True, null=True, help_text="회수 토너 최대값 OID")
+    drum_c = models.CharField(max_length=256, blank=True, null=True, help_text="시안 드럼 OID")
+    drum_m = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 드럼 OID")
+    drum_y = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 드럼 OID")
+    drum_k = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 드럼 OID")
+    drum_c_max = models.CharField(max_length=256, blank=True, null=True, help_text="시안 드럼 최대값 OID")
+    drum_m_max = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 드럼 최대값 OID")
+    drum_y_max = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 드럼 최대값 OID")
+    drum_k_max = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 드럼 최대값 OID")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "oid_lists"
+
+    def __str__(self) -> str:
+        return f"[{self.manufacturer}] {self.printer_model}"
+
+
+class PrinterModelMaster(models.Model):
+    """
+    printers: 프린터 및 복합기 모델 마스터
+    """
+    manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
+    printer_model = models.CharField(max_length=256, unique=True, help_text="프린터 모델명")
+    printer_type = models.IntegerField(null=True, blank=True, help_text="프린터 타입")
+    product_code = models.CharField(max_length=256, blank=True, null=True, help_text="제품 코드")
+    device_type = models.IntegerField(null=True, blank=True, help_text="장치 유형")
+    note = models.TextField(blank=True, null=True, help_text="비고")
+    oid_list = models.ForeignKey(OidListMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="printers")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "printers"
+
+    def __str__(self) -> str:
+        return f"[{self.manufacturer}] {self.printer_model}"
+
+
+class MonitoringCustomer(models.Model):
+    """
+    monitoring_customers: 사업장별 모니터링 대상 고객사
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="monitoring_customers")
+    customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
+    employee_count = models.IntegerField(default=0, help_text="종업원 수")
+    pc = models.IntegerField(default=0, help_text="PC 대수")
+    mfp = models.IntegerField(default=0, help_text="복합기 대수")
+    printer = models.IntegerField(default=0, help_text="프린터 대수")
+    other_info = models.TextField(blank=True, null=True, help_text="기타 정보")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "monitoring_customers"
+        unique_together = ("workplace", "customer_id")
+
+    def __str__(self) -> str:
+        return f"MonitoringCustomer(Workplace: {self.workplace_id}, Customer: {self.customer_id})"
+
+
+class MonitoringPrinter(models.Model):
+    """
+    monitoring_printers: 모니터링 복합기/프린터 장비
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="monitoring_printers")
+    license = models.CharField(max_length=256, blank=True, null=True, help_text="라이센스")
+    printer_model = models.CharField(max_length=256, blank=True, null=True, help_text="프린터 모델명")
+    scanned_model = models.CharField(max_length=256, blank=True, null=True, help_text="스캔된 모델명")
+    device_type = models.CharField(max_length=256, blank=True, null=True, help_text="장치 유형")
+    contract_type = models.IntegerField(null=True, blank=True, help_text="계약 유형")
+    sl = models.CharField(max_length=256, blank=True, null=True, help_text="SL")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+    customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
+    ip = models.CharField(max_length=256, blank=True, null=True, help_text="IP 주소")
+    location = models.CharField(max_length=256, blank=True, null=True, help_text="설치 위치")
+    state = models.CharField(max_length=256, default="active", help_text="상태 (active/inactive/excluded)")
+    note = models.CharField(max_length=256, blank=True, null=True, help_text="비고")
+    installed_time = models.CharField(max_length=256, blank=True, null=True, help_text="설치일")
+    contract_start_date = models.CharField(max_length=256, blank=True, null=True, help_text="계약 시작일")
+    contract_end_date = models.CharField(max_length=256, blank=True, null=True, help_text="계약 종료일")
+    operation_company_id = models.BigIntegerField(null=True, blank=True, help_text="관리사업자 FK")
+    custom_equipment_model_id = models.BigIntegerField(null=True, blank=True, help_text="사용자정의 모델 FK")
+    asset_number = models.BigIntegerField(null=True, blank=True, help_text="자산번호")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "monitoring_printers"
+        unique_together = ("workplace", "serial_no")
+
+    def __str__(self) -> str:
+        return f"[{self.serial_no}] {self.printer_model} ({self.ip})"
+
+
+class MonitoringData(models.Model):
+    """
+    monitoring_data: 실시간 최신 관제 카운터 및 소모품 데이터
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="monitoring_data")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+    monitoring_printer = models.OneToOneField(MonitoringPrinter, on_delete=models.CASCADE, related_name="realtime_data")
+    count1 = models.IntegerField(default=0, help_text="컬러 카운트")
+    count2 = models.IntegerField(default=0, help_text="흑백 카운트")
+    count3 = models.IntegerField(default=0, help_text="큰컬러 카운트")
+    count3_k = models.IntegerField(default=0, help_text="큰흑백 카운트")
+    count4 = models.IntegerField(default=0, help_text="전체 카운트")
+
+    toner_c = models.IntegerField(default=100, help_text="시안 토너 잔량")
+    toner_m = models.IntegerField(default=100, help_text="마젠타 토너 잔량")
+    toner_y = models.IntegerField(default=100, help_text="옐로 토너 잔량")
+    toner_k = models.IntegerField(default=100, help_text="블랙 토너 잔량")
+    toner_k2 = models.IntegerField(default=100, help_text="블랙2 토너 잔량")
+    toner_recovery = models.IntegerField(default=100, help_text="회수 토너 잔량")
+
+    drum_c = models.IntegerField(default=100, help_text="시안 드럼 잔량")
+    drum_m = models.IntegerField(default=100, help_text="마젠타 드럼 잔량")
+    drum_y = models.IntegerField(default=100, help_text="옐로 드럼 잔량")
+    drum_k = models.IntegerField(default=100, help_text="블랙 드럼 잔량")
+
+    toner_c_max = models.IntegerField(default=100)
+    toner_m_max = models.IntegerField(default=100)
+    toner_y_max = models.IntegerField(default=100)
+    toner_k_max = models.IntegerField(default=100)
+    toner_k2_max = models.IntegerField(default=100)
+    toner_recovery_max = models.IntegerField(default=100)
+
+    drum_c_max = models.IntegerField(default=100)
+    drum_m_max = models.IntegerField(default=100)
+    drum_y_max = models.IntegerField(default=100)
+    drum_k_max = models.IntegerField(default=100)
+
+    manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
+    source = models.CharField(max_length=256, default="agent", help_text="수집 출처")
+    email_updated_at = models.DateTimeField(null=True, blank=True)
+    agent_updated_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "monitoring_data"
+        unique_together = ("workplace", "serial_no")
+
+    def __str__(self) -> str:
+        return f"MonitoringData([{self.serial_no}] Total: {self.count4})"
+
+
+class MonitoringDataRecord(models.Model):
+    """
+    monitoring_data_records: 모니터링 데이터 일별/월별 이력 레코드
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="monitoring_records")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+    monitoring_printer = models.ForeignKey(MonitoringPrinter, on_delete=models.CASCADE, related_name="data_records")
+    count1 = models.IntegerField(default=0)
+    count2 = models.IntegerField(default=0)
+    count3 = models.IntegerField(default=0)
+    count3_k = models.IntegerField(default=0)
+    count4 = models.IntegerField(default=0)
+
+    toner_c = models.IntegerField(default=100)
+    toner_m = models.IntegerField(default=100)
+    toner_y = models.IntegerField(default=100)
+    toner_k = models.IntegerField(default=100)
+    toner_k2 = models.IntegerField(default=100)
+    toner_recovery = models.IntegerField(default=100)
+
+    drum_c = models.IntegerField(default=100)
+    drum_m = models.IntegerField(default=100)
+    drum_y = models.IntegerField(default=100)
+    drum_k = models.IntegerField(default=100)
+
+    toner_c_max = models.IntegerField(default=100)
+    toner_m_max = models.IntegerField(default=100)
+    toner_y_max = models.IntegerField(default=100)
+    toner_k_max = models.IntegerField(default=100)
+    toner_k2_max = models.IntegerField(default=100)
+    toner_recovery_max = models.IntegerField(default=100)
+
+    drum_c_max = models.IntegerField(default=100)
+    drum_m_max = models.IntegerField(default=100)
+    drum_y_max = models.IntegerField(default=100)
+    drum_k_max = models.IntegerField(default=100)
+
+    manufacturer = models.CharField(max_length=256, blank=True, null=True)
+    source = models.CharField(max_length=256, default="agent")
+    email_updated_at = models.DateTimeField(null=True, blank=True)
+    agent_updated_at = models.DateTimeField(null=True, blank=True)
+    yyyymmdd = models.CharField(max_length=256, help_text="기준일자 (YYYYMMDD)")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "monitoring_data_records"
+        unique_together = ("monitoring_printer", "yyyymmdd")
+
+    def __str__(self) -> str:
+        return f"Record([{self.serial_no}] {self.yyyymmdd})"
+
+
+class SuppliesAlert(models.Model):
+    """
+    supplies: 소모품 잔량 알림 및 상태
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="supplies_alerts")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+
+    toner_c = models.IntegerField(default=100)
+    toner_m = models.IntegerField(default=100)
+    toner_y = models.IntegerField(default=100)
+    toner_k = models.IntegerField(default=100)
+    toner_k2 = models.IntegerField(default=100)
+    toner_recovery = models.IntegerField(default=100)
+
+    drum_c = models.IntegerField(default=100)
+    drum_m = models.IntegerField(default=100)
+    drum_y = models.IntegerField(default=100)
+    drum_k = models.IntegerField(default=100)
+
+    toner_c_max = models.IntegerField(default=100)
+    toner_m_max = models.IntegerField(default=100)
+    toner_y_max = models.IntegerField(default=100)
+    toner_k_max = models.IntegerField(default=100)
+    toner_k2_max = models.IntegerField(default=100)
+    toner_recovery_max = models.IntegerField(default=100)
+
+    drum_c_max = models.IntegerField(default=100)
+    drum_m_max = models.IntegerField(default=100)
+    drum_y_max = models.IntegerField(default=100)
+    drum_k_max = models.IntegerField(default=100)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "supplies"
+        unique_together = ("workplace", "serial_no")
+
+    def __str__(self) -> str:
+        return f"SuppliesAlert([{self.serial_no}])"
+
+
+class SupplyUsage(models.Model):
+    """
+    supply_usages: 소모품 사용 및 교체 이력
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="supply_usages")
+    customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
+    monitoring_printer = models.ForeignKey(MonitoringPrinter, on_delete=models.SET_NULL, null=True, blank=True, related_name="supply_usages")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+    item = models.CharField(max_length=256, help_text="소모품 항목")
+    quantity = models.IntegerField(default=1, help_text="수량")
+    type = models.CharField(max_length=256, default="manual", help_text="유형 (manual/system)")
+    type_value = models.CharField(max_length=256, blank=True, null=True, help_text="유형 값")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "supply_usages"
+
+    def __str__(self) -> str:
+        return f"SupplyUsage([{self.serial_no}] {self.item} x {self.quantity})"
+
+
+class UnregisteredPrinter(models.Model):
+    """
+    unregistered_printers: 미등록 탐지 프린터
+    """
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="unregistered_printers")
+    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
+    confirmed_serial_no = models.CharField(max_length=256, blank=True, null=True, help_text="확인된 시리얼번호")
+    scanned_model = models.CharField(max_length=256, blank=True, null=True, help_text="스캔된 모델명")
+    printer_id = models.BigIntegerField(null=True, blank=True, help_text="프린터 모델 FK")
+    customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
+    ip = models.CharField(max_length=256, blank=True, null=True, help_text="IP 주소")
+    location = models.CharField(max_length=256, blank=True, null=True, help_text="위치")
+    registered = models.BooleanField(default=False, help_text="등록 완료 여부")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "unregistered_printers"
+        unique_together = ("workplace", "serial_no")
+
+    def __str__(self) -> str:
+        return f"UnregisteredPrinter([{self.serial_no}] {self.scanned_model})"
+
+
 
