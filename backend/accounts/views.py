@@ -235,7 +235,8 @@ class VerifyTOTPSetupView(APIView):
 
 class Toggle2FAView(APIView):
     """
-    Toggle 2FA (Enable / Disable) for personal user profile
+    Toggle 2FA for personal user profile.
+    Enforces that 2FA cannot be enabled without completing Authenticator App QR Verification.
     """
     permission_classes = [IsAuthenticated]
 
@@ -244,12 +245,17 @@ class Toggle2FAView(APIView):
         enable = request.data.get("enable")
 
         if enable is True:
-            if not user.totp_secret:
-                user.totp_secret = pyotp.random_base32()
+            # Enforce Authenticator App setup verification
+            if not user.totp_secret or not user.is_2fa_enabled:
+                return Response(
+                    {
+                        "detail": "Authenticator 앱 등록 및 6자리 코드 검증이 완료되지 않아 2FA를 활성화할 수 없습니다. 먼저 OTP 설정을 완료해 주세요.",
+                        "require_setup": True,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             user.is_2fa_enabled = True
-            if not user.backup_codes:
-                user.backup_codes = generate_backup_codes()
-            user.save(update_fields=["totp_secret", "is_2fa_enabled", "backup_codes"])
+            user.save(update_fields=["is_2fa_enabled"])
             msg = "2차 인증(2FA)이 활성화되었습니다."
         else:
             user.is_2fa_enabled = False
@@ -499,9 +505,51 @@ class DeviceDetailView(APIView):
         device = Device.objects.filter(pk=pk, user__workplace=request.user.workplace).first()
         if not device:
             raise NotFound("존재하지 않거나 권한이 없는 기기입니다.")
-        device_name = device.device_name
-        device.delete()
-        return Response({"detail": f"[{device_name}] 기기가 삭제되었습니다."}, status=status.HTTP_200_OK)
+        member_name = member.name
+        member.delete()
+        return Response({"detail": f"[{member_name}] 구성원 계정이 삭제되었습니다."}, status=status.HTTP_200_OK)
+
+
+class MemberBackupCodesView(APIView):
+    """
+    Allows Admin (OWNER/ADMIN_STAFF) to view or regenerate 10 emergency backup codes for a staff member
+    """
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
+
+    def get(self, request, pk: int) -> Response:
+        member = User.objects.filter(pk=pk, workplace=request.user.workplace).first()
+        if not member:
+            raise NotFound("존재하지 않거나 권한이 없는 구성원입니다.")
+
+        if not member.backup_codes:
+            member.backup_codes = generate_backup_codes()
+            member.save(update_fields=["backup_codes"])
+
+        return Response(
+            {
+                "member_id": member.id,
+                "member_name": member.name,
+                "member_email": member.email,
+                "backup_codes": member.backup_codes,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, pk: int) -> Response:
+        member = User.objects.filter(pk=pk, workplace=request.user.workplace).first()
+        if not member:
+            raise NotFound("존재하지 않거나 권한이 없는 구성원입니다.")
+
+        member.backup_codes = generate_backup_codes()
+        member.save(update_fields=["backup_codes"])
+
+        return Response(
+            {
+                "detail": f"[{member.name}] 구성원의 2FA 비상 복구 백업 코드 10개가 새로 재발급되었습니다.",
+                "backup_codes": member.backup_codes,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetRequestView(APIView):

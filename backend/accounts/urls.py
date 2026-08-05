@@ -13,6 +13,7 @@ from .views import (
     MemberInviteView,
     MemberListCreateView,
     MemberReinviteView,
+    MemberBackupCodesView,
     MonitoringSuppliesView,
     MonitoringUsageView,
     PasswordResetConfirmView,
@@ -41,6 +42,7 @@ urlpatterns = [
     path("workplace/members/", MemberListCreateView.as_view(), name="member-list-create"),
     path("workplace/members/invite/", MemberInviteView.as_view(), name="member-invite"),
     path("workplace/members/<int:pk>/reinvite/", MemberReinviteView.as_view(), name="member-reinvite"),
+    path("workplace/members/<int:pk>/backup-codes/", MemberBackupCodesView.as_view(), name="member-backup-codes"),
     path("workplace/members/<int:pk>/", MemberDetailView.as_view(), name="member-detail"),
     
     # Workplace Printer Assets (Devices)

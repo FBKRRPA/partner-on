@@ -8,9 +8,11 @@ import {
   DeviceDto,
   get2FAPolicy,
   getDevices,
+  getMemberBackupCodes,
   getMembers,
   inviteMember,
   MemberDto,
+  regenerateMemberBackupCodes,
   reinviteMember,
   rejectDevice,
   RoleType,
@@ -23,13 +25,19 @@ interface Props {
   accessToken: string;
 }
 
-export function MemberManagement({ accessToken }: Props) {
+export function MemberManagement({ accessToken }: Props): React.ReactNode {
   const [activeTab, setActiveTab] = useState<"MEMBERS" | "DEVICES" | "POLICY">("MEMBERS");
 
   // Member state
   const [members, setMembers] = useState<MemberDto[]>([]);
   const [viewMode, setViewMode] = useState<"LIST" | "CREATE" | "EDIT">("LIST");
   const [selectedMember, setSelectedMember] = useState<MemberDto | null>(null);
+
+  // Backup codes modal state
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const [backupCodesList, setBackupCodesList] = useState<string[]>([]);
+  const [backupTargetMember, setBackupTargetMember] = useState<MemberDto | null>(null);
+  const [backupModalLoading, setBackupModalLoading] = useState(false);
 
   // Device state
   const [devices, setDevices] = useState<DeviceDto[]>([]);
@@ -161,6 +169,39 @@ export function MemberManagement({ accessToken }: Props) {
       setIsError(true);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleOpenBackupCodesModal(member: MemberDto) {
+    try {
+      setBackupModalLoading(true);
+      setBackupTargetMember(member);
+      const res = await getMemberBackupCodes(accessToken, member.id);
+      setBackupCodesList(res.backup_codes || []);
+      setBackupModalOpen(true);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "백업 코드를 가져오는데 실패했습니다.");
+      setIsError(true);
+    } finally {
+      setBackupModalLoading(false);
+    }
+  }
+
+  async function handleRegenerateBackupCodes() {
+    if (!backupTargetMember) return;
+    if (!confirm(`'${backupTargetMember.name}' 사원의 2FA 비상 복구 백업 코드 10개를 새로 재발급하시겠습니까?\n(기존 백업 코드는 모두 무효화됩니다.)`)) return;
+
+    try {
+      setBackupModalLoading(true);
+      const res = await regenerateMemberBackupCodes(accessToken, backupTargetMember.id);
+      setBackupCodesList(res.backup_codes || []);
+      setMessage(res.detail || "백업 코드가 새로 재발급되었습니다.");
+      setIsError(false);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "백업 코드 재발급에 실패했습니다.");
+      setIsError(true);
+    } finally {
+      setBackupModalLoading(false);
     }
   }
 
@@ -440,6 +481,14 @@ export function MemberManagement({ accessToken }: Props) {
                                 초대 재발송
                               </button>
                             )}
+                            <button
+                              onClick={() => handleOpenBackupCodesModal(m)}
+                              disabled={backupModalLoading}
+                              className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#01916D] text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                              title="관리자 비상 복구 백업코드 10개 조회"
+                            >
+                              🔑 백업코드
+                            </button>
                             <button
                               onClick={() => {
                                 setSelectedMember(m);
@@ -859,6 +908,73 @@ export function MemberManagement({ accessToken }: Props) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* BACKUP CODES ADMIN MODAL */}
+      {backupModalOpen && backupTargetMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-md bg-[#01916D]/10 text-[#01916D] text-xs font-bold">
+                  관리자 비상 지원
+                </span>
+                <h3 className="text-xl font-extrabold text-[#333333] mt-1">
+                  [{backupTargetMember.name}] 사원 2FA 백업코드
+                </h3>
+                <p className="text-xs text-[#5C5C5C] mt-0.5">
+                  해당 사원이 스마트폰 분실 등으로 2FA에 접속하지 못할 때 안내하는 8자리 일회성 복구 코드입니다.
+                </p>
+              </div>
+              <button
+                onClick={() => setBackupModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            {backupModalLoading ? (
+              <div className="py-8 text-center text-slate-500 text-sm">
+                백업 코드를 불러오는 중...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2.5 bg-slate-50 p-4 rounded-2xl border border-slate-200 font-mono text-center text-sm font-bold text-slate-800">
+                  {backupCodesList.map((code, idx) => (
+                    <div key={idx} className="bg-white py-2 px-3 rounded-xl border border-slate-200/80 shadow-2xs">
+                      <span className="text-xs text-slate-400 mr-2 font-sans">#{idx + 1}</span>
+                      {code}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="text-xs text-slate-500 bg-amber-50 border border-amber-200/80 p-3.5 rounded-xl leading-relaxed">
+                  💡 <strong>관리자 안내 지침</strong>: 사원에게 복구 코드를 하나씩 전달해 주세요. 각 백업 코드는 1회 로그인 성공 시 자동 소멸됩니다.
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    onClick={handleRegenerateBackupCodes}
+                    disabled={backupModalLoading}
+                    className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-xl transition-all cursor-pointer"
+                  >
+                    🔄 10개 전체 새 재발급
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(backupCodesList.join("\n"));
+                      alert("10개의 백업 코드가 클립보드에 복사되었습니다.");
+                    }}
+                    className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                  >
+                    📋 전체 복사하기
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -386,6 +386,36 @@ export async function deleteMember(token: string, memberId: number): Promise<voi
   throw new Error(parseErrorMessage(body, "구성원 삭제에 실패했습니다."));
 }
 
+export async function getMemberBackupCodes(token: string, memberId: number): Promise<{ member_name: string; member_email: string; backup_codes: string[] }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/${memberId}/backup-codes/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok || !body) {
+    throw new Error(parseErrorMessage(body, "백업 코드를 불러오지 못했습니다."));
+  }
+  return body as { member_name: string; member_email: string; backup_codes: string[] };
+}
+
+export async function regenerateMemberBackupCodes(token: string, memberId: number): Promise<{ detail: string; backup_codes: string[] }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/members/${memberId}/backup-codes/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok || !body) {
+    throw new Error(parseErrorMessage(body, "백업 코드 재발급에 실패했습니다."));
+  }
+  return body as { detail: string; backup_codes: string[] };
+}
+
 export async function getDevices(token: string): Promise<DeviceDto[]> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/devices/`, {
     method: "GET",
