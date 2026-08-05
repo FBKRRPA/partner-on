@@ -124,7 +124,10 @@ class SNMPScanner:
                 "1.3.6.1.4.1.2988.1.1.12.1.1.301": t_c,
                 "1.3.6.1.4.1.2988.1.1.12.1.1.304": t_k,
             }
-            from agent.oid_inference import OidInferenceEngine
+            try:
+                from agent.oid_inference import OidInferenceEngine
+            except ModuleNotFoundError:
+                from oid_inference import OidInferenceEngine
             raw_res = {
                 "ip": ip,
                 "scan_method": "SNMP_WALK" if self.mode == "walk" else "SNMP_GET",
@@ -166,7 +169,10 @@ class SNMPScanner:
         """
         # If registered target serials are specified, return pinpoint scanned devices for all registered serials
         if self.target_serials:
-            from agent.oid_inference import OidInferenceEngine
+            try:
+                from agent.oid_inference import OidInferenceEngine
+            except ModuleNotFoundError:
+                from oid_inference import OidInferenceEngine
             results = []
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()

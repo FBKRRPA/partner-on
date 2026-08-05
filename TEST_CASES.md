@@ -33,6 +33,7 @@
 | **TC-023** | 수집 DB | 동일 IP 기기의 시리얼 번호 재스캔 시 실시간 자동 갱신(Update) 구축 | UnregisteredPrinter Unique (workplace, ip) | ✅ PASS |
 | **TC-024** | OID/수집 | 지능형 OID 유추 엔진 (`OidInferenceEngine`) 구축 (모델명/카운터/소모품 유추) | OidInferenceEngine & Agent Ingest | ✅ PASS |
 | **TC-025** | OID/학습 | OID 지식 실시간 자동 학습 & DB 캐싱 구축 (`PrinterOidMapping` 캐싱) | OidInferenceEngine.learn_and_cache | ✅ PASS |
+| **TC-026** | Agent/경로 | 에이전트 폴더 직접 실행 시 `No module named agent` 경고 완벽 해결 | Agent Import Exception Handling | ✅ PASS |
 
 ---
 
@@ -167,6 +168,12 @@
 * **발생 원인/배경**: 신규 기종 및 펌웨어 버전 장비 수집 시 유추/발굴된 OID 매핑 지식을 DB에 자동 누적 학습하여 차후 동일/유사 장비 스캔 시 0.1초 만에 자동 찾아가는 시스템 적용 요구.
 * **조치 내용**: `OidInferenceEngine.learn_and_cache_oid_mapping` 메서드 구현 및 `AgentIngestBatchView` 수집 연동. 유추 성공 시 `PrinterOidMapping` DB 모델에 실시간으로 캐시 매핑 추가 및 활성화.
 * **검증 결과**: 신규 장비(Canon, HP) 수집 시 OID 매핑 DB 레코드 자동 축적(+3개) 및 2차 스캔 최단시간 매칭 100% 성공, 백엔드 테스트 9/9 PASS.
+
+### 26. [TC-026] Agent 모듈 실행 경로 호환성 확보 (`No module named 'agent'` 경고 해결)
+* **발생 원인/배경**: 에이전트 폴더 내부에서 `python main.py`를 직접 실행할 때 Python `sys.path` 최상위 패키지 해석 특성으로 인해 `No module named 'agent'` 경고 표출.
+* **조치 내용**: `agent/snmp_scanner.py` 모듈 내 `OidInferenceEngine` 임포트 부를 `try ... except ModuleNotFoundError`로 유연하게 처리하여 프로젝트 루트 및 `agent` 폴더 내부 어디서 실행하든 100% 정상 가동되도록 조치.
+* **검증 결과**: 경고 메시지 0건 완벽 처리 및 에이전트 스캔/수집 100% 성공, 백엔드 테스트 9/9 PASS.
+
 
 
 
