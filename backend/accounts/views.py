@@ -1151,16 +1151,11 @@ class AgentIngestBatchView(APIView):
             ip_addr = item.get("ip_address", "127.0.0.1")
             m_name = item.get("model_name", "Standard MFP")
 
-            # A. Legacy PrinterAsset Update with Flexible Serial & IP Matching
+            # A. Legacy PrinterAsset Update with Strict Serial & IP Matching
             clean_sno = str(s_no).strip()
             asset = PrinterAsset.objects.filter(serial_no__iexact=clean_sno).first()
             if not asset and ip_addr:
                 asset = PrinterAsset.objects.filter(ip_address=ip_addr).first()
-            if not asset and registered_assets:
-                # Fallback to workplace's registered assets sequentially without exceeding actual registered count
-                unmatched_assets = [a for a in registered_assets if a.id not in matched_asset_ids]
-                if unmatched_assets:
-                    asset = unmatched_assets[0]
 
             if asset:
                 matched_asset_ids.add(asset.id)
