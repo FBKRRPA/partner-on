@@ -45,16 +45,21 @@ def main():
     if args.auth or not cfg.get("agent_token"):
         auth_code = args.auth
         if not auth_code:
-            auth_code = input(">> 파트너온 웹에서 발급받은 8자리 인증 코드를 입력하세요: ").strip()
+            print("\n" + "=" * 60)
+            print("  [PartnerOn Windows SNMP Agent - 수집기 최초 설정]")
+            print("  파트너온 웹 화면 [자산 및 입출고 > 수집기/에이전트 관리]에서")
+            print("  발급받으신 8자리 인증 코드 (예: AST-8A9F2K)를 입력해 주세요.")
+            print("=" * 60)
+            auth_code = input(">> 8자리 인증 코드 입력: ").strip()
 
-        print(f"[INFO] 인증 코드 [{auth_code}]로 서버 인증을 시도합니다...")
+        print(f"\n[INFO] 인증 코드 [{auth_code}]로 파트너온 클라우드 서버에 접속을 시도합니다...")
         try:
             res = api_client.authenticate_code(auth_code)
             token = res.get("token") or f"agent_token_{auth_code}"
             cfg["agent_token"] = token
             cfg["server_url"] = server_url
             config_mgr.save_config(cfg)
-            print("[SUCCESS] 에이전트 인증 성공! 설정 파일(config.dat)이 안전하게 DPAPI 암호화 저장되었습니다.")
+            print("[SUCCESS] 에이전트 인증 성공! 수집기 토큰이 Windows DPAPI로 암호화 저장되었습니다.\n")
         except Exception as e:
             print(f"[ERROR] 인증 실패: {e}")
             sys.exit(1)
