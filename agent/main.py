@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--auth", type=str, help="8-digit Auth Code for Agent initial activation")
     parser.add_argument("--add-ip", type=str, help="Manually add custom designated printer IP")
     parser.add_argument("--server", type=str, default="http://localhost:8000", help="PartnerOn Server URL")
+    parser.add_argument("--interval", type=int, default=3600, help="Scan interval in seconds (default: 3600s)")
     parser.add_argument("--mode", type=str, choices=["auto", "get", "walk"], default="auto", help="SNMP Scan Mode (auto/get/walk)")
     args = parser.parse_args()
 
