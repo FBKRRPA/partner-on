@@ -159,16 +159,17 @@ class Verify2FAView(APIView):
 
 class SetupTOTPView(APIView):
     """
-    Setup or regenerate TOTP secret & QR Code Image Data URI for Authenticator App
+    Setup or fetch TOTP secret & QR Code Image Data URI for Authenticator App
+    Supports both GET and POST requests.
     """
     permission_classes = [IsAuthenticated]
 
-    def post(self, request) -> Response:
-        user = request.user
-        secret = pyotp.random_base32()
-        user.totp_secret = secret
-        user.save(update_fields=["totp_secret"])
+    def _generate_totp_response(self, user) -> Response:
+        if not user.totp_secret:
+            user.totp_secret = pyotp.random_base32()
+            user.save(update_fields=["totp_secret"])
 
+        secret = user.totp_secret
         totp = pyotp.TOTP(secret)
         provisioning_uri = totp.provisioning_uri(
             name=user.email, issuer_name="PartnerOn"
@@ -187,12 +188,26 @@ class SetupTOTPView(APIView):
 
         return Response(
             {
+                "secret": secret,
                 "totp_secret": secret,
+                "otpauth_url": provisioning_uri,
                 "provisioning_uri": provisioning_uri,
                 "qr_code_url": qr_code_url,
+                "is_enabled": user.is_2fa_enabled,
             },
             status=status.HTTP_200_OK,
         )
+
+    def get(self, request) -> Response:
+        return self._generate_totp_response(request.user)
+
+    def post(self, request) -> Response:
+        # Regenerate or return response
+        user = request.user
+        if not user.totp_secret or request.data.get("regenerate"):
+            user.totp_secret = pyotp.random_base32()
+            user.save(update_fields=["totp_secret"])
+        return self._generate_totp_response(user)
 
 
 class VerifyTOTPSetupView(APIView):
