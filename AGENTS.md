@@ -183,6 +183,12 @@
   * `status`: Enum (`ONLINE`, `OFFLINE`, `PENDING`) - 수집기 연결 상태
   * `detected_count`: IntegerField - 탐지/스캔된 복합기 수
   * `last_scanned_at`: DateTimeField - 최근 Agent 통신 시각
+* **`accounts_printeroidmapping` (PrinterOidMapping 모델)**:
+  * `id`: Primary Key
+  * `vendor_name`: `CharField(max_length=60)` - 제조사명 (Fujifilm, Canon, Ricoh, Standard)
+  * `oid_key`: `CharField(max_length=60)` - OID 키 (serial_no, count_color, count_mono, toner_c 등)
+  * `oid_value`: `CharField(max_length=150)` - SNMP OID 주소 문자열
+  * `is_active`: Boolean - OID 수집 활성화 여부
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블

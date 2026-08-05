@@ -210,3 +210,22 @@ class AgentCollector(models.Model):
         return f"[{self.auth_code}] {self.name} ({self.status})"
 
 
+class PrinterOidMapping(models.Model):
+    """
+    Multifunction Printer SNMP OID Master Database Table
+    """
+    vendor_name = models.CharField(max_length=60, default="Fujifilm", help_text="제조사명")
+    oid_key = models.CharField(max_length=60, help_text="OID 키 (serial_no, count_color, count_mono, toner_c...)")
+    oid_value = models.CharField(max_length=150, help_text="SNMP OID 주소 (예: 1.3.6.1.4.1.2988...)")
+    description = models.CharField(max_length=150, blank=True, help_text="설명")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("vendor_name", "oid_key")
+        ordering = ["vendor_name", "oid_key"]
+
+    def __str__(self) -> str:
+        return f"[{self.vendor_name}] {self.oid_key} -> {self.oid_value}"
+
+
+

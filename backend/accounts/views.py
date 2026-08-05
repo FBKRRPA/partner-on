@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector
+from .models import User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping
 from .permissions import IsOwnerPermission
 from .serializers import (
     DeviceDtoSerializer,
@@ -985,20 +985,34 @@ class AgentAuthView(APIView):
 
 class AgentFetchOidsView(APIView):
     """
-    Dynamic OID Downloader for Agent
+    Dynamic OID Downloader for Agent reading directly from PrinterOidMapping DB model
     """
     authentication_classes: list = []
     permission_classes: list = []
 
     def get(self, request) -> Response:
-        oids = {
-            "sysDescr": "1.3.6.1.2.1.1.1.0",
-            "serial_no": "1.3.6.1.4.1.2988.1.1.12.1.1.101",
-            "product_code": "1.3.6.1.4.1.2988.1.1.12.1.1.102",
-            "count_total": "1.3.6.1.4.1.2988.1.1.12.1.1.201",
-            "count_color": "1.3.6.1.4.1.2988.1.1.12.1.1.202",
-            "count_mono": "1.3.6.1.4.1.2988.1.1.12.1.1.203",
-        }
+        vendor = request.query_params.get("vendor", "Fujifilm")
+        db_oids = PrinterOidMapping.objects.filter(vendor_name=vendor, is_active=True)
+
+        if not db_oids.exists():
+            # Seed default Fujifilm OIDs in DB if table is empty
+            default_seeds = [
+                ("sysDescr", "1.3.6.1.2.1.1.1.0", "장비 설명"),
+                ("serial_no", "1.3.6.1.4.1.2988.1.1.12.1.1.101", "장비 시리얼 번호"),
+                ("product_code", "1.3.6.1.4.1.2988.1.1.12.1.1.102", "제품 프로덕트 코드"),
+                ("count_total", "1.3.6.1.4.1.2988.1.1.12.1.1.201", "총 누적 카운트"),
+                ("count_color", "1.3.6.1.4.1.2988.1.1.12.1.1.202", "컬러 누적 카운트"),
+                ("count_mono", "1.3.6.1.4.1.2988.1.1.12.1.1.203", "흑백 누적 카운트"),
+            ]
+            for key, val, desc in default_seeds:
+                PrinterOidMapping.objects.get_or_create(
+                    vendor_name=vendor,
+                    oid_key=key,
+                    defaults={"oid_value": val, "description": desc},
+                )
+            db_oids = PrinterOidMapping.objects.filter(vendor_name=vendor, is_active=True)
+
+        oids = {item.oid_key: item.oid_value for item in db_oids}
         return Response(oids, status=status.HTTP_200_OK)
 
 
