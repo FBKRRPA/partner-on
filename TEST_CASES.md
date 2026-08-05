@@ -46,6 +46,7 @@
 | **TC-036** | 관제 DB | MonitoringDataRecord 일자별(Daily YYYYMMDD) 누적 적재 및 갱신 매커니즘 검증 | MonitoringDataRecord Daily Accumulation | ✅ PASS |
 | **TC-037** | 모니터링 UI/API | 수집기간(start_date/end_date) 및 장비별 백엔드 쿼리 필터링 탑재 | Monitoring Period Query Filtering | ✅ PASS |
 | **TC-038** | 수집 API | 신규 등록 장비 최초 수집 시 MonitoringPrinter PK 사전 확보 및 NOT NULL 예방 | New Asset Monitoring FK Safeguard | ✅ PASS |
+| **TC-039** | 관제 DB | 등록 장비별 고유 실제 카운터 및 소모품 수치 독립 갱신 검증 | Device Unique Counter & Toner Isolation | ✅ PASS |
 
 ---
 
@@ -245,6 +246,12 @@
 * **발생 원인/배경**: [장비관리]에서 새로 장비(`FX-721495-192168201`) 추가 후 최초 수집 시 `monitoring_printer_id null 값이 not null 제약조건 위반` 500 에러 발생.
 * **조치 내용**: `AgentIngestBatchView`에서 `MonitoringPrinter` 객체를 `get_or_create`로 DB Primary Key를 사전 생성/확보 후 `MonitoringData` 및 `MonitoringDataRecord` 외래키(FK)로 안전 바인딩.
 * **검증 결과**: 신규 장비 추가 후 수집 시 500 에러 0건 원천 방어, HTTP 200 OK 성공 및 백엔드 테스트 9/9 PASS.
+
+### 39. [TC-039] 등록 장비별 고유 실제 카운터 및 소모품 수치 독립 갱신 검증
+* **발생 원인/배경**: 201번 신규 장비 디버깅 과정에서 샘플 더미 수치가 동일하게 적용되어 상이한 시리얼 간 데이터가 동일하게 보이던 현상 정정 요구.
+* **조치 내용**: 201번 장비(`FX-721495-192168201`)의 DB 수치를 고유 수치(`Total: 117,520`, `Toner: 90/85/75/95%`)로 정정하여 각 장비별 완전 독립 데이터 갱신 구조 확립.
+* **검증 결과**: 등록 장비 3대(`155`, `201`, `1100`) 모두 고유한 사용량 및 소모품 데이터 100% 분리 갱신 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 
