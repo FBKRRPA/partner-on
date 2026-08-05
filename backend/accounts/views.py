@@ -1119,16 +1119,20 @@ class AgentTargetAssetsView(APIView):
         
         workplace = collector.workplace if collector else Workplace.objects.first()
         if not workplace:
-            return Response({"target_ips": [], "target_serials": []}, status=status.HTTP_200_OK)
+            return Response({"target_ips": [], "target_serials": [], "scan_unregistered": True, "count": 0}, status=status.HTTP_200_OK)
 
         assets = PrinterAsset.objects.filter(workplace=workplace)
         target_ips = [a.ip_address for a in assets if a.ip_address]
         target_serials = [a.serial_no for a in assets if a.serial_no]
 
+        # Parameter or query check for scan_unregistered
+        scan_unregistered = request.query_params.get("scan_unregistered", "false").lower() == "true"
+
         return Response(
             {
                 "target_ips": target_ips,
                 "target_serials": target_serials,
+                "scan_unregistered": scan_unregistered or (len(assets) == 0),
                 "count": len(assets),
             },
             status=status.HTTP_200_OK,

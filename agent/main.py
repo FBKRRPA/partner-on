@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--server", type=str, default="http://localhost:8000", help="PartnerOn Server URL")
     parser.add_argument("--interval", type=int, default=3600, help="Scan interval in seconds (default: 3600s)")
     parser.add_argument("--mode", type=str, choices=["auto", "get", "walk"], default="auto", help="SNMP Scan Mode (auto/get/walk)")
+    parser.add_argument("--scan-unregistered", "-u", action="store_true", help="Force full subnet scan for unregistered devices")
     args = parser.parse_args()
 
     print("============================================================")
@@ -77,17 +78,25 @@ def main():
             
             # Fetch dynamic OIDs and Strictly Registered Target IPs & Serials from Server
             oid_map = api_client.fetch_latest_oids(agent_token)
-            target_res = api_client.fetch_target_assets(agent_token)
+            target_res = api_client.fetch_target_assets(agent_token, scan_unregistered=args.scan_unregistered)
             target_ips = target_res.get("target_ips", [])
             target_serials = target_res.get("target_serials", [])
+            scan_unregistered_flag = args.scan_unregistered or target_res.get("scan_unregistered", False)
 
-            print(f"[INFO] 서버에 정식 등록된 스캔 대상 시리얼/IP: {len(target_serials)}대 ({', '.join(target_serials)})")
-            
-            # Perform pinpoint SNMP scan strictly for REGISTERED Target Serials & IPs
-            scanner = SNMPScanner(target_ips=target_ips, target_serials=target_serials, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
+            # 3-Branch Scan Logic Rule:
+            # Condition 1: No registered assets (target_serials 0) -> Full Subnet Scan
+            # Condition 2: Parameter/Query scan_unregistered is True -> Full Subnet Scan
+            # Condition 3: Existing registered assets present -> Pinpoint Scan for Registered Assets Only
+            if not target_serials or scan_unregistered_flag:
+                print(f"[INFO] 🔍 [풀 스캔 모드 가동] (사유: {'최초 미등록 상태' if not target_serials else '미등록 장비 스캔 파라미터 전달'}) - 전체 서브넷(.1~.254) 탐지 중...")
+                full_subnets = [f"192.168.1.{i}" for i in range(1, 255)]
+                scanner = SNMPScanner(target_ips=full_subnets, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
+            else:
+                print(f"[INFO] ⚡ [등록 장비 전용 핀포인트 스캔 모드 가동] (등록 장비: {len(target_serials)}대)")
+                scanner = SNMPScanner(target_ips=target_ips, target_serials=target_serials, custom_ips=custom_ips, oid_map=oid_map, mode=args.mode)
+
             scanned_devices = scanner.scan_all()
-
-            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 등록 복합기 감지됨.")
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 감지됨.")
 
             # Upload Batch Packet to Server
             upload_res = api_client.upload_batch_data(agent_token, scanned_devices)
