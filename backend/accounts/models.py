@@ -539,11 +539,23 @@ class UnregisteredPrinter(models.Model):
     serial_no = models.CharField(max_length=256, help_text="시리얼번호")
     confirmed_serial_no = models.CharField(max_length=256, blank=True, null=True, help_text="확인된 시리얼번호")
     scanned_model = models.CharField(max_length=256, blank=True, null=True, help_text="스캔된 모델명")
+    vendor_name = models.CharField(max_length=120, blank=True, null=True, help_text="제조사명 (Fujifilm/Canon/HP 등)")
+    mac_address = models.CharField(max_length=64, blank=True, null=True, help_text="MAC 주소")
     printer_id = models.BigIntegerField(null=True, blank=True, help_text="프린터 모델 FK")
     customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
     ip = models.CharField(max_length=256, blank=True, null=True, help_text="IP 주소")
     location = models.CharField(max_length=256, blank=True, null=True, help_text="위치")
     registered = models.BooleanField(default=False, help_text="등록 완료 여부")
+
+    # Scanned Counter & Supplies Data
+    count_total = models.IntegerField(default=0, help_text="탐지된 총 카운터")
+    count_color = models.IntegerField(default=0, help_text="탐지된 컬러 카운터")
+    count_mono = models.IntegerField(default=0, help_text="탐지된 흑백 카운터")
+    toner_k = models.IntegerField(default=0, help_text="K 토너 잔량 (%)")
+    toner_c = models.IntegerField(default=0, help_text="C 토너 잔량 (%)")
+    toner_m = models.IntegerField(default=0, help_text="M 토너 잔량 (%)")
+    toner_y = models.IntegerField(default=0, help_text="Y 토너 잔량 (%)")
+    last_scanned_at = models.DateTimeField(null=True, blank=True, help_text="최근 탐지 시각")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

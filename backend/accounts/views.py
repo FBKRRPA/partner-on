@@ -1348,15 +1348,27 @@ class AgentIngestBatchView(APIView):
                     )
                 )
             else:
-                # Unregistered Scanned Device -> Separately saved into unregistered_printers table
-                # Respect original scanned serial_no value without artificial auto-generation
+                # Unregistered Scanned Device -> Separately saved into unregistered_printers table with rich detail columns
+                mac_addr = raw_item.get("mac_address", "")
+                vendor = item.get("vendor_name", "Standard")
+
                 unregistered_printer_updates.append(
                     UnregisteredPrinter(
                         workplace=workplace,
                         serial_no=clean_sno,
                         scanned_model=m_name,
+                        vendor_name=vendor,
+                        mac_address=mac_addr,
                         ip=ip_addr,
                         registered=False,
+                        count_total=c_total,
+                        count_color=c_color,
+                        count_mono=c_mono,
+                        toner_k=t_k,
+                        toner_c=t_c,
+                        toner_m=t_m,
+                        toner_y=t_y,
+                        last_scanned_at=now,
                         updated_at=now,
                     )
                 )
@@ -1456,7 +1468,22 @@ class AgentIngestBatchView(APIView):
                 unregistered_printer_updates,
                 update_conflicts=True,
                 unique_fields=["workplace", "ip"],
-                update_fields=["serial_no", "scanned_model", "registered", "updated_at"],
+                update_fields=[
+                    "serial_no",
+                    "scanned_model",
+                    "vendor_name",
+                    "mac_address",
+                    "registered",
+                    "count_total",
+                    "count_color",
+                    "count_mono",
+                    "toner_k",
+                    "toner_c",
+                    "toner_m",
+                    "toner_y",
+                    "last_scanned_at",
+                    "updated_at",
+                ],
             )
 
         return Response(

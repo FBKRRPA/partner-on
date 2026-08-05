@@ -197,7 +197,7 @@
 * **`monitoring_data_records` (MonitoringDataRecord 모델)**: 관제 데이터 일별/월별 누적 이력
 * **`supplies` (SuppliesAlert 모델)**: 소모품 잔량 경고 및 상태
 * **`supply_usages` (SupplyUsage 모델)**: 소모품 수동/시스템 교체 사용 이력
-* **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 목록 (`unique_together = ("workplace", "ip")`로 동일 IP 장비 재스캔 시 `serial_no` 및 `scanned_model` 실시간 자동 갱신 지원)
+* **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 상세 저장소 (`unique_together = ("workplace", "ip")`로 동일 IP 장비 재스캔 시 `serial_no`, `scanned_model`, `vendor_name`, `mac_address`, `count_total/color/mono`, `toner_k/c/m/y`, `last_scanned_at` 실시간 자동 갱신 지원)
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블
