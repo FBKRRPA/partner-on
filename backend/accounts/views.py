@@ -1338,10 +1338,12 @@ class AgentIngestBatchView(APIView):
                 )
             else:
                 # Unregistered Scanned Device -> Separately saved into unregistered_printers table
+                # If serial_no is missing/empty from SNMP scan, auto-generate clear IP-based identifier
+                unreg_sno = clean_sno if clean_sno and clean_sno != "NONE" else f"UNREG-IP-{ip_addr.replace('.', '-')}"
                 unregistered_printer_updates.append(
                     UnregisteredPrinter(
                         workplace=workplace,
-                        serial_no=clean_sno,
+                        serial_no=unreg_sno,
                         scanned_model=m_name,
                         ip=ip_addr,
                         registered=False,

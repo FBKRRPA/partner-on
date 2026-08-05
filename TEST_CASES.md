@@ -29,6 +29,7 @@
 | **TC-019** | 수집 API | Agent Ingest API `NameError` (collector, unregistered_printer_updates) 정정 | DRF Ingest API & Tests | ✅ PASS |
 | **TC-020** | Agent/수집 | 등록 시리얼 2대 타겟팅 동기화 및 2대 전체 스캔/수집 완료 | Agent Scanner & Ingest | ✅ PASS |
 | **TC-021** | 수집 DB | 미등록 탐지 기기 `unregistered_printers` 테이블 분리 저장 구축 | DRF Ingest & UnregisteredPrinter | ✅ PASS |
+| **TC-022** | 수집 DB | 미등록 장비 시리얼 미반환 시 대체 식별자(`UNREG-IP-xxx`) 자동 생성 | DRF Ingest Serial Fallback | ✅ PASS |
 
 ---
 
@@ -143,6 +144,12 @@
 * **발생 원인/배경**: 현장에서 에이전트가 탐지한 장비 중 [장비관리]에 등록되지 않은 기기를 관제 DB 오염 없이 `unregistered_printers` 테이블에 분리 저장 요구.
 * **조치 내용**: 백엔드 `AgentIngestBatchView`에서 등록 기기(2대)는 관제 테이블로 갱신하고, 미등록 탐지 기기는 `unregistered_printers` (`UnregisteredPrinter`) 테이블로 PostgreSQL `bulk_create` 분리 저장 구축.
 * **검증 결과**: 등록 기기 관제 DB 갱신과 미등록 장비 `unregistered_printers` 테이블 분리 저장 100% 정상 작동 및 백엔드 테스트 9/9 PASS.
+
+### 22. [TC-022] 미등록 장비 시리얼 미반환 시 대체 식별자(`UNREG-IP-xxx`) 자동 생성
+* **발생 원인/배경**: 타사 일반 네트워크 프린터는 SNMP 응답 시 시리얼 번호(Serial No)가 빈 문자열(`""`)로 리턴되어 미등록 테이블의 시리얼 칸이 비어 보임.
+* **조치 내용**: 백엔드 수집 엔진에서 미등록 기기의 시리얼 번호가 비어있는 경우 `UNREG-IP-{ip}` 형태의 IP 기반 명확한 대체 시리얼 식별자를 자동 할당.
+* **검증 결과**: 시리얼 칸 빈칸 현상 100% 방지 및 미등록 기기 가독성 향상 완료.
+
 
 
 
