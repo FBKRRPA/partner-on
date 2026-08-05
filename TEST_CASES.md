@@ -17,6 +17,13 @@
 | **TC-007** | 필터링 | 시리얼 번호 매칭 기반 모델명 및 수집 기간 필터 | UI Select & Date Picker | ✅ PASS |
 | **TC-008** | 데이터 무결성 | 복합기별 데이터 동일 덮어쓰기 오류 수정 (Fallback 제거) | 백엔드 Serial/IP Matching | ✅ PASS |
 | **TC-009** | 대규모 수집 | 1,000대 ~ 10,000대 대규모 수집 엔터프라이즈 벌크 엔진 | High-Load Ingest Benchmark | ✅ PASS |
+| **TC-010** | 보안 인증 | 역할 기반 2차 인증 (2FA: TOTP, Email OTP, 비상복구) | SimpleJWT & pyotp | ✅ PASS |
+| **TC-011** | 기기 보안 | 대표 승인 기기 통제 시스템 (`Device` 승인 모듈) | Device ID & Status | ✅ PASS |
+| **TC-012** | 네트워크 | Dynamic IP 동적 감지 유틸리티 (`getApiBaseUrl()`) | Frontend auth-api.ts | ✅ PASS |
+| **TC-013** | PWA/오프라인 | PWA 지원 및 네트워크 연결 끊김 오프라인 폴백 | `@ducanh2912/next-pwa` | ✅ PASS |
+| **TC-014** | 권한/메뉴 | 7대 대분류 25개 소분류 네비게이션 & 4단계 RBAC | RoleMenuPermission | ✅ PASS |
+| **TC-015** | 구성원 관리 | 8자리 구성원 초대 코드 생성 및 회원가입 연동 | Invite Code System | ✅ PASS |
+| **TC-016** | SNMP/OID | 복합기 제조사별 OID 동적 맵 매핑 | PrinterOidMapping Master | ✅ PASS |
 
 ---
 
@@ -66,3 +73,40 @@
 * **발생 원인/배경**: 대규모 1만 대 IoT 장비 배치 수집 시 N+1 DB 쿼리로 인한 성능 병목 우려.
 * **조치 내용**: In-Memory O(1) 매핑 + PostgreSQL Native `bulk_create(..., update_conflicts=True)` 적용 (50,000회 쿼리 ➔ 단 5회 SQL 조작).
 * **검증 결과**: 1,000대 0.26초, 10,000대 1.24초 만에 타임아웃 없이 완벽 처리 벤치마크 통과.
+
+---
+
+### 10. [TC-010] 역할 기반 2차 인증 (2FA: TOTP, Email OTP, 비상 복구 코드)
+* **발생 원인/배경**: B2B 보안 표준 준수를 위해 사업장 대표/관리자/영업/CE 직급별 2FA 강제 및 검증 기능 필요.
+* **조치 내용**: `pyotp` TOTP QR 코드 발급, Email OTP 6자리 5분 만료/1회성 검증, 8자리 일회성 비상 복구 코드 10개 발급 연동.
+* **검증 결과**: 2FA 성공 시에만 JWT Bearer 토큰 최종 발급 확인.
+
+### 11. [TC-011] 대표 승인 기기 통제 시스템 (`Device` 승인 모듈)
+* **발생 원인/배경**: 미승인 단말기에서의 무단 접속 차단 및 대표/관리자의 접속 기기 승인 관리 필요.
+* **조치 내용**: 브라우저/기기 UUID 자동 채증, 승인 대기(`PENDING`) 시 로그인 차단 모달 팝업, 대표 승인(`APPROVED`) 및 거절(`REJECTED`) 백엔드 API 연동.
+* **검증 결과**: 승인된 디바이스만 접속 허용 통제 완벽 동작.
+
+### 12. [TC-012] Dynamic IP 동적 감지 유틸리티 (`getApiBaseUrl()`)
+* **발생 원인/배경**: API 요청 주소를 `http://localhost:8000`으로 하드코딩하여 다른 컴퓨터/IP 접속 시 `Failed to fetch` 에러 발생.
+* **조치 내용**: `frontend/lib/auth-api.ts`에 `getApiBaseUrl()` 유틸리티 함수 구현하여 브라우저의 현재 호스트네임/IP 대역으로 API URL 동적 할당.
+* **검증 결과**: 로컬, 내부망 IP, 실서버 도메인 무중단 API 접속 지원.
+
+### 13. [TC-013] PWA 지원 및 네트워크 연결 끊김 오프라인 폴백
+* **발생 원인/배경**: 모바일/태블릿 현장 점검 시 네트워크 미연결 상태에서도 앱 기본 UI 유지 필요.
+* **조치 내용**: `@ducanh2912/next-pwa` 설정, 웹 앱 매니페스트(`manifest.webmanifest`), 서비스워커(`sw.js`) 연동 및 `/offline` 오프라인 폴백 페이지 제작.
+* **검증 결과**: 오프라인 전환 시 서비스 워커 캐시 및 오프라인 안시 UI 정상 작동.
+
+### 14. [TC-014] 7대 대분류 25개 소분류 네비게이션 & 4단계 RBAC 메뉴 권한
+* **발생 원인/배경**: 복잡한 B2B CRM/ERP 기능을 한눈에 조망하고 직급별 메뉴 접근 권한 제어 필요.
+* **조치 내용**: `AppHeader` 메가 드롭다운 네비게이션 구현, `RoleMenuPermission` DB 모델과 연동하여 `OWNER`, `ADMIN_STAFF`, `SALES`, `CE` 권한별 메뉴 접근 제어, `MenuScaffoldPage` 스캐폴드 적용.
+* **검증 결과**: 25개 소분류 메뉴 스케폴딩 및 직급별 403 Forbidden 권한 통제 완벽 작동.
+
+### 15. [TC-015] 8자리 구성원 초대 코드 생성 및 회원가입 연동
+* **발생 원인/배경**: 사업장 대표가 직원을 간편하게 시스템 구성원으로 초대하고 수락하는 흐름 필요.
+* **조치 내용**: 8자리 고유 초대 코드(`INV-8A9F2K`) 자동 발급, 24시간 만료 시간 트래킹, 초대 코드 입력 회원가입 API 및 승인 상태 연동.
+* **검증 결과**: 초대 코드를 통한 소속 사업장 자동 할당 회원가입 완벽 작동.
+
+### 16. [TC-016] 복합기 제조사별 OID 동적 맵 매핑 (`PrinterOidMapping`)
+* **발생 원인/배경**: Fujifilm, Canon, Ricoh 등 제조사별로 서로 다른 SNMP OID 주소를 수집할 수 있는 유연한 구조 필요.
+* **조치 내용**: `PrinterOidMapping` 마스터 DB 테이블 및 `OidListMaster` 구축하여 제조사/모델별 OID 키-값 동적 매핑 지원.
+* **검증 결과**: 에이전트 수집기가 DB에 등록된 OID 맵을 읽어 복합기 SNMP 수집 성공.
