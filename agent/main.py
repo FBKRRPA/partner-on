@@ -84,10 +84,9 @@ def main():
 
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] 스캔 완료: 총 {len(scanned_devices)}대 복합기/프린터 감지됨.")
 
-            if scanned_devices:
-                # Batch HTTPS Upload
-                upload_res = api_client.upload_batch_data(agent_token, scanned_devices)
-                print(f"[SUCCESS] 클라우드 배치 업로드 완료: {upload_res.get('detail', '성공')}")
+            # Always Upload Batch Packet to Server to update last_scanned_at and ONLINE status
+            upload_res = api_client.upload_batch_data(agent_token, scanned_devices)
+            print(f"[SUCCESS] 클라우드 배치 업로드 완료 (감지 장비: {len(scanned_devices)}대): {upload_res.get('detail', '성공')}")
 
         except KeyboardInterrupt:
             print("\n[INFO] 사용자에 의해 에이전트가 종료됩니다. 서버에 오프라인 상태를 통보합니다...")
