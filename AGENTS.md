@@ -231,6 +231,7 @@
 * ⚠️ **[중요] 모델/테이블 추가 및 필드 수정 시 필수 절차**:
   1. `models.py` 수정 후 `python manage.py makemigrations` 및 `python manage.py migrate` 수행.
   2. **새로운 모델/테이블이 생성되거나 필드가 변경된 경우, LLM 코딩 에이전트는 반드시 `AGENTS.md` 파일의 `5. 데이터베이스 스키마 & ORM 모델` 섹션에 해당 테이블 및 필드 설명을 업데이트해야 합니다.**
+  3. **Django ORM 쿼리 작성 시 `from django.db import models` 또는 `from django.db.models import Q`를 상단에 명시적으로 임포트하여 `NameError` 예외로 인한 서버 500 장애를 원천 예방해야 합니다.**
 
 ### ④ **에이전트 이중 수집 분리 & 3가지 스캔 자동 분기 규칙 (필수 준수)**
 * **등록 장비와 미등록 장비의 이중 수집 분리**:

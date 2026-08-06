@@ -55,6 +55,7 @@
 | **TC-045** | 수집 엔진 | 풀 스캔 모드 시 활성 미등록 장비 2대(.55, .100) 자동 탐지 세팅 | Full Scan 2 Devices Auto Detection | ✅ PASS |
 | **TC-046** | 수집 API | 수집 API IP 키 호환성 보완 및 미등록 장비 N대 온전 DB 저장 | Ingest API IP Key Fallback & Deduplication Fix | ✅ PASS |
 | **TC-047** | DB/연동 | 장비 등록 시 unregistered_printers 3개 필드(location, registered, confirmed_serial_no) 자동 동기화 | UnregisteredPrinter Field Registration Sync | ✅ PASS |
+| **TC-048** | 백엔드/수집 | 수집 API Django ORM Q 객체 명시적 임포트 수술 및 NameError 500 서버 장애 교정 | Ingest API NameError Resolution & Q Import | ✅ PASS |
 
 ---
 
@@ -299,6 +300,12 @@
 * **발생 원인/배경**: 미등록 탐지 장비가 정식 장비(`PrinterAsset`)로 사전 등록되거나 Agent 수집 시 매칭될 때 `unregistered_printers` 테이블의 3개 항목 동기화 요구.
 * **조치 내용**: `PrinterAssetListCreateView` 수동 등록 시 및 `AgentIngestBatchView` 수집 매칭 시 해당 `UnregisteredPrinter` 레코드를 찾아 `location=location`, `registered=True`, `confirmed_serial_no=serial_no` 3개 필드를 자동 실시간 갱신.
 * **검증 결과**: 장비 등록 시 `unregistered_printers` DB 테이블 3개 필드 동기화 완료 및 백엔드 테스트 9/9 PASS.
+
+### 48. [TC-048] 수집 API Django ORM Q 객체 명시적 임포트 수술 및 NameError 500 서버 장애 교정
+* **발생 원인/배경**: `AgentIngestBatchView` 수집 처리 시 `NameError: name 'models' is not defined`로 인한 서버 500 예외 장애 파악.
+* **조치 내용**: `backend/accounts/views.py` 파일 상단에 `from django.db.models import Q` 명시적 임포트 선언 및 `Q(...)` 구문으로 교정. `AGENTS.md` 6-③ 지침에 해당 수칙 등록.
+* **검증 결과**: API 수집 요청 시 200 OK 정상 응답 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 

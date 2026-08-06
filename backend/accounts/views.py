@@ -4,6 +4,8 @@ import random
 import string
 import pyotp
 import qrcode
+from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
@@ -1276,9 +1278,9 @@ class AgentIngestBatchView(APIView):
                 assets_to_update.append(asset)
 
                 # Sync related UnregisteredPrinter fields: location, registered=True, confirmed_serial_no
-                unreg_match_q = models.Q(serial_no__iexact=clean_sno)
+                unreg_match_q = Q(serial_no__iexact=clean_sno)
                 if ip_addr:
-                    unreg_match_q |= models.Q(ip=ip_addr)
+                    unreg_match_q |= Q(ip=ip_addr)
                 UnregisteredPrinter.objects.filter(workplace=workplace).filter(unreg_match_q).update(
                     registered=True,
                     location=asset.location,
@@ -1694,9 +1696,9 @@ class PrinterAssetListCreateView(APIView):
             printer.save()
 
         # Update UnregisteredPrinter fields: location, registered=True, confirmed_serial_no
-        unreg_q = models.Q(serial_no__iexact=serial_no)
+        unreg_q = Q(serial_no__iexact=serial_no)
         if ip_address:
-            unreg_q |= models.Q(ip=ip_address)
+            unreg_q |= Q(ip=ip_address)
         UnregisteredPrinter.objects.filter(workplace=workplace).filter(unreg_q).update(
             registered=True,
             location=location,
