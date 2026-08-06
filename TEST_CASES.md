@@ -50,6 +50,7 @@
 | **TC-040** | DB/초기화 | unregistered_printers DB 테이블 시뮬레이션 더미 데이터 100% 초기화 | UnregisteredPrinter Table Purge | ✅ PASS |
 | **TC-041** | UI/API | 장비 현황 페이지(operations/assets/devices) 장비 수정 및 삭제 기능 구축 | Printer Asset Edit & Delete Modals | ✅ PASS |
 | **TC-042** | UI/CSS | 미존재 로컬 폰트(MinSansVF) 호출 404 Not Found 에러 교정 | Font 404 Not Found Exception Resolution | ✅ PASS |
+| **TC-043** | UI/폰트 | MinSans(MinSansVF.woff2/ttf) 폰트 파일 fonts 폴더 배치 및 연동 | MinSans Font Files Placement & Integration | ✅ PASS |
 
 ---
 
@@ -269,6 +270,12 @@
 * **발생 원인/배경**: `globals.css` 내 로컬 미존재 폰트(`MinSansVF.woff2`/`ttf`) `@font-face` 로딩 시도로 인한 404 Not Found 콘솔 에러 발생.
 * **조치 내용**: `frontend/app/globals.css`에서 해당 구문 제거 및 Google 웹폰트(`Noto Sans KR`, `Roboto`) 표준 fallback으로 정정.
 * **검증 결과**: 폰트 404 조회 에러 0건 원천 해결 및 백엔드 테스트 9/9 PASS.
+
+### 43. [TC-043] MinSans(MinSansVF.woff2/ttf) 폰트 파일 fonts 폴더 배치 및 연동
+* **발생 원인/배경**: 대표 지시에 따라 `MinSansVF.woff2` 및 `MinSansVF.ttf` 폰트 파일을 `frontend/public/fonts/` 폴더에 생성 배치 요구.
+* **조치 내용**: `frontend/public/fonts/` 폴더 생성 및 `MinSansVF.woff2`, `MinSansVF.ttf` 파일 배치. `globals.css` `@font-face` 복원 연동.
+* **검증 결과**: 폰트 파일 2종 정상 배치 및 브라우저 200 OK 렌더링 확인, 백엔드 테스트 9/9 PASS.
+
 
 
 
