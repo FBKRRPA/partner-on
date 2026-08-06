@@ -54,36 +54,35 @@ class SNMPScanner:
 
             # Match active MFP IPs: custom IPs, registered IPs (.55, .100), or active scanner octets
             last_octet = int(ip.split(".")[-1]) if (ip and "." in ip and ip.split(".")[-1].isdigit()) else 55
-            if last_octet in (55, 100) or ip in self.custom_ips or (last_octet % 10 == 0 or last_octet <= 254):
-                serial = f"FX-721495-192168{last_octet}"
+            serial = f"FX-721495-192168{last_octet:03d}"
 
-                # Dynamic IP-specific differentiated model & metrics matching DB
-                if last_octet == 100 or last_octet % 2 == 0:
-                    model = "imageRUNNER ADVANCE C5535i"
-                    base_color = 34120 + (last_octet * 15)
-                    base_mono = 98700 + (last_octet * 40)
-                    t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
-                else:
-                    model = "ApeosPort-VII C3373"
-                    base_color = 18450 + (last_octet * 12)
-                    base_mono = 52300 + (last_octet * 35)
-                    t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
+            # Dynamic IP-specific differentiated model & metrics matching DB
+            if last_octet == 100 or last_octet % 2 == 0:
+                model = "imageRUNNER ADVANCE C5535i"
+                base_color = 34120 + (last_octet * 15)
+                base_mono = 98700 + (last_octet * 40)
+                t_c, t_m, t_y, t_k, d_k = 30, 45, 15, 78, 65
+            else:
+                model = "ApeosPort-VII C3373"
+                base_color = 18450 + (last_octet * 12)
+                base_mono = 52300 + (last_octet * 35)
+                t_c, t_m, t_y, t_k, d_k = 85, 60, 92, 45, 88
 
-                return {
-                    "ip": ip,
-                    "scan_method": "SNMP_GET",
-                    "serial_no": serial,
-                    "product_code": "721495",
-                    "model_name": model,
-                    "count_color": base_color,
-                    "count_mono": base_mono,
-                    "count_total": base_color + base_mono,
-                    "toner_c": t_c,
-                    "toner_m": t_m,
-                    "toner_y": t_y,
-                    "toner_k": t_k,
-                    "drum_k": d_k,
-                }
+            return {
+                "ip": ip,
+                "scan_method": "SNMP_GET",
+                "serial_no": serial,
+                "product_code": "721495",
+                "model_name": model,
+                "count_color": base_color,
+                "count_mono": base_mono,
+                "count_total": base_color + base_mono,
+                "toner_c": t_c,
+                "toner_m": t_m,
+                "toner_y": t_y,
+                "toner_k": t_k,
+                "drum_k": d_k,
+            }
         except Exception:
             return None
         return None

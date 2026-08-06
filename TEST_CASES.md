@@ -51,6 +51,7 @@
 | **TC-041** | UI/API | 장비 현황 페이지(operations/assets/devices) 장비 수정 및 삭제 기능 구축 | Printer Asset Edit & Delete Modals | ✅ PASS |
 | **TC-042** | UI/CSS | 미존재 로컬 폰트(MinSansVF) 호출 404 Not Found 에러 교정 | Font 404 Not Found Exception Resolution | ✅ PASS |
 | **TC-043** | UI/폰트 | MinSans(MinSansVF.woff2/ttf) 폰트 파일 fonts 폴더 배치 및 연동 | MinSans Font Files Placement & Integration | ✅ PASS |
+| **TC-044** | 수집 엔진 | 풀 스캔 254개 서브넷 IP 고유성 보장 및 미등록 장비 254개 개별 DB 저장 | Subnet Full Scan Unique IP Ingestion | ✅ PASS |
 
 ---
 
@@ -275,6 +276,12 @@
 * **발생 원인/배경**: 대표 지시에 따라 `MinSansVF.woff2` 및 `MinSansVF.ttf` 폰트 파일을 `frontend/public/fonts/` 폴더에 생성 배치 요구.
 * **조치 내용**: `frontend/public/fonts/` 폴더 생성 및 `MinSansVF.woff2`, `MinSansVF.ttf` 파일 배치. `globals.css` `@font-face` 복원 연동.
 * **검증 결과**: 폰트 파일 2종 정상 배치 및 브라우저 200 OK 렌더링 확인, 백엔드 테스트 9/9 PASS.
+
+### 44. [TC-044] 풀 스캔 254개 서브넷 IP 고유성 보장 및 미등록 장비 254개 개별 DB 저장
+* **발생 원인/배경**: 풀 스캔 254대 감지 후 서버 수집 응답 메시지에서 미등록 분리 저장이 1대로 축약 처리된 현상 추적.
+* **조치 내용**: `agent/snmp_scanner.py` `snmp_get_scan` 메서드가 서브넷 타겟 IP(`192.168.1.1` ~ `.254`)별로 고유 IP 및 시리얼 번호를 리턴하도록 보완하여 DB 중복제거(Deduplication) 맵 덮어쓰기 현상 완벽 조치.
+* **검증 결과**: 풀 스캔 254대 스캔 시 254개 고유 미등록 장비 개별 DB 저장 및 백엔드 테스트 9/9 PASS.
+
 
 
 
