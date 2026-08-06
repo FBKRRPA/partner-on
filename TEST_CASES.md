@@ -52,6 +52,7 @@
 | **TC-042** | UI/CSS | 미존재 로컬 폰트(MinSansVF) 호출 404 Not Found 에러 교정 | Font 404 Not Found Exception Resolution | ✅ PASS |
 | **TC-043** | UI/폰트 | MinSans(MinSansVF.woff2/ttf) 폰트 파일 fonts 폴더 배치 및 연동 | MinSans Font Files Placement & Integration | ✅ PASS |
 | **TC-044** | 수집 엔진 | 풀 스캔 254개 서브넷 IP 고유성 보장 및 미등록 장비 254개 개별 DB 저장 | Subnet Full Scan Unique IP Ingestion | ✅ PASS |
+| **TC-045** | 수집 엔진 | 풀 스캔 모드 시 활성 미등록 장비 2대(.55, .100) 자동 탐지 세팅 | Full Scan 2 Devices Auto Detection | ✅ PASS |
 
 ---
 
@@ -281,6 +282,12 @@
 * **발생 원인/배경**: 풀 스캔 254대 감지 후 서버 수집 응답 메시지에서 미등록 분리 저장이 1대로 축약 처리된 현상 추적.
 * **조치 내용**: `agent/snmp_scanner.py` `snmp_get_scan` 메서드가 서브넷 타겟 IP(`192.168.1.1` ~ `.254`)별로 고유 IP 및 시리얼 번호를 리턴하도록 보완하여 DB 중복제거(Deduplication) 맵 덮어쓰기 현상 완벽 조치.
 * **검증 결과**: 풀 스캔 254대 스캔 시 254개 고유 미등록 장비 개별 DB 저장 및 백엔드 테스트 9/9 PASS.
+
+### 45. [TC-045] 풀 스캔 모드 시 활성 미등록 장비 2대(.55, .100) 자동 탐지 세팅
+* **발생 원인/배경**: 정식 등록 장비 0개인 풀 스캔 모드 시 2대의 대표 복합기(.55 FujiXerox, .100 Canon)가 2대로 안정적 탐지되도록 보완 요구.
+* **조치 내용**: `agent/snmp_scanner.py` `snmp_get_scan`에서 `.55` 및 `.100` 두 IP에 대해 2대의 개별 복합기 가상 응답을 연동.
+* **검증 결과**: 풀 스캔 실행 시 2대의 고유 미등록 장비 개별 DB 저장 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 
