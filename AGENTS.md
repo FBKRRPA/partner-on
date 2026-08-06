@@ -240,9 +240,10 @@
   * **조건 1 (최초 등록 0대 상태)**: `target_serials` 0대 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
   * **조건 2 (미등록 장비 스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 API 쿼리 수신 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
   * **조건 3 (기존 등록 장비가 있는 정기 수집)**: 정식 등록 기기 존재 ➔ 0.5초 초고속 등록 장비 전용 핀포인트 스캔(Pinpoint Scan).
-* **지능형 OID 유추 엔진 (`OidInferenceEngine`) 및 실시간 지식 캐싱**:
-  * `sysDescr` 및 브랜드 패턴 분석을 통한 모델명 정제 (`scanned_model`), 카운터/소모품 비율 유추 보완.
-  * 유추 성공 시 `PrinterOidMapping` DB 모델에 `learn_and_cache_oid_mapping`을 호출하여 OID 지식을 실시간 자동 캐싱 학습.
+* **수집 API IP 키 호환성 및 덮어쓰기 방지 지침 (`Ingest API IP Resolution Directive`)**:
+  * 백엔드 수집 API(`AgentIngestBatchView`)는 에이전트 패킷의 IP 키 이름(`ip_address` 또는 `ip`)을 호환 수용(`item.get("ip_address") or item.get("ip") or "127.0.0.1"`)하여, 고유 IP 상실로 인한 미등록 장비 1대 축소 덮어쓰기(Deduplication Overwrite) 버그를 원천 예방해야 합니다.
+* **풀 스캔 타겟 IP 고유성 지침 (`Full Scan IP Uniqueness Directive`)**:
+  * 에이전트 풀 스캔(.1~.254) 시 스캐너는 각 타겟 IP별로 고유 IP 및 시리얼 번호를 부여하여 `unregistered_printers` DB 테이블에 N대 장비가 개별 분리 적재되도록 수집합니다.
 * **정적 에셋 폰트 파일 경로 무결성 준수**:
   * `MinSans` (`MinSansVF.woff2`, `MinSansVF.ttf`) 웹폰트는 반드시 `frontend/public/fonts/` 폴더에 배치하고 `globals.css`에서 `@font-face`로 로딩하여 404 에러를 예방합니다.
 
