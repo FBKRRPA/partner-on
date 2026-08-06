@@ -579,6 +579,8 @@ export interface MonitoringUsageRecordDto {
   yyyymmdd: string;
   date_formatted: string;
   serial_no: string;
+  customer_name?: string;
+  location?: string;
   model_name: string;
   count_color: number;
   count_mono: number;
@@ -612,6 +614,9 @@ export interface MonitoringSupplyRecordDto {
   yyyymmdd: string;
   date_formatted: string;
   serial_no: string;
+  customer_name?: string;
+  location?: string;
+  model_name?: string;
   toner_c: number;
   toner_m: number;
   toner_y: number;

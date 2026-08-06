@@ -57,6 +57,7 @@
 | **TC-047** | DB/연동 | 장비 등록 시 unregistered_printers 3개 필드(location, registered, confirmed_serial_no) 자동 동기화 | UnregisteredPrinter Field Registration Sync | ✅ PASS |
 | **TC-048** | 백엔드/수집 | 수집 API Django ORM Q 객체 명시적 임포트 수술 및 NameError 500 서버 장애 교정 | Ingest API NameError Resolution & Q Import | ✅ PASS |
 | **TC-049** | 수집 스캐너 | 시리얼 해싱 기반 등록 장비별 고유 동적 사용량 및 소모품 수치 독립 생성 | Dynamic Unique Metrics per Registered Serial | ✅ PASS |
+| **TC-050** | UI/관제 | 모니터링 관제 화면(사용량/소모품) 고객사 컬럼 추가 및 행 클릭 상세 관제 모달 팝업 | Customer Column & Row Click Detail Modal Inspection | ✅ PASS |
 
 ---
 
@@ -311,6 +312,12 @@
 * **발생 원인/배경**: 새로 수동 등록된 임의 시리얼 번호 수집 시 동일 기본 더미 조건에 빠져 수치가 같게 나오던 현상 추적.
 * **조치 내용**: `agent/snmp_scanner.py` 스캐너 핀포인트 로직에서 시리얼 숫자 고유 해싱 연산(`sno_num`)을 탑재하여 어떤 시리얼이 등록되더라도 시리얼별로 100% 다른 사용량과 소모품 수치가 독립 생성되도록 수술.
 * **검증 결과**: 등록 장비 N대별 완전히 다른 고유 수치 독립 갱신 확인 및 백엔드 테스트 9/9 PASS.
+
+### 50. [TC-050] 모니터링 관제 화면(사용량/소모품) 고객사 컬럼 추가 및 행 클릭 상세 관제 모달 팝업
+* **발생 원인/배경**: 관제 목록에서 복합기별 설치 고객사 및 위치를 한눈에 식별하고 클릭 시 상세 관제 팝업 렌더링 요구.
+* **조치 내용**: `MonitoringUsageView` & `MonitoringSuppliesView` DTO에 `customer_name` 및 `location`을 추가하고, `/operations/monitoring/usage` 및 `/supplies` 관제 화면에 `[고객사명 / 설치 위치]` 컬럼 기본 추가 및 행(Row) 클릭 시 상세 관제 모달 팝업 렌더링 구현.
+* **검증 결과**: 35개 정적 페이지 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

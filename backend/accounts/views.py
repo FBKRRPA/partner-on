@@ -1915,16 +1915,21 @@ class MonitoringUsageView(APIView):
         if filter_serial and filter_serial != "ALL":
             records_qs = records_qs.filter(serial_no=filter_serial)
 
+        asset_map = {p.serial_no: p for p in printers}
+
         history_records = []
         db_records = records_qs.order_by("-yyyymmdd", "-agent_updated_at")[:500]
         for r in db_records:
+            asset = asset_map.get(r.serial_no)
             history_records.append(
                 {
                     "id": r.id,
                     "yyyymmdd": r.yyyymmdd,
                     "date_formatted": f"{r.yyyymmdd[:4]}-{r.yyyymmdd[4:6]}-{r.yyyymmdd[6:]}",
                     "serial_no": r.serial_no,
-                    "model_name": r.monitoring_printer.printer_model if r.monitoring_printer else "Standard MFP",
+                    "customer_name": asset.customer_name if asset else "자사 본사",
+                    "location": asset.location if asset else "사무실",
+                    "model_name": asset.model_name if asset else (r.monitoring_printer.printer_model if r.monitoring_printer else "Standard MFP"),
                     "count_color": r.count1,
                     "count_mono": r.count2,
                     "count_total": r.count4,
@@ -2001,15 +2006,21 @@ class MonitoringSuppliesView(APIView):
         if filter_serial and filter_serial != "ALL":
             records_qs = records_qs.filter(serial_no=filter_serial)
 
+        asset_map = {p.serial_no: p for p in printers}
+
         history_records = []
         db_records = records_qs.order_by("-yyyymmdd", "-agent_updated_at")[:500]
         for r in db_records:
+            asset = asset_map.get(r.serial_no)
             history_records.append(
                 {
                     "id": r.id,
                     "yyyymmdd": r.yyyymmdd,
                     "date_formatted": f"{r.yyyymmdd[:4]}-{r.yyyymmdd[4:6]}-{r.yyyymmdd[6:]}",
                     "serial_no": r.serial_no,
+                    "customer_name": asset.customer_name if asset else "자사 본사",
+                    "location": asset.location if asset else "사무실",
+                    "model_name": asset.model_name if asset else "Standard MFP",
                     "toner_c": r.toner_c,
                     "toner_m": r.toner_m,
                     "toner_y": r.toner_y,

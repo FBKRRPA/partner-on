@@ -17,6 +17,9 @@ export default function MonitoringSuppliesPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"SNAPSHOT" | "HISTORY">("HISTORY");
 
+  // Selected Device State for Detail Modal Inspection
+  const [selectedSupplyModal, setSelectedSupplyModal] = useState<MonitoringSupplyDto | null>(null);
+
   // Filters State
   const [selectedSerial, setSelectedSerial] = useState<string>("ALL");
   const [startDate, setStartDate] = useState<string>("");
@@ -179,9 +182,7 @@ export default function MonitoringSuppliesPage() {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-[#E01E35]">{criticalCount}</span>
-              <span className="text-xs font-bold text-[#E01E35] bg-rose-50 px-2 py-0.5 rounded-full">
-                CRITICAL (위험)
-              </span>
+              <span className="text-xs font-semibold text-slate-500">대</span>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
@@ -190,9 +191,7 @@ export default function MonitoringSuppliesPage() {
             </span>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-amber-600">{warningCount}</span>
-              <span className="text-xs font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
-                WARNING (주의)
-              </span>
+              <span className="text-xs font-semibold text-slate-500">대</span>
             </div>
           </div>
         </div>
@@ -202,7 +201,7 @@ export default function MonitoringSuppliesPage() {
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-8">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-bold text-[#333333]">
-                과거부터 오늘까지의 일자별 소모품 잔량 소진 이력 전체 목록 (PostgreSQL DB 시계열 데이터)
+                일자별 소모품 잔량 및 소진 추이 이력 목록
               </h2>
               <span className="text-xs font-bold text-[#01916D] bg-emerald-50 px-2.5 py-1 rounded-full">
                 MonitoringDataRecord 마스터
@@ -222,62 +221,91 @@ export default function MonitoringSuppliesPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-100">
                     <tr>
+                      <th className="py-3.5 px-6">고객사명 / 설치 위치</th>
                       <th className="py-3.5 px-6">수집 일자 (YYYY-MM-DD)</th>
-                      <th className="py-3.5 px-6">장비 시리얼 번호</th>
+                      <th className="py-3.5 px-6">장비 시리얼 번호 / 모델명</th>
                       <th className="py-3.5 px-6 w-64">토너 잔량 (C / M / Y / K)</th>
                       <th className="py-3.5 px-6">드럼(K)</th>
-                      <th className="py-3.5 px-6 text-right">Agent 데이터 수집 시각</th>
+                      <th className="py-3.5 px-6 text-right">Agent 수집 시각</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredHistory.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-4 px-6 font-mono font-extrabold text-[#01916D]">
-                          {item.date_formatted}
-                        </td>
-                        <td className="py-4 px-6 font-mono text-xs font-bold text-slate-800">
-                          {item.serial_no}
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="space-y-1.5 text-xs font-mono">
-                            <div className="flex items-center gap-2">
-                              <span className="w-4 font-bold text-cyan-600">C:</span>
-                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                <div className="bg-cyan-500 h-2 rounded-full" style={{ width: `${item.toner_c}%` }} />
+                    {filteredHistory.map((item) => {
+                      const supplyObj = suppliesList.find((s) => s.serial_no === item.serial_no) || {
+                        id: item.id,
+                        customer_name: item.customer_name || "자사 본사",
+                        serial_no: item.serial_no,
+                        model_name: item.model_name || "Standard MFP",
+                        location: item.location || "사무실",
+                        toner_c: item.toner_c,
+                        toner_m: item.toner_m,
+                        toner_y: item.toner_y,
+                        toner_k: item.toner_k,
+                        drum_k: item.drum_k,
+                        status_alert: "NORMAL",
+                        alert_message: "정상",
+                        last_updated_at: item.agent_updated_at,
+                      };
+                      return (
+                        <tr
+                          key={item.id}
+                          onClick={() => setSelectedSupplyModal(supplyObj)}
+                          className="hover:bg-emerald-50/40 transition-colors cursor-pointer"
+                        >
+                          <td className="py-4 px-6">
+                            <span className="inline-block px-2.5 py-0.5 bg-[#01916D]/10 text-[#01916D] font-bold text-xs rounded-full mb-0.5">
+                              {item.customer_name || "자사 본사"}
+                            </span>
+                            <div className="text-xs text-slate-500 font-medium">{item.location || "사무실"}</div>
+                          </td>
+                          <td className="py-4 px-6 font-mono font-extrabold text-[#01916D]">
+                            {item.date_formatted}
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="font-mono text-xs font-bold text-slate-800">{item.serial_no}</div>
+                            <div className="text-xs text-slate-500 font-medium">{item.model_name || "Standard MFP"}</div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="space-y-1.5 text-xs font-mono">
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 font-bold text-cyan-600">C:</span>
+                                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                  <div className="bg-cyan-500 h-2 rounded-full" style={{ width: `${item.toner_c}%` }} />
+                                </div>
+                                <span className="w-8 text-right font-bold text-slate-700">{item.toner_c}%</span>
                               </div>
-                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_c}%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="w-4 font-bold text-pink-600">M:</span>
-                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                <div className="bg-pink-500 h-2 rounded-full" style={{ width: `${item.toner_m}%` }} />
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 font-bold text-pink-600">M:</span>
+                                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                  <div className="bg-pink-500 h-2 rounded-full" style={{ width: `${item.toner_m}%` }} />
+                                </div>
+                                <span className="w-8 text-right font-bold text-slate-700">{item.toner_m}%</span>
                               </div>
-                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_m}%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="w-4 font-bold text-amber-500">Y:</span>
-                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                <div className="bg-amber-400 h-2 rounded-full" style={{ width: `${item.toner_y}%` }} />
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 font-bold text-amber-500">Y:</span>
+                                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                  <div className="bg-amber-400 h-2 rounded-full" style={{ width: `${item.toner_y}%` }} />
+                                </div>
+                                <span className="w-8 text-right font-bold text-slate-700">{item.toner_y}%</span>
                               </div>
-                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_y}%</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="w-4 font-bold text-slate-800">K:</span>
-                              <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                <div className="bg-slate-800 h-2 rounded-full" style={{ width: `${item.toner_k}%` }} />
+                              <div className="flex items-center gap-2">
+                                <span className="w-4 font-bold text-slate-800">K:</span>
+                                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                  <div className="bg-slate-800 h-2 rounded-full" style={{ width: `${item.toner_k}%` }} />
+                                </div>
+                                <span className="w-8 text-right font-bold text-slate-700">{item.toner_k}%</span>
                               </div>
-                              <span className="w-8 text-right font-bold text-slate-700">{item.toner_k}%</span>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 font-mono font-bold text-slate-800">
-                          {item.drum_k}%
-                        </td>
-                        <td className="py-4 px-6 text-right text-xs text-slate-500 font-medium">
-                          {formatKoreanDateTime(item.agent_updated_at)}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="py-4 px-6 font-mono font-bold text-slate-800">
+                            {item.drum_k}%
+                          </td>
+                          <td className="py-4 px-6 text-right text-xs text-slate-500 font-medium">
+                            {formatKoreanDateTime(item.agent_updated_at)}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -304,7 +332,7 @@ export default function MonitoringSuppliesPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-slate-600 font-bold text-xs uppercase tracking-wider border-b border-slate-100">
                     <tr>
-                      <th className="py-3.5 px-6">고객사 / 설치 위치</th>
+                      <th className="py-3.5 px-6">고객사명 / 설치 위치</th>
                       <th className="py-3.5 px-6">시리얼 번호 / 모델명</th>
                       <th className="py-3.5 px-6 w-64">토너 잔량 (C / M / Y / K)</th>
                       <th className="py-3.5 px-6">드럼(K)</th>
@@ -314,14 +342,20 @@ export default function MonitoringSuppliesPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {filteredDevices.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                      <tr
+                        key={item.id}
+                        onClick={() => setSelectedSupplyModal(item)}
+                        className="hover:bg-emerald-50/40 transition-colors cursor-pointer"
+                      >
                         <td className="py-4 px-6">
-                          <div className="font-bold text-[#333333]">{item.customer_name}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{item.location}</div>
+                          <span className="inline-block px-2.5 py-0.5 bg-[#01916D]/10 text-[#01916D] font-bold text-xs rounded-full mb-0.5">
+                            {item.customer_name}
+                          </span>
+                          <div className="text-xs text-slate-500 font-medium">{item.location}</div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="font-mono text-xs font-bold text-slate-800">{item.serial_no}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{item.model_name}</div>
+                          <div className="text-xs text-slate-500 font-medium">{item.model_name}</div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="space-y-1.5 text-xs font-mono">
@@ -386,6 +420,105 @@ export default function MonitoringSuppliesPage() {
           </div>
         )}
       </main>
+
+      {/* Supplies Detail Inspection Modal */}
+      {selectedSupplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setSelectedSupplyModal(null)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              ✕
+            </button>
+
+            <div className="flex items-center gap-2 mb-3">
+              <span className="px-3 py-1 bg-[#01916D]/10 text-[#01916D] font-black text-xs rounded-full">
+                {selectedSupplyModal.customer_name}
+              </span>
+              <span className="text-xs text-slate-400 font-bold">•</span>
+              <span className="text-xs text-slate-600 font-bold">{selectedSupplyModal.location}</span>
+            </div>
+
+            <h2 className="text-xl font-black text-[#333333] mb-1">
+              {selectedSupplyModal.model_name}
+            </h2>
+            <div className="font-mono text-xs text-slate-500 font-extrabold mb-6">
+              시리얼 번호: <span className="text-[#01916D]">{selectedSupplyModal.serial_no}</span>
+            </div>
+
+            {/* Detailed Toner & Drum Progress Gauges */}
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 mb-6 space-y-3.5">
+              <h3 className="text-xs font-extrabold text-slate-600 mb-2">실시간 소모품 잔량 상태 (SNMP 관제)</h3>
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-cyan-600">Cyan Toner (시안)</span>
+                  <span className="font-mono text-slate-800">{selectedSupplyModal.toner_c}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div className="bg-cyan-500 h-3 rounded-full transition-all" style={{ width: `${selectedSupplyModal.toner_c}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-pink-600">Magenta Toner (마젠타)</span>
+                  <span className="font-mono text-slate-800">{selectedSupplyModal.toner_m}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div className="bg-pink-500 h-3 rounded-full transition-all" style={{ width: `${selectedSupplyModal.toner_m}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-amber-600">Yellow Toner (옐로)</span>
+                  <span className="font-mono text-slate-800">{selectedSupplyModal.toner_y}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div className="bg-amber-400 h-3 rounded-full transition-all" style={{ width: `${selectedSupplyModal.toner_y}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-slate-800">Black Toner (블랙 K)</span>
+                  <span className="font-mono text-slate-800">{selectedSupplyModal.toner_k}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div className="bg-slate-800 h-3 rounded-full transition-all" style={{ width: `${selectedSupplyModal.toner_k}%` }} />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60">
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-[#01916D]">Black Drum Unit (드럼 K)</span>
+                  <span className="font-mono text-slate-800">{selectedSupplyModal.drum_k}%</span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                  <div className="bg-[#01916D] h-3 rounded-full transition-all" style={{ width: `${selectedSupplyModal.drum_k}%` }} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center text-xs p-3 bg-slate-100/70 rounded-xl mb-6">
+              <span className="font-bold text-slate-600">Agent 수집 시각</span>
+              <span className="font-medium font-mono text-slate-700">
+                {formatKoreanDateTime(selectedSupplyModal.last_updated_at)}
+              </span>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setSelectedSupplyModal(null)}
+                className="px-5 py-2.5 bg-[#01916D] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#006449] transition-all cursor-pointer"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AppFooter />
     </div>
