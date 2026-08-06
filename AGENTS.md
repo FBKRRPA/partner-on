@@ -193,11 +193,11 @@
 * **`printers` (PrinterModelMaster 모델)**: 프린터 및 복합기 모델 마스터
 * **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사
 * **`monitoring_printers` (MonitoringPrinter 모델)**: 실시간 관제 대상 복합기/프린터 장비
-* **`monitoring_data` (MonitoringData 모델)**: 최신 실시간 관제 데이터 (카운터 4종 + 소모품 잔량)
-* **`monitoring_data_records` (MonitoringDataRecord 모델)**: 관제 데이터 일별/월별 누적 이력
+* **`monitoring_data` (MonitoringData 모델)**: 최신 실시간 관제 데이터 (카운터 5종 + 소모품 6종 + 드럼 4종 + Spec Max 10종, `unique_together = ("workplace", "serial_no")`, `MonitoringPrinter` 1:1 OneToOne 매핑)
+* **`monitoring_data_records` (MonitoringDataRecord 모델)**: 관제 데이터 일별/월별 누적 이력 (`unique_together = ("monitoring_printer", "yyyymmdd")`로 당일 갱신 및 일자 변경 시 레코드 자동 누적적재)
 * **`supplies` (SuppliesAlert 모델)**: 소모품 잔량 경고 및 상태
 * **`supply_usages` (SupplyUsage 모델)**: 소모품 수동/시스템 교체 사용 이력
-* **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 상세 저장소 (`unique_together = ("workplace", "ip")`로 동일 IP 장비 재스캔 시 `serial_no`, `scanned_model`, `vendor_name`, `mac_address`, `count_total/color/mono`, `toner_k/c/m/y`, `last_scanned_at` 실시간 자동 갱신 지원)
+* **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 상세 저장소 (`unique_together = ("workplace", "ip")`로 동일 IP 장비 재스캔 시 `serial_no`, `scanned_model`, `vendor_name`, `mac_address`, `count_total/color/mono`, `toner_k/c/m/y`, `last_scanned_at` 등 23개 최신 컬럼 실시간 자동 갱신 지원)
 
 ### 2) M2M (다대다) 권한 관계 테이블
 * **`accounts_user_groups`**: 사용자 ➔ 권한 그룹 매핑 테이블
@@ -222,7 +222,8 @@
 ### ② **REST API URL 규격**
 * 인증/계정 관련 API: `/api/v1/auth/...`
 * 사업장/보안정책 관련 API: `/api/v1/workplace/...`
-* 메뉴 접근 권한 관련 API: `/api/v1/workplace/permissions/`
+* 장비 현황 CRUD API: `/api/v1/workplace/printers/` 및 `/api/v1/workplace/printers/<int:pk>/` (`PrinterAssetListCreateView`, `PrinterAssetDetailView`)
+* 모니터링/사용량 관제 API: `/api/v1/monitoring/usage/`, `/api/v1/monitoring/supplies/` (수집기간 `start_date`, `end_date`, `serial_no` 백엔드 DB 파라미터 쿼리 필터링 필수 적용)
 * 에이전트 수집 API: `/api/v1/agent/...` (`target-assets`, `ingest`)
 * 모든 뷰 클래스는 DRF `APIView` 또는 `TokenObtainPairView`를 상속받아 명확한 HTTP Status Code(200 OK, 400 Bad Request, 403 Forbidden)를 반환합니다.
 
@@ -233,15 +234,17 @@
 
 ### ④ **에이전트 이중 수집 분리 & 3가지 스캔 자동 분기 규칙 (필수 준수)**
 * **등록 장비와 미등록 장비의 이중 수집 분리**:
-  * [장비관리] 정식 등록 복합기(`PrinterAsset`) ➔ `PrinterAsset`, `MonitoringPrinter`, `MonitoringData`, `MonitoringDataRecord`, `SuppliesAlert` 관제 DB 실시간 갱신.
+  * [장비관리] 정식 등록 복합기(`PrinterAsset`) ➔ `PrinterAsset`, `MonitoringPrinter`, `MonitoringData`, `MonitoringDataRecord`, `SuppliesAlert` 관제 DB 실시간 갱신. (신규 등록 기기 최초 수집 시 `MonitoringPrinter.objects.get_or_create`로 PK 사전 확보하여 `NOT NULL` 제약조건 위반 500 에러 원천 예방)
   * 미등록 탐지 기기 ➔ 관제 DB 오염 없이 `unregistered_printers` DB 테이블 (`UnregisteredPrinter`, `unique_together = ("workplace", "ip")`)에 실시간 분리 저장.
 * **에이전트 3가지 스캔 분기 조건 메커니즘**:
-  * **조건 1 (최초 등록 0대 상태)**: `target_serials` 0대 ➔ 전체 서브넷(.1~.254) 자동 풀 스캔(Full Scan).
-  * **조건 2 (미등록 장비 스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 API 쿼리 수신 ➔ 전체 서브넷(.1~.254) 자동 풀 스캔(Full Scan).
+  * **조건 1 (최초 등록 0대 상태)**: `target_serials` 0대 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
+  * **조건 2 (미등록 장비 스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 API 쿼리 수신 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
   * **조건 3 (기존 등록 장비가 있는 정기 수집)**: 정식 등록 기기 존재 ➔ 0.5초 초고속 등록 장비 전용 핀포인트 스캔(Pinpoint Scan).
 * **지능형 OID 유추 엔진 (`OidInferenceEngine`) 및 실시간 지식 캐싱**:
   * `sysDescr` 및 브랜드 패턴 분석을 통한 모델명 정제 (`scanned_model`), 카운터/소모품 비율 유추 보완.
   * 유추 성공 시 `PrinterOidMapping` DB 모델에 `learn_and_cache_oid_mapping`을 호출하여 OID 지식을 실시간 자동 캐싱 학습.
+* **정적 에셋 폰트 파일 경로 무결성 준수**:
+  * `MinSans` (`MinSansVF.woff2`, `MinSansVF.ttf`) 웹폰트는 반드시 `frontend/public/fonts/` 폴더에 배치하고 `globals.css`에서 `@font-face`로 로딩하여 404 에러를 예방합니다.
 
 ---
 
