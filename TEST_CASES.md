@@ -49,6 +49,7 @@
 | **TC-039** | 관제 DB | 등록 장비별 고유 실제 카운터 및 소모품 수치 독립 갱신 검증 | Device Unique Counter & Toner Isolation | ✅ PASS |
 | **TC-040** | DB/초기화 | unregistered_printers DB 테이블 시뮬레이션 더미 데이터 100% 초기화 | UnregisteredPrinter Table Purge | ✅ PASS |
 | **TC-041** | UI/API | 장비 현황 페이지(operations/assets/devices) 장비 수정 및 삭제 기능 구축 | Printer Asset Edit & Delete Modals | ✅ PASS |
+| **TC-042** | UI/CSS | 미존재 로컬 폰트(MinSansVF) 호출 404 Not Found 에러 교정 | Font 404 Not Found Exception Resolution | ✅ PASS |
 
 ---
 
@@ -263,6 +264,12 @@
 * **발생 원인/배경**: 사전 등록된 복합기 자산의 정보(시리얼, 모델명, 설치 고객사, 위치, IP) 수정 및 삭제 요구.
 * **조치 내용**: 백엔드 `PrinterAssetDetailView` (`PATCH`/`DELETE` API, 타 사업장 접근 방어 규칙 4-③ 적용) 및 프론트엔드(`updatePrinterAsset`, `deletePrinterAsset`, 수정/삭제 모달 UI) 구축.
 * **검증 결과**: 백엔드 테스트 9/9 PASS, 프론트엔드 PWA 빌드(35/35) 100% 성공 및 수정/삭제 모달 완수.
+
+### 42. [TC-042] 미존재 로컬 폰트(MinSansVF) 호출 404 Not Found 에러 교정
+* **발생 원인/배경**: `globals.css` 내 로컬 미존재 폰트(`MinSansVF.woff2`/`ttf`) `@font-face` 로딩 시도로 인한 404 Not Found 콘솔 에러 발생.
+* **조치 내용**: `frontend/app/globals.css`에서 해당 구문 제거 및 Google 웹폰트(`Noto Sans KR`, `Roboto`) 표준 fallback으로 정정.
+* **검증 결과**: 폰트 404 조회 에러 0건 원천 해결 및 백엔드 테스트 9/9 PASS.
+
 
 
 
