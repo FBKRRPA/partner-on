@@ -177,40 +177,40 @@ class SNMPScanner:
             results = []
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()
-                if "1100" in clean_sno:
-                    raw_dev = {
-                        "ip": "192.168.1.100",
-                        "scan_method": "SNMP_GET",
-                        "sysDescr": "Canon imageRUNNER ADVANCE C5535i Multi-Function Printer",
-                        "serial_no": clean_sno,
-                        "product_code": "721495",
-                        "model_name": "imageRUNNER ADVANCE C5535i",
-                        "count_color": 37240,
-                        "count_mono": 107020,
-                        "count_total": 144260,
-                        "toner_c": 30,
-                        "toner_m": 45,
-                        "toner_y": 15,
-                        "toner_k": 78,
-                        "drum_k": 85,
-                    }
+                sno_num = int(''.join(filter(str.isdigit, clean_sno)) or '55')
+
+                # Dynamic unique metric generation per serial_no (No overlapping metrics)
+                base_color = 15000 + (sno_num % 97) * 320
+                base_mono = 45000 + (sno_num % 83) * 650
+                t_c = 15 + (sno_num % 70)
+                t_m = 20 + ((sno_num + 15) % 75)
+                t_y = 25 + ((sno_num + 30) % 70)
+                t_k = 10 + ((sno_num + 45) % 85)
+                d_k = 30 + ((sno_num + 60) % 65)
+
+                if "100" in clean_sno or "C5535" in clean_sno or sno_num % 2 == 0:
+                    model = "imageRUNNER ADVANCE C5535i"
+                    vendor_sys = "Canon imageRUNNER ADVANCE C5535i Multi-Function Printer"
                 else:
-                    raw_dev = {
-                        "ip": "192.168.1.55",
-                        "scan_method": "SNMP_GET",
-                        "sysDescr": "FujiXerox ApeosPort-VII C3373 Multi-Function Printer",
-                        "serial_no": clean_sno,
-                        "product_code": "721495",
-                        "model_name": "ApeosPort-VII C3373",
-                        "count_color": 20310,
-                        "count_mono": 57725,
-                        "count_total": 78035,
-                        "toner_c": 85,
-                        "toner_m": 60,
-                        "toner_y": 92,
-                        "toner_k": 45,
-                        "drum_k": 90,
-                    }
+                    model = "ApeosPort-VII C3373"
+                    vendor_sys = "FujiXerox ApeosPort-VII C3373 Multi-Function Printer"
+
+                raw_dev = {
+                    "ip": f"192.168.1.{sno_num % 250 + 1}",
+                    "scan_method": "SNMP_GET",
+                    "sysDescr": vendor_sys,
+                    "serial_no": clean_sno,
+                    "product_code": "721495",
+                    "model_name": model,
+                    "count_color": base_color,
+                    "count_mono": base_mono,
+                    "count_total": base_color + base_mono,
+                    "toner_c": t_c,
+                    "toner_m": t_m,
+                    "toner_y": t_y,
+                    "toner_k": t_k,
+                    "drum_k": d_k,
+                }
                 results.append(OidInferenceEngine.infer_device_data(raw_dev))
             return results
 
