@@ -1275,6 +1275,17 @@ class AgentIngestBatchView(APIView):
                 asset.last_scanned_at = now
                 assets_to_update.append(asset)
 
+                # Sync related UnregisteredPrinter fields: location, registered=True, confirmed_serial_no
+                unreg_match_q = models.Q(serial_no__iexact=clean_sno)
+                if ip_addr:
+                    unreg_match_q |= models.Q(ip=ip_addr)
+                UnregisteredPrinter.objects.filter(workplace=workplace).filter(unreg_match_q).update(
+                    registered=True,
+                    location=asset.location,
+                    confirmed_serial_no=asset.serial_no,
+                    updated_at=now,
+                )
+
                 # Prepare MonitoringPrinter Object & Ensure valid PK before binding FK
                 m_printer = existing_m_printers.get(clean_sno)
                 if not m_printer:
@@ -1681,6 +1692,17 @@ class PrinterAssetListCreateView(APIView):
             if ip_address:
                 printer.ip_address = ip_address
             printer.save()
+
+        # Update UnregisteredPrinter fields: location, registered=True, confirmed_serial_no
+        unreg_q = models.Q(serial_no__iexact=serial_no)
+        if ip_address:
+            unreg_q |= models.Q(ip=ip_address)
+        UnregisteredPrinter.objects.filter(workplace=workplace).filter(unreg_q).update(
+            registered=True,
+            location=location,
+            confirmed_serial_no=serial_no,
+            updated_at=timezone.now(),
+        )
 
         return Response(
             {

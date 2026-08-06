@@ -54,6 +54,7 @@
 | **TC-044** | 수집 엔진 | 풀 스캔 254개 서브넷 IP 고유성 보장 및 미등록 장비 254개 개별 DB 저장 | Subnet Full Scan Unique IP Ingestion | ✅ PASS |
 | **TC-045** | 수집 엔진 | 풀 스캔 모드 시 활성 미등록 장비 2대(.55, .100) 자동 탐지 세팅 | Full Scan 2 Devices Auto Detection | ✅ PASS |
 | **TC-046** | 수집 API | 수집 API IP 키 호환성 보완 및 미등록 장비 N대 온전 DB 저장 | Ingest API IP Key Fallback & Deduplication Fix | ✅ PASS |
+| **TC-047** | DB/연동 | 장비 등록 시 unregistered_printers 3개 필드(location, registered, confirmed_serial_no) 자동 동기화 | UnregisteredPrinter Field Registration Sync | ✅ PASS |
 
 ---
 
@@ -293,6 +294,12 @@
 * **발생 원인/배경**: 에이전트 수집 패킷 키(`ip` vs `ip_address`) 파싱 문제로 모든 미등록 장비 IP가 기본값(`127.0.0.1`)으로 대체되어 단 1개로 중복 덮어씌워졌던 버그 발견.
 * **조치 내용**: 백엔드 `AgentIngestBatchView`에서 `item.get("ip_address") or item.get("ip")`를 읽어 각 장비의 고유 IP(`192.168.1.55`, `192.168.1.100`)를 100% 보존하도록 수술.
 * **검증 결과**: 미등록 장비 N대가 중복 덮어쓰기 없이 `unregistered_printers` DB 테이블에 개별 분리 저장됨 확인 및 백엔드 테스트 9/9 PASS.
+
+### 47. [TC-047] 장비 등록/매칭 시 unregistered_printers 레코드 정보(location, registered=True, confirmed_serial_no) 자동 동기화 갱신
+* **발생 원인/배경**: 미등록 탐지 장비가 정식 장비(`PrinterAsset`)로 사전 등록되거나 Agent 수집 시 매칭될 때 `unregistered_printers` 테이블의 3개 항목 동기화 요구.
+* **조치 내용**: `PrinterAssetListCreateView` 수동 등록 시 및 `AgentIngestBatchView` 수집 매칭 시 해당 `UnregisteredPrinter` 레코드를 찾아 `location=location`, `registered=True`, `confirmed_serial_no=serial_no` 3개 필드를 자동 실시간 갱신.
+* **검증 결과**: 장비 등록 시 `unregistered_printers` DB 테이블 3개 필드 동기화 완료 및 백엔드 테스트 9/9 PASS.
+
 
 
 
