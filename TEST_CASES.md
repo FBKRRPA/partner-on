@@ -48,6 +48,7 @@
 | **TC-038** | 수집 API | 신규 등록 장비 최초 수집 시 MonitoringPrinter PK 사전 확보 및 NOT NULL 예방 | New Asset Monitoring FK Safeguard | ✅ PASS |
 | **TC-039** | 관제 DB | 등록 장비별 고유 실제 카운터 및 소모품 수치 독립 갱신 검증 | Device Unique Counter & Toner Isolation | ✅ PASS |
 | **TC-040** | DB/초기화 | unregistered_printers DB 테이블 시뮬레이션 더미 데이터 100% 초기화 | UnregisteredPrinter Table Purge | ✅ PASS |
+| **TC-041** | UI/API | 장비 현황 페이지(operations/assets/devices) 장비 수정 및 삭제 기능 구축 | Printer Asset Edit & Delete Modals | ✅ PASS |
 
 ---
 
@@ -257,6 +258,12 @@
 * **발생 원인/배경**: 실제 현장 에이전트 스캔 데이터만 순수하게 수집받아 확인하기 위한 테스트 시뮬레이션 데이터 100% 초기화 지침.
 * **조치 내용**: `UnregisteredPrinter.objects.all().delete()` 수행하여 255개 더미 레코드 전량 삭제 및 `AgentCollector.detected_count` 3대로 초기화 동기화.
 * **검증 결과**: `unregistered_printers` DB 테이블 0건 (Clean Empty) 초기화 성공 및 백엔드 테스트 9/9 PASS.
+
+### 41. [TC-041] 장비 현황 페이지(operations/assets/devices) 장비 수정 및 삭제 기능 구축
+* **발생 원인/배경**: 사전 등록된 복합기 자산의 정보(시리얼, 모델명, 설치 고객사, 위치, IP) 수정 및 삭제 요구.
+* **조치 내용**: 백엔드 `PrinterAssetDetailView` (`PATCH`/`DELETE` API, 타 사업장 접근 방어 규칙 4-③ 적용) 및 프론트엔드(`updatePrinterAsset`, `deletePrinterAsset`, 수정/삭제 모달 UI) 구축.
+* **검증 결과**: 백엔드 테스트 9/9 PASS, 프론트엔드 PWA 빌드(35/35) 100% 성공 및 수정/삭제 모달 완수.
+
 
 
 

@@ -21,6 +21,7 @@ from .views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     PrinterAssetListCreateView,
+    PrinterAssetDetailView,
     RoleMenuPermissionView,
     SetupTOTPView,
     SignUpView,
@@ -49,6 +50,7 @@ urlpatterns = [
     
     # Workplace Printer Assets (Devices)
     path("workplace/printers/", PrinterAssetListCreateView.as_view(), name="printer-asset-list-create"),
+    path("workplace/printers/<int:pk>/", PrinterAssetDetailView.as_view(), name="printer-asset-detail"),
 
     path("workplace/devices/", DeviceListApprovalView.as_view(), name="device-list"),
     path("workplace/devices/<int:pk>/", DeviceDetailView.as_view(), name="device-detail"),

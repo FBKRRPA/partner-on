@@ -739,7 +739,50 @@ export async function createPrinterAsset(
   if (!response.ok) {
     throw new Error(parseErrorMessage(body, "장비 수동 등록에 실패했습니다."));
   }
-  return body as { detail: string; id: number; serial_no: string };
+  return body as unknown as { detail: string; id: number; serial_no: string };
+}
+
+export async function updatePrinterAsset(
+  token: string,
+  assetId: number,
+  payload: {
+    serial_no: string;
+    model_name: string;
+    customer_name: string;
+    location: string;
+    ip_address?: string;
+  }
+): Promise<{ detail: string; id: number; serial_no: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/printers/${assetId}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "장비 정보 수정에 실패했습니다."));
+  }
+  return body as unknown as { detail: string; id: number; serial_no: string };
+}
+
+export async function deletePrinterAsset(
+  token: string,
+  assetId: number
+): Promise<{ detail: string }> {
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/printers/${assetId}/`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "장비 삭제에 실패했습니다."));
+  }
+  return body as unknown as { detail: string };
 }
 
 export async function signUpWithInvite(payload: {

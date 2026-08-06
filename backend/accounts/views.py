@@ -1692,6 +1692,82 @@ class PrinterAssetListCreateView(APIView):
         )
 
 
+class PrinterAssetDetailView(APIView):
+    """
+    Update & Delete Printer Assets (/api/v1/workplace/printers/<int:pk>/)
+    - Security Rule: Strictly scoped by workplace=request.user.workplace
+    """
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, pk: int) -> Response:
+        return self.patch(request, pk)
+
+    def patch(self, request, pk: int) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        printer = PrinterAsset.objects.filter(pk=pk, workplace=workplace).first()
+        if not printer:
+            return Response({"detail": "해당 장비를 찾을 수 없거나 접근 권한이 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        serial_no = str(request.data.get("serial_no", printer.serial_no)).strip()
+        model_name = str(request.data.get("model_name", printer.model_name)).strip()
+        customer_name = str(request.data.get("customer_name", printer.customer_name)).strip()
+        location = str(request.data.get("location", printer.location)).strip()
+        ip_address = request.data.get("ip_address", printer.ip_address)
+
+        if not serial_no:
+            return Response({"detail": "시리얼 번호는 필수 항목입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check serial_no duplication in same workplace for other asset
+        existing_duplicate = PrinterAsset.objects.filter(workplace=workplace, serial_no=serial_no).exclude(pk=pk).first()
+        if existing_duplicate:
+            return Response({"detail": f"이미 존재하거나 사용 중인 시리얼 번호({serial_no})입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        printer.serial_no = serial_no
+        printer.model_name = model_name
+        printer.customer_name = customer_name
+        printer.location = location
+        printer.ip_address = ip_address if ip_address else None
+        printer.save()
+
+        # Sync serial_no with MonitoringPrinter if exists
+        MonitoringPrinter.objects.filter(workplace=workplace, pk=printer.id).update(
+            serial_no=serial_no, printer_model=model_name, ip=ip_address if ip_address else ""
+        )
+
+        return Response(
+            {
+                "detail": "장비 정보가 수정되었습니다.",
+                "id": printer.id,
+                "serial_no": printer.serial_no,
+                "model_name": printer.model_name,
+                "customer_name": printer.customer_name,
+                "location": printer.location,
+                "ip_address": printer.ip_address,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk: int) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        printer = PrinterAsset.objects.filter(pk=pk, workplace=workplace).first()
+        if not printer:
+            return Response({"detail": "해당 장비를 찾을 수 없거나 접근 권한이 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        serial = printer.serial_no
+        printer.delete()
+
+        # Clean up related MonitoringPrinter & MonitoringData
+        MonitoringPrinter.objects.filter(workplace=workplace, serial_no=serial).delete()
+
+        return Response({"detail": f"장비({serial})가 삭제되었습니다."}, status=status.HTTP_200_OK)
+
+
 class CollectorCodeGenerateView(APIView):
     """
     Generates 8-digit Auth Code for Windows Agent and saves in AgentCollector DB model
