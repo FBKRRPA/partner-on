@@ -53,6 +53,7 @@
 | **TC-043** | UI/폰트 | MinSans(MinSansVF.woff2/ttf) 폰트 파일 fonts 폴더 배치 및 연동 | MinSans Font Files Placement & Integration | ✅ PASS |
 | **TC-044** | 수집 엔진 | 풀 스캔 254개 서브넷 IP 고유성 보장 및 미등록 장비 254개 개별 DB 저장 | Subnet Full Scan Unique IP Ingestion | ✅ PASS |
 | **TC-045** | 수집 엔진 | 풀 스캔 모드 시 활성 미등록 장비 2대(.55, .100) 자동 탐지 세팅 | Full Scan 2 Devices Auto Detection | ✅ PASS |
+| **TC-046** | 수집 API | 수집 API IP 키 호환성 보완 및 미등록 장비 N대 온전 DB 저장 | Ingest API IP Key Fallback & Deduplication Fix | ✅ PASS |
 
 ---
 
@@ -287,6 +288,12 @@
 * **발생 원인/배경**: 정식 등록 장비 0개인 풀 스캔 모드 시 2대의 대표 복합기(.55 FujiXerox, .100 Canon)가 2대로 안정적 탐지되도록 보완 요구.
 * **조치 내용**: `agent/snmp_scanner.py` `snmp_get_scan`에서 `.55` 및 `.100` 두 IP에 대해 2대의 개별 복합기 가상 응답을 연동.
 * **검증 결과**: 풀 스캔 실행 시 2대의 고유 미등록 장비 개별 DB 저장 확인 및 백엔드 테스트 9/9 PASS.
+
+### 46. [TC-046] 수집 API(AgentIngestBatchView) IP 키 호환성 보완 및 미등록 장비 N대 온전 DB 저장
+* **발생 원인/배경**: 에이전트 수집 패킷 키(`ip` vs `ip_address`) 파싱 문제로 모든 미등록 장비 IP가 기본값(`127.0.0.1`)으로 대체되어 단 1개로 중복 덮어씌워졌던 버그 발견.
+* **조치 내용**: 백엔드 `AgentIngestBatchView`에서 `item.get("ip_address") or item.get("ip")`를 읽어 각 장비의 고유 IP(`192.168.1.55`, `192.168.1.100`)를 100% 보존하도록 수술.
+* **검증 결과**: 미등록 장비 N대가 중복 덮어쓰기 없이 `unregistered_printers` DB 테이블에 개별 분리 저장됨 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 

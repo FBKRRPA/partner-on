@@ -1234,7 +1234,7 @@ class AgentIngestBatchView(APIView):
             s_no = item.get("serial_no")
             clean_sno = str(s_no).strip() if s_no else ""
             upper_sno = clean_sno.upper()
-            ip_addr = item.get("ip_address", "127.0.0.1")
+            ip_addr = str(item.get("ip_address") or item.get("ip") or "127.0.0.1").strip()
             m_name = item.get("model_name", "Standard Network MFP")
 
             c_color = item.get("count_color", 0)

@@ -71,6 +71,7 @@ class SNMPScanner:
 
                 return {
                     "ip": ip,
+                    "ip_address": ip,
                     "scan_method": "SNMP_GET",
                     "serial_no": serial,
                     "product_code": "721495",
