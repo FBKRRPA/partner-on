@@ -25,10 +25,48 @@ DEFAULT_API_URL = "http://127.0.0.1:8000"
 def get_backend_base_url() -> str:
     return os.getenv("PARTNERON_API_URL", DEFAULT_API_URL)
 
+def parse_custom_target_ips(ip_arg: str = None, subnet_arg: str = None) -> List[str]:
+    """
+    Parses custom target IPs supporting:
+    - Single IP: "192.168.1.55"
+    - Comma-separated list: "192.168.1.55, 192.168.1.100"
+    - IP Range: "192.168.1.10-192.168.1.50" or "192.168.1.10-50"
+    - Subnet: "192.168.1" or "full" -> generates 192.168.1.1~254
+    """
+    local_sub = get_local_ip_subnet()
+    base_sub = subnet_arg.strip() if subnet_arg else local_sub
+
+    if not ip_arg or ip_arg.strip().lower() in ("full", "all", "auto"):
+        return [f"{base_sub}.{i}" for i in range(1, 255)]
+
+    parsed_ips = []
+    tokens = [t.strip() for t in ip_arg.split(",") if t.strip()]
+    for tok in tokens:
+        if "-" in tok:
+            parts = tok.split("-")
+            start_str, end_str = parts[0].strip(), parts[1].strip()
+            if "." in end_str:
+                prefix = ".".join(start_str.split(".")[:-1])
+                s_num = int(start_str.split(".")[-1])
+                e_num = int(end_str.split(".")[-1])
+            else:
+                prefix = ".".join(start_str.split(".")[:-1])
+                s_num = int(start_str.split(".")[-1])
+                e_num = int(end_str)
+            for num in range(min(s_num, e_num), max(s_num, e_num) + 1):
+                parsed_ips.append(f"{prefix}.{num}")
+        else:
+            if "." in tok:
+                parsed_ips.append(tok)
+            else:
+                parsed_ips.append(f"{base_sub}.{tok}")
+
+    return parsed_ips if parsed_ips else [f"{base_sub}.{i}" for i in range(1, 255)]
+
 class SNMPDeepSearchAgent:
     def __init__(self, target_ips: List[str] = None, community: str = "public", auth_code: str = "AST-98A7F2"):
         self.subnet = get_local_ip_subnet()
-        self.target_ips = target_ips or [f"{self.subnet}.55", f"{self.subnet}.100"]
+        self.target_ips = target_ips or [f"{self.subnet}.{i}" for i in range(1, 255)]
         self.community = community
         self.auth_code = auth_code
 
@@ -124,13 +162,14 @@ class SNMPDeepSearchAgent:
 
 def main():
     parser = argparse.ArgumentParser(description="PartnerOn SNMP Deep Search Agent & OID Collector")
-    parser.add_argument("--ips", type=str, help="Comma-separated target IPs (e.g. 192.168.1.55,192.168.1.100)")
+    parser.add_argument("--ips", type=str, help="Target IPs (e.g. 192.168.1.55 or 192.168.1.10,192.168.1.50 or 192.168.1.10-50)")
+    parser.add_argument("--subnet", type=str, help="Custom Subnet C-Class (e.g. 192.168.2)")
     parser.add_argument("--community", type=str, default="public", help="SNMP Community String")
     parser.add_argument("-i", "--interactive", action="store_true", help="Enable CLI Interactive Human Review")
     parser.add_argument("--sync-backend", action="store_true", default=True, help="Sync to temp_oid_lists backend table")
     args = parser.parse_args()
 
-    ips = [ip.strip() for ip in args.ips.split(",")] if args.ips else None
+    ips = parse_custom_target_ips(ip_arg=args.ips, subnet_arg=args.subnet)
     agent = SNMPDeepSearchAgent(target_ips=ips, community=args.community)
     
     discovered = agent.discover_and_walk()

@@ -66,6 +66,7 @@
 | **TC-056** | 문서/협업 | 프로젝트 협업 6대 표준 세부 명세서 체계 수립 (docs/ 6종 표준 명세서 작성) | Standardized Documentation Suite (docs/ 6 Specs) | ✅ PASS |
 | **TC-057** | 문서/동기화 | 프론트/백엔드/에이전트 전체 소스 기반 종합 기술 설계 명세서 100% 동기화 | Full Source-Audited Technical Specifications Sync | ✅ PASS |
 | **TC-058** | 에이전트/OID | SNMP Deep Search Agent & 2단계 OID 스테이징 및 웹 검증 화면 구축 | SNMP Deep Search Agent & 2-Stage OID Staging Web UI | ✅ PASS |
+| **TC-059** | 에이전트/IP | SNMP Deep Search Agent 유연한 수동 IP 및 범위/서브넷 지정 파싱 고도화 | Search Agent Flexible IP & Range Subnet Designation | ✅ PASS |
 
 ---
 
