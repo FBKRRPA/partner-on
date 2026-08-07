@@ -59,6 +59,7 @@
 | **TC-049** | 수집 스캐너 | 시리얼 해싱 기반 등록 장비별 고유 동적 사용량 및 소모품 수치 독립 생성 | Dynamic Unique Metrics per Registered Serial | ✅ PASS |
 | **TC-050** | UI/관제 | 모니터링 관제 화면(사용량/소모품) 고객사 컬럼 추가 및 행 클릭 상세 관제 모달 팝업 | Customer Column & Row Click Detail Modal Inspection | ✅ PASS |
 | **TC-051** | 세션/보안 | 401 Unauthorized 인증 만료 시 로그인 화면(/login) 자동 이동 및 returnUrl 원복 연동 | 401 Token Expiration Redirection & ReturnUrl Recovery | ✅ PASS |
+| **TC-052** | UI/헤더 | 상단 헤더(AppHeader) 전 메뉴 공통 로그인/로그아웃 세션 감지 및 호환 키 일관화 | AppHeader Common Session Detection & Consistent Logout Button | ✅ PASS |
 
 ---
 
@@ -323,6 +324,12 @@
 * **발생 원인/배경**: 장시간 자리 비움 후 401 토큰 만료 에러 발생 시 화면이 멈춰있던 B2B 보안/UX 미흡 현상 추적.
 * **조치 내용**: `frontend/lib/auth-api.ts` 공통 API 통신 인터셉터에서 401 수신 시 세션 저장소 정리를 거쳐 `/login?expired=true&returnUrl=...` 로 자동 리다이렉트되도록 구현. 로그인 성공 시 이전에 보던 페이지로 자동 원복.
 * **검증 결과**: 35개 정적 페이지 프로덕션 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
+### 52. [TC-052] 상단 헤더(AppHeader) 전 메뉴 공통 로그인/로그아웃 세션 감지 및 호환 키 일관화
+* **발생 원인/배경**: 메뉴 간 이동 시 일부 서브페이지에서 헤더 유저 세션 키 차이로 로그인/로그아웃 상태가 불일치하던 현상 추적.
+* **조치 내용**: `frontend/components/layout/AppHeader.tsx`에서 `accessToken`/`partneron.accessToken` 및 `user`/`partneron.user` 세션 저장소 키를 전방위 호환 감지하도록 보강하고, 로그인 유저 감지 시 전 메뉴 일관되게 `[로그아웃]` 버튼으로 고정 렌더링.
+* **검증 결과**: 35개 정적 페이지 프로덕션 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 

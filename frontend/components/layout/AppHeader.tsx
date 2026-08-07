@@ -69,10 +69,20 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
   const [detectedWorkplace, setDetectedWorkplace] = useState<string>("");
 
   useEffect(() => {
-    const rawUser = sessionStorage.getItem("user") || localStorage.getItem("user");
-    const token = sessionStorage.getItem("accessToken") || localStorage.getItem("accessToken") || "";
-    
-    if (token) {
+    const rawUser =
+      sessionStorage.getItem("user") ||
+      sessionStorage.getItem("partneron.user") ||
+      localStorage.getItem("user") ||
+      localStorage.getItem("partneron.user");
+
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      sessionStorage.getItem("partneron.accessToken") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("partneron.accessToken") ||
+      "";
+
+    if (token || rawUser) {
       setIsLoggedInState(true);
     }
 
@@ -86,7 +96,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         console.error(e);
       }
     }
-    
+
     if (token) {
       getMenuPermissions(token)
         .then((perms) => {
@@ -347,7 +357,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
               </span>
             )}
 
-            {(onLogout || isLoggedInState) ? (
+            {(isLoggedInState || onLogout) ? (
               <button
                 onClick={handleLogoutAction}
                 className="px-3.5 py-2 text-xs font-semibold text-[#5C5C5C] hover:text-[#E01E35] hover:bg-rose-50 rounded-xl transition-all border border-slate-200 hover:border-rose-200 cursor-pointer"
