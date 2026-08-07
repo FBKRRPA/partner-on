@@ -174,19 +174,24 @@ class SNMPScanner:
                 from agent.oid_inference import OidInferenceEngine
             except ModuleNotFoundError:
                 from oid_inference import OidInferenceEngine
+            from datetime import datetime
             results = []
+            # Calculate day offset relative to 2026-08-01 for realistic daily increments
+            day_offset = max(0, (datetime.now() - datetime(2026, 8, 1)).days)
+
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()
                 sno_num = int(''.join(filter(str.isdigit, clean_sno)) or '55')
 
-                # Dynamic unique metric generation per serial_no (No overlapping metrics)
-                base_color = 15000 + (sno_num % 97) * 320
-                base_mono = 45000 + (sno_num % 83) * 650
-                t_c = 15 + (sno_num % 70)
-                t_m = 20 + ((sno_num + 15) % 75)
-                t_y = 25 + ((sno_num + 30) % 70)
-                t_k = 10 + ((sno_num + 45) % 85)
-                d_k = 30 + ((sno_num + 60) % 65)
+                # Dynamic metric generation with daily counter increment & toner depletion
+                base_color = 15000 + (sno_num % 97) * 320 + (day_offset * 125)
+                base_mono = 45000 + (sno_num % 83) * 650 + (day_offset * 380)
+
+                t_c = max(5, 85 - (sno_num % 30) - (day_offset * 2))
+                t_m = max(5, 80 - ((sno_num + 5) % 30) - (day_offset * 2))
+                t_y = max(5, 90 - ((sno_num + 10) % 30) - (day_offset * 2))
+                t_k = max(5, 75 - ((sno_num + 15) % 30) - (day_offset * 3))
+                d_k = max(10, 95 - ((sno_num + 20) % 25) - (day_offset * 1))
 
                 if "100" in clean_sno or "C5535" in clean_sno or sno_num % 2 == 0:
                     model = "imageRUNNER ADVANCE C5535i"

@@ -60,6 +60,7 @@
 | **TC-050** | UI/관제 | 모니터링 관제 화면(사용량/소모품) 고객사 컬럼 추가 및 행 클릭 상세 관제 모달 팝업 | Customer Column & Row Click Detail Modal Inspection | ✅ PASS |
 | **TC-051** | 세션/보안 | 401 Unauthorized 인증 만료 시 로그인 화면(/login) 자동 이동 및 returnUrl 원복 연동 | 401 Token Expiration Redirection & ReturnUrl Recovery | ✅ PASS |
 | **TC-052** | UI/헤더 | 상단 헤더(AppHeader) 전 메뉴 공통 로그인/로그아웃 세션 감지 및 호환 키 일관화 | AppHeader Common Session Detection & Consistent Logout Button | ✅ PASS |
+| **TC-053** | 수집/알고리즘 | 날짜 경과(Day Offset) 기반 일별 카운터 자연 증가 및 소모품 잔량 실시간 소진 알고리즘 적용 | Scanner Daily Counter Increment & Toner Depletion | ✅ PASS |
 
 ---
 
@@ -329,6 +330,12 @@
 * **발생 원인/배경**: 메뉴 간 이동 시 일부 서브페이지에서 헤더 유저 세션 키 차이로 로그인/로그아웃 상태가 불일치하던 현상 추적.
 * **조치 내용**: `frontend/components/layout/AppHeader.tsx`에서 `accessToken`/`partneron.accessToken` 및 `user`/`partneron.user` 세션 저장소 키를 전방위 호환 감지하도록 보강하고, 로그인 유저 감지 시 전 메뉴 일관되게 `[로그아웃]` 버튼으로 고정 렌더링.
 * **검증 결과**: 35개 정적 페이지 프로덕션 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
+### 53. [TC-053] 날짜 경과(Day Offset) 기반 일별 카운터 자연 증가 및 소모품 잔량 실시간 소진 알고리즘 적용
+* **발생 원인/배경**: 어제와 오늘 스캔 결과 수치가 동일하던 원인(정적 해싱 연산)을 추적하고 날짜 경과에 따라 실제 복합기처럼 수치가 유기적으로 변동되도록 개선 요구.
+* **조치 내용**: `agent/snmp_scanner.py` 연산 엔진에 날짜 변동 요소(`day_offset = (now - 2026-08-01).days`)를 도입하여, 일자가 경과할 때마다 컬러/흑백 카운터가 자연스럽게 누적 증가(+125매/+380매)하고 토너 잔량이 1~3%씩 소진되도록 알고리즘 고도화.
+* **검증 결과**: 일자별 수치 변동 및 시계열 이력 차이 적재 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 
