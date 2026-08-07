@@ -63,6 +63,7 @@
 | **TC-053** | 수집/알고리즘 | 날짜 경과(Day Offset) 기반 일별 카운터 자연 증가 및 소모품 잔량 실시간 소진 알고리즘 적용 | Scanner Daily Counter Increment & Toner Depletion | ✅ PASS |
 | **TC-054** | 에이전트/수집 | 에이전트 정기 수집(5분/10분) 시 장비별 분 단위 시계열 수치 차감 및 카운터 증가 연동 | Agent Periodic Minute Micro-Increment & Live Time-Series | ✅ PASS |
 | **TC-055** | 수집/백엔드 | 카운터 수치 단조 증가(Monotonic Increase) 보장 및 스캐너 연산 공식 통일 | Counter Monotonic Increase & Scanner Formula Unification | ✅ PASS |
+| **TC-056** | 문서/협업 | 프로젝트 협업 6대 표준 세부 명세서 체계 수립 (docs/ 6종 표준 명세서 작성) | Standardized Documentation Suite (docs/ 6 Specs) | ✅ PASS |
 
 ---
 
@@ -347,6 +348,12 @@
 * **발생 원인/배경**: 스캔 방식(IP 스캔 vs 핀포인트 스캔) 간 연산 공식 차이로 인해 오늘 카운터 수치가 어제 수치보다 적게 표출되던 역전 현상 지적.
 * **조치 내용**: `agent/snmp_scanner.py` 연산 공식을 100% 하나로 통일하고, `AgentIngestBatchView` 백엔드 수집 API에 `max(asset.count_color, c_color)` 단조 증가 규칙을 적용하여 카운터 수치가 줄어드는 현상을 원천 방지. DB 레코드의 오늘(8/7) 수치를 어제(8/6) 수치 대비 100% 우상향(+505매)으로 완전 정정.
 * **검증 결과**: 오늘 누적 수량 어제 대비 100% 우상향 증가 확인 및 백엔드 테스트 9/9 PASS.
+
+### 56. [TC-056] 프로젝트 협업 6대 표준 세부 명세서 체계 수립 (docs/ 6종 표준 명세서 작성)
+* **발생 원인/배경**: 개발자 협업 및 LLM 코딩 에이전트 가독성을 극대화하기 위해 `docs/` 하위에 6대 전문 표준 명세서를 수립하고자 제안.
+* **조치 내용**: `docs/architecture.md`, `docs/coding-style.md`, `docs/api.md`, `docs/db-schema.md`, `docs/business-rules.md`, `docs/ui-guidelines.md` 6종 문서를 수립하고, `AGENTS.md` 및 `README.md`에 Sitemap 인덱스 연동 완료.
+* **검증 결과**: 문서 6종 일괄 작성 및 백엔드 테스트 9/9 PASS.
+
 
 
 

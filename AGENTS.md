@@ -14,6 +14,15 @@
   * PWA (Progressive Web App) 및 오프라인 폴백 지원
   * 7대 대분류 25개 소분류 메가 드롭다운 네비게이션 & 4단계 직급별 메뉴 권한 관리 (RBAC)
 
+### 📚 **프로젝트 세부 설계 명세서 (`docs/` Sitemap)**
+협업 개발 및 코딩 에이전트를 위한 6대 영역별 세부 명세서는 아래 문서에서 확장 확인하실 수 있습니다:
+* 🏗️ **[System Architecture](file:///d:/workspace/Partneron_v1/docs/architecture.md)**: 전체 시스템 아키텍처 및 PWA, 2FA, Agent 동적 통신 아키텍처
+* 💻 **[Coding Style & Security](file:///d:/workspace/Partneron_v1/docs/coding-style.md)**: 백엔드/프론트엔드 코딩 규칙 & OWASP 보안 취약점 방지 수칙
+* 📡 **[REST API Specification](file:///d:/workspace/Partneron_v1/docs/api.md)**: API 엔드포인트 명세 및 JWT Bearer, Agent Ingest API 규격
+* 🗄️ **[Database Schema](file:///d:/workspace/Partneron_v1/docs/db-schema.md)**: 13개 데이터베이스 테이블 ERD 및 Hot/Cold 시계열 Upsert 구조
+* 💼 **[Business Rules](file:///d:/workspace/Partneron_v1/docs/business-rules.md)**: 4단계 RBAC 권한, 2FA 정책, 수집기 3가지 스캔 분기 규칙
+* 🎨 **[UI & Design Guidelines](file:///d:/workspace/Partneron_v1/docs/ui-guidelines.md)**: Fujifilm 에메랄드 브랜드 토큰, Glassmorphism & UI 지침
+
 ---
 
 ## 🛠️ 2. 기술 스택 & 환경 규격 (Tech Stack & Environment)
