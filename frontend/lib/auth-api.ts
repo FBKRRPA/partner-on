@@ -818,7 +818,27 @@ function parseErrorMessage(body: Record<string, any> | null, defaultMsg: string)
   return detail || defaultMsg;
 }
 
+function handleUnauthorizedRedirect() {
+  if (typeof window === "undefined") return;
+  // Clear session storage tokens
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("partneron.accessToken");
+  sessionStorage.removeItem("refreshToken");
+
+  const currentPath = window.location.pathname + window.location.search;
+  // Avoid redirection loop if already on /login or /signup
+  if (window.location.pathname.startsWith("/login") || window.location.pathname.startsWith("/signup")) {
+    return;
+  }
+
+  const redirectUrl = `/login?expired=true&returnUrl=${encodeURIComponent(currentPath)}`;
+  window.location.href = redirectUrl;
+}
+
 async function readJsonResponse(response: Response): Promise<Record<string, any> | null> {
+  if (response.status === 401) {
+    handleUnauthorizedRedirect();
+  }
   const contentType = response.headers.get("content-type") ?? "";
   return contentType.includes("application/json") ? response.json() : null;
 }

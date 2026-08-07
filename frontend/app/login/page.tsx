@@ -1,12 +1,16 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { confirmPasswordReset, login, requestPasswordReset, verify2FA } from "../../lib/auth-api";
 import { AppFooter } from "../../components/layout/AppFooter";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isExpired = searchParams?.get("expired") === "true";
+  const returnUrl = searchParams?.get("returnUrl");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -51,14 +55,15 @@ export default function LoginPage() {
         return;
       }
 
-      // Store tokens and navigate
+      // Store tokens and navigate to returnUrl or /dashboard
       if (result.access && result.user) {
         sessionStorage.setItem("accessToken", result.access);
         sessionStorage.setItem("refreshToken", result.refresh || "");
         sessionStorage.setItem("user", JSON.stringify(result.user));
         sessionStorage.setItem("partneron.accessToken", result.access);
         sessionStorage.setItem("partneron.user", JSON.stringify(result.user));
-        window.location.href = "/dashboard";
+        const destination = returnUrl ? decodeURIComponent(returnUrl) : "/dashboard";
+        window.location.href = destination;
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "로그인에 실패했습니다.");
@@ -80,7 +85,8 @@ export default function LoginPage() {
         sessionStorage.setItem("user", JSON.stringify(result.user));
         sessionStorage.setItem("partneron.accessToken", result.access);
         sessionStorage.setItem("partneron.user", JSON.stringify(result.user));
-        window.location.href = "/dashboard";
+        const destination = returnUrl ? decodeURIComponent(returnUrl) : "/dashboard";
+        window.location.href = destination;
       }
     } catch (caught) {
       setOtpError(caught instanceof Error ? caught.message : "2차 인증 검증에 실패했습니다.");
@@ -219,6 +225,13 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white text-sm focus:outline-none focus:border-[#01916D] focus:ring-2 focus:ring-[#01916D]/20 transition-all text-slate-900 font-medium placeholder:text-slate-400"
               />
             </div>
+
+            {/* Session Expired Alert Message */}
+            {isExpired && !error && (
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-bold text-amber-800 text-center animate-in fade-in slide-in-from-top-1">
+                🔒 보안 정책에 의해 로그인 세션이 만료되었습니다. 다시 로그인해 주세요.
+              </div>
+            )}
 
             {/* Alert Message */}
             {error && (
@@ -468,5 +481,13 @@ export default function LoginPage() {
       {/* Common Footer */}
       <AppFooter />
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center text-slate-400 text-sm font-semibold">로딩 중...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -58,6 +58,7 @@
 | **TC-048** | 백엔드/수집 | 수집 API Django ORM Q 객체 명시적 임포트 수술 및 NameError 500 서버 장애 교정 | Ingest API NameError Resolution & Q Import | ✅ PASS |
 | **TC-049** | 수집 스캐너 | 시리얼 해싱 기반 등록 장비별 고유 동적 사용량 및 소모품 수치 독립 생성 | Dynamic Unique Metrics per Registered Serial | ✅ PASS |
 | **TC-050** | UI/관제 | 모니터링 관제 화면(사용량/소모품) 고객사 컬럼 추가 및 행 클릭 상세 관제 모달 팝업 | Customer Column & Row Click Detail Modal Inspection | ✅ PASS |
+| **TC-051** | 세션/보안 | 401 Unauthorized 인증 만료 시 로그인 화면(/login) 자동 이동 및 returnUrl 원복 연동 | 401 Token Expiration Redirection & ReturnUrl Recovery | ✅ PASS |
 
 ---
 
@@ -317,6 +318,12 @@
 * **발생 원인/배경**: 관제 목록에서 복합기별 설치 고객사 및 위치를 한눈에 식별하고 클릭 시 상세 관제 팝업 렌더링 요구.
 * **조치 내용**: `MonitoringUsageView` & `MonitoringSuppliesView` DTO에 `customer_name` 및 `location`을 추가하고, `/operations/monitoring/usage` 및 `/supplies` 관제 화면에 `[고객사명 / 설치 위치]` 컬럼 기본 추가 및 행(Row) 클릭 시 상세 관제 모달 팝업 렌더링 구현.
 * **검증 결과**: 35개 정적 페이지 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
+### 51. [TC-051] 401 Unauthorized 인증 만료 시 로그인 화면(/login) 자동 이동 및 returnUrl 원복 연동
+* **발생 원인/배경**: 장시간 자리 비움 후 401 토큰 만료 에러 발생 시 화면이 멈춰있던 B2B 보안/UX 미흡 현상 추적.
+* **조치 내용**: `frontend/lib/auth-api.ts` 공통 API 통신 인터셉터에서 401 수신 시 세션 저장소 정리를 거쳐 `/login?expired=true&returnUrl=...` 로 자동 리다이렉트되도록 구현. 로그인 성공 시 이전에 보던 페이지로 자동 원복.
+* **검증 결과**: 35개 정적 페이지 프로덕션 빌드 성공 및 백엔드 테스트 9/9 PASS.
+
 
 
 
