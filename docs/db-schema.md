@@ -66,7 +66,8 @@ PartnerOn 시스템에는 **총 16개 데이터베이스 모델 테이블**(비�
 
 ### 2) 관제 및 마스터 모델 테이블
 
-8. **`oid_lists` (OidListMaster 모델)**: 제조사/모델별 OID 상세 맵
+8. **`temp_oid_lists` (`TempOidListMaster` 모델 - 임시 스테이징)**: 검색 에이전트 스캔 직후 1차 임시 스테이징 저장소 (`status: PENDING`/`CONFIRMED`/`REJECTED`)
+9. **`oid_lists` (`OidListMaster` 모델 - 정식 마스터)**: 제조사/모델별 OID 1:1 풀 맵 마스터 저장소
 9. **`printers` (PrinterModelMaster 모델)**: 프린터 및 복합기 모델 마스터 (`printer_model` unique)
 10. **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사 (`unique_together = ("workplace", "customer_id")`)
 11. **`monitoring_printers` (MonitoringPrinter 모델)**: 모니터링 복합기 장비 마스터 (`unique_together = ("workplace", "serial_no")`)

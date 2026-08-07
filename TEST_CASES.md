@@ -65,6 +65,7 @@
 | **TC-055** | 수집/백엔드 | 카운터 수치 단조 증가(Monotonic Increase) 보장 및 스캐너 연산 공식 통일 | Counter Monotonic Increase & Scanner Formula Unification | ✅ PASS |
 | **TC-056** | 문서/협업 | 프로젝트 협업 6대 표준 세부 명세서 체계 수립 (docs/ 6종 표준 명세서 작성) | Standardized Documentation Suite (docs/ 6 Specs) | ✅ PASS |
 | **TC-057** | 문서/동기화 | 프론트/백엔드/에이전트 전체 소스 기반 종합 기술 설계 명세서 100% 동기화 | Full Source-Audited Technical Specifications Sync | ✅ PASS |
+| **TC-058** | 에이전트/OID | SNMP Deep Search Agent & 2단계 OID 스테이징 및 웹 검증 화면 구축 | SNMP Deep Search Agent & 2-Stage OID Staging Web UI | ✅ PASS |
 
 ---
 
@@ -359,6 +360,12 @@
 * **발생 원인/배경**: 전체 소스코드(Next.js 15, DRF 5.1, 16개 DB 테이블, Python Agent) 전수 실사 조사를 거쳐 기술 문서 100% 동기화 요구.
 * **조치 내용**: `docs/` 하위 6대 명세서(`architecture.md`, `coding-style.md`, `api.md`, `db-schema.md`, `business-rules.md`, `ui-guidelines.md`)와 `AGENTS.md`, `README.md`를 실제 소스코드 모든 명칭 및 매핑 규칙과 100% 부합하도록 전수 업데이트 완료.
 * **검증 결과**: 전체 소스 전수 조율 완료 및 백엔드 테스트 9/9 PASS.
+
+### 58. [TC-058] SNMP Deep Search Agent & 2단계 OID 스테이징 및 웹 검증 화면 구축
+* **발생 원인/배경**: 미지의 복합기 MIB Private OID Tree 전체 스캔 및 14대 관제 OID 자동 추론, 사람이 눈으로 보고 승인하는 2단계 스테이징(`temp_oid_lists` ➔ `oid_lists`) 및 전용 웹 화면 구축 요구.
+* **조치 내용**: `agent/search_snmp_agent.py`, `agent/oid_analyzer.py`, `TempOidListMaster` (`temp_oid_lists`), `TempOidListInspectionView`, `TempOidListActionView`, `/operations/basic/oid-lists` 웹 화면 및 `OidInspectionModal` 모달 구축 완료.
+* **검증 결과**: 2단계 이관 실측 성공, 백엔드 테스트 9/9 PASS, 프론트엔드 빌드 36/36 SUCCESS.
+
 
 
 

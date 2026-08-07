@@ -12,7 +12,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
     User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping,
     MonitoringPrinter, MonitoringData, MonitoringDataRecord, SuppliesAlert, SupplyUsage, UnregisteredPrinter,
-    PrinterModelMaster, OidListMaster, MonitoringCustomer
+    PrinterModelMaster, OidListMaster, MonitoringCustomer, TempOidListMaster
 )
 from .permissions import IsOwnerPermission
 from .serializers import (
@@ -2038,6 +2038,169 @@ class MonitoringSuppliesView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class TempOidListInspectionView(APIView):
+    """
+    1. GET: temp_oid_lists 스테이징 데이터 목록 & 통계 요약 (전체, 대기, 승인완료)
+    2. POST: 검색 에이전트 수집 결과 temp_oid_lists 1차 스테이징 적재 API
+    """
+    permission_classes = [AllowAny]  # Agent ingestion allows tokenless by auth_code or JWT for Web UI
+
+    def get(self, request) -> Response:
+        if not request.user.is_authenticated:
+            return Response({"detail": "인증이 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED)
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"stats": {}, "records": []}, status=status.HTTP_200_OK)
+
+        qs = TempOidListMaster.objects.filter(Q(workplace=workplace) | Q(workplace__isnull=True))
+        
+        status_filter = request.query_params.get("status", "").strip()
+        if status_filter and status_filter != "ALL":
+            qs = qs.filter(status=status_filter)
+
+        total_count = qs.count()
+        pending_count = qs.filter(status=TempOidListMaster.Status.PENDING).count()
+        confirmed_count = qs.filter(status=TempOidListMaster.Status.CONFIRMED).count()
+
+        records_data = []
+        for r in qs.order_by("-created_at")[:200]:
+            records_data.append(
+                {
+                    "id": r.id,
+                    "manufacturer": r.manufacturer or "미지 제조사",
+                    "printer_model": r.printer_model or "표준 모델",
+                    "scanned_ip": r.scanned_ip or "127.0.0.1",
+                    "serial_no": r.serial_no or "-",
+                    "count1": r.count1 or "-",
+                    "count2": r.count2 or "-",
+                    "count4": r.count4 or "-",
+                    "toner_c": r.toner_c or "-",
+                    "toner_m": r.toner_m or "-",
+                    "toner_y": r.toner_y or "-",
+                    "toner_k": r.toner_k or "-",
+                    "drum_k": r.drum_k or "-",
+                    "raw_walk_dump": r.raw_walk_dump or {},
+                    "status": r.status,
+                    "created_at": timezone.localtime(r.created_at).strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "-",
+                }
+            )
+
+        return Response(
+            {
+                "stats": {
+                    "total": total_count,
+                    "pending": pending_count,
+                    "confirmed": confirmed_count,
+                },
+                "records": records_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request) -> Response:
+        auth_code = request.data.get("auth_code", "").strip()
+        workplace = None
+        if auth_code:
+            collector = AgentCollector.objects.filter(auth_code=auth_code).first()
+            if collector:
+                workplace = collector.workplace
+
+        items = request.data.get("records", [])
+        if not items and request.data.get("scanned_ip"):
+            items = [request.data]
+
+        created_count = 0
+        for item in items:
+            s_ip = item.get("scanned_ip") or item.get("ip") or "127.0.0.1"
+            m_name = item.get("printer_model") or item.get("model_name") or "Standard MFP"
+            vendor = item.get("manufacturer") or item.get("vendor_name") or "Fujifilm"
+
+            r = TempOidListMaster.objects.create(
+                workplace=workplace,
+                manufacturer=vendor,
+                printer_model=m_name,
+                scanned_ip=s_ip,
+                serial_no=item.get("serial_no"),
+                count1=item.get("count1") or item.get("count_color"),
+                count2=item.get("count2") or item.get("count_mono"),
+                count4=item.get("count4") or item.get("count_total"),
+                toner_c=item.get("toner_c"),
+                toner_m=item.get("toner_m"),
+                toner_y=item.get("toner_y"),
+                toner_k=item.get("toner_k"),
+                drum_k=item.get("drum_k"),
+                raw_walk_dump=item.get("raw_walk_dump", {}),
+                status=TempOidListMaster.Status.PENDING,
+            )
+            created_count += 1
+
+        return Response({"status": "SUCCESS", "created_count": created_count}, status=status.HTTP_201_CREATED)
+
+
+class TempOidListActionView(APIView):
+    """
+    POST: temp_oid_lists 레코드 승인(approve) 또는 거절(reject)
+    승인 시 정식 oid_lists (OidListMaster) 및 PrinterOidMapping DB로 자동 1:1 이관
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk: int, action: str) -> Response:
+        workplace = request.user.workplace
+        rec = TempOidListMaster.objects.filter(pk=pk).first()
+        if not rec:
+            return Response({"detail": "해당 임시 OID 레코드를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        if action == "approve":
+            rec.status = TempOidListMaster.Status.CONFIRMED
+            rec.save()
+
+            # 1. Promote to OidListMaster (oid_lists table)
+            OidListMaster.objects.update_or_create(
+                manufacturer=rec.manufacturer,
+                printer_model=rec.printer_model,
+                defaults={
+                    "serial_no": rec.serial_no,
+                    "count1": rec.count1,
+                    "count2": rec.count2,
+                    "count4": rec.count4,
+                    "toner_c": rec.toner_c,
+                    "toner_m": rec.toner_m,
+                    "toner_y": rec.toner_y,
+                    "toner_k": rec.toner_k,
+                    "drum_k": rec.drum_k,
+                },
+            )
+
+            # 2. Promote to PrinterOidMapping (accounts_printeroidmapping table)
+            mappings = [
+                ("serial_no", rec.serial_no),
+                ("count_color", rec.count1),
+                ("count_mono", rec.count2),
+                ("count_total", rec.count4),
+                ("toner_c", rec.toner_c),
+                ("toner_m", rec.toner_m),
+                ("toner_y", rec.toner_y),
+                ("toner_k", rec.toner_k),
+                ("drum_k", rec.drum_k),
+            ]
+            for key, val in mappings:
+                if val and str(val).strip():
+                    PrinterOidMapping.objects.update_or_create(
+                        vendor_name=rec.manufacturer or "Standard",
+                        oid_key=key,
+                        defaults={"oid_value": str(val).strip(), "is_active": True},
+                    )
+
+            return Response({"status": "CONFIRMED", "message": f"[{rec.printer_model}] OID가 정식 마스터 DB로 승인 이관되었습니다."}, status=status.HTTP_200_OK)
+
+        elif action == "reject":
+            rec.status = TempOidListMaster.Status.REJECTED
+            rec.save()
+            return Response({"status": "REJECTED", "message": "해당 임시 OID가 거절되었습니다."}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "잘못된 요청 동작입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

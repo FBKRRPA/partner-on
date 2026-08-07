@@ -272,6 +272,52 @@ class OidListMaster(models.Model):
         return f"[{self.manufacturer}] {self.printer_model}"
 
 
+class TempOidListMaster(models.Model):
+    """
+    temp_oid_lists: 검색 에이전트가 탐지/추론한 1차 임시 OID 스테이징 레코드
+    """
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "검증 대기"
+        CONFIRMED = "CONFIRMED", "마스터 이관 완료"
+        REJECTED = "REJECTED", "거절됨"
+
+    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="temp_oid_lists", null=True, blank=True)
+    manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
+    printer_model = models.CharField(max_length=256, blank=True, null=True, help_text="프린터 모델명")
+    scanned_ip = models.CharField(max_length=256, blank=True, null=True, help_text="스캔된 IP")
+    
+    serial_no = models.CharField(max_length=256, blank=True, null=True, help_text="시리얼 OID 후보")
+    count1 = models.CharField(max_length=256, blank=True, null=True, help_text="컬러 카운트 OID 후보")
+    count2 = models.CharField(max_length=256, blank=True, null=True, help_text="흑백 카운트 OID 후보")
+    count3 = models.CharField(max_length=256, blank=True, null=True, help_text="큰컬러 카운트 OID 후보")
+    count3_k = models.CharField(max_length=256, blank=True, null=True, help_text="큰흑백 카운트 OID 후보")
+    count4 = models.CharField(max_length=256, blank=True, null=True, help_text="전체 카운트 OID 후보")
+    
+    toner_c = models.CharField(max_length=256, blank=True, null=True, help_text="시안 토너 OID 후보")
+    toner_m = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 토너 OID 후보")
+    toner_y = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 토너 OID 후보")
+    toner_k = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 토너 OID 후보")
+    toner_recovery = models.CharField(max_length=256, blank=True, null=True, help_text="회수 토너 OID 후보")
+    
+    drum_c = models.CharField(max_length=256, blank=True, null=True, help_text="시안 드럼 OID 후보")
+    drum_m = models.CharField(max_length=256, blank=True, null=True, help_text="마젠타 드럼 OID 후보")
+    drum_y = models.CharField(max_length=256, blank=True, null=True, help_text="옐로 드럼 OID 후보")
+    drum_k = models.CharField(max_length=256, blank=True, null=True, help_text="블랙 드럼 OID 후보")
+
+    raw_walk_dump = models.JSONField(default=dict, blank=True, help_text="Raw MIB Tree Dump JSON")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "temp_oid_lists"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"TempOID([{self.scanned_ip}] {self.manufacturer} {self.printer_model} - {self.status})"
+
+
 class PrinterModelMaster(models.Model):
     """
     printers: 프린터 및 복합기 모델 마스터

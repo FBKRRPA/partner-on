@@ -39,6 +39,7 @@ const PATH_TO_KEY_MAP: Record<string, string> = {
   "/operations/basic/consumable-codes": "basic_consumable_codes",
   "/operations/basic/contracts": "basic_contracts",
   "/operations/basic/permissions": "basic_permissions",
+  "/operations/basic/oid-lists": "basic_oid_lists",
   "/operations/assets/devices": "assets_devices",
   "/operations/assets/in-out": "assets_in_out",
   "/operations/assets/inventory": "assets_inventory",
@@ -143,6 +144,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "부소모품 코드", href: "/operations/basic/consumable-codes", key: "basic_consumable_codes" },
         { name: "고객(계약후)", href: "/operations/basic/contracts", key: "basic_contracts" },
         { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용", key: "basic_permissions" },
+        { name: "OID 검증 및 승인", href: "/operations/basic/oid-lists", key: "basic_oid_lists" },
       ],
     },
     {

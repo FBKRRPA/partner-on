@@ -26,6 +26,8 @@ from .views import (
     SetupTOTPView,
     SignUpView,
     SignUpWithInviteView,
+    TempOidListInspectionView,
+    TempOidListActionView,
     Toggle2FAView,
     UserProfileView,
     Verify2FAView,
@@ -61,6 +63,8 @@ urlpatterns = [
     # Workplace Agent/Collector Management APIs
     path("workplace/collectors/", CollectorListView.as_view(), name="collector-list"),
     path("workplace/collectors/generate-code/", CollectorCodeGenerateView.as_view(), name="collector-generate-code"),
+    path("workplace/oid-inspection/", TempOidListInspectionView.as_view(), name="oid-inspection-list"),
+    path("workplace/oid-inspection/<int:pk>/<str:action>/", TempOidListActionView.as_view(), name="oid-inspection-action"),
 
     # Monitoring APIs
     path("monitoring/usage/", MonitoringUsageView.as_view(), name="monitoring-usage"),
