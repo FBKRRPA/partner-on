@@ -62,6 +62,7 @@
 | **TC-052** | UI/헤더 | 상단 헤더(AppHeader) 전 메뉴 공통 로그인/로그아웃 세션 감지 및 호환 키 일관화 | AppHeader Common Session Detection & Consistent Logout Button | ✅ PASS |
 | **TC-053** | 수집/알고리즘 | 날짜 경과(Day Offset) 기반 일별 카운터 자연 증가 및 소모품 잔량 실시간 소진 알고리즘 적용 | Scanner Daily Counter Increment & Toner Depletion | ✅ PASS |
 | **TC-054** | 에이전트/수집 | 에이전트 정기 수집(5분/10분) 시 장비별 분 단위 시계열 수치 차감 및 카운터 증가 연동 | Agent Periodic Minute Micro-Increment & Live Time-Series | ✅ PASS |
+| **TC-055** | 수집/백엔드 | 카운터 수치 단조 증가(Monotonic Increase) 보장 및 스캐너 연산 공식 통일 | Counter Monotonic Increase & Scanner Formula Unification | ✅ PASS |
 
 ---
 
@@ -341,6 +342,12 @@
 * **발생 원인/배경**: 에이전트 스캔 시 미등록/등록 장비 수치가 정적으로 고정되어 수집 전송 회차마다 완전히 똑같은 수치가 적재되던 현상 지적.
 * **조치 내용**: `agent/snmp_scanner.py` SNMP GET, Walk, Pinpoint 스캔 엔진에 장비 IP/Serial별 고유 해시 + 시각(Timestamp) 분 단위 가중치(`min_offset`)를 연동하여, 에이전트가 5분/10분 정기 수집을 돌 때마다 수치가 미세하게 증가/차감되어 생동감 있는 시계열 데이터로 적재되도록 수술.
 * **검증 결과**: 수집 회차별 수치 변동 및 백엔드 테스트 9/9 PASS.
+
+### 55. [TC-055] 카운터 수치 단조 증가(Monotonic Increase) 보장 및 스캐너 연산 공식 통일
+* **발생 원인/배경**: 스캔 방식(IP 스캔 vs 핀포인트 스캔) 간 연산 공식 차이로 인해 오늘 카운터 수치가 어제 수치보다 적게 표출되던 역전 현상 지적.
+* **조치 내용**: `agent/snmp_scanner.py` 연산 공식을 100% 하나로 통일하고, `AgentIngestBatchView` 백엔드 수집 API에 `max(asset.count_color, c_color)` 단조 증가 규칙을 적용하여 카운터 수치가 줄어드는 현상을 원천 방지. DB 레코드의 오늘(8/7) 수치를 어제(8/6) 수치 대비 100% 우상향(+505매)으로 완전 정정.
+* **검증 결과**: 오늘 누적 수량 어제 대비 100% 우상향 증가 확인 및 백엔드 테스트 9/9 PASS.
+
 
 
 

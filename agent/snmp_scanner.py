@@ -208,23 +208,27 @@ class SNMPScanner:
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()
                 sno_num = int(''.join(filter(str.isdigit, clean_sno)) or '55')
-
-                # Dynamic metric generation with daily counter increment, minute micro increment & toner depletion
-                base_color = 15000 + (sno_num % 97) * 320 + (day_offset * 125) + (min_offset * 2)
-                base_mono = 45000 + (sno_num % 83) * 650 + (day_offset * 380) + (min_offset * 5)
-
-                t_c = max(5, 85 - (sno_num % 30) - (day_offset * 2) - (min_offset // 50))
-                t_m = max(5, 80 - ((sno_num + 5) % 30) - (day_offset * 2) - (min_offset // 50))
-                t_y = max(5, 90 - ((sno_num + 10) % 30) - (day_offset * 2) - (min_offset // 50))
-                t_k = max(5, 75 - ((sno_num + 15) % 30) - (day_offset * 3) - (min_offset // 30))
-                d_k = max(10, 95 - ((sno_num + 20) % 25) - (day_offset * 1))
-
+                last_octet = sno_num % 250 + 1
                 if "100" in clean_sno or "C5535" in clean_sno or sno_num % 2 == 0:
                     model = "imageRUNNER ADVANCE C5535i"
                     vendor_sys = "Canon imageRUNNER ADVANCE C5535i Multi-Function Printer"
+                    base_color = 34120 + (last_octet * 155) + (day_offset * 120) + (min_offset * 2)
+                    base_mono = 98700 + (last_octet * 420) + (day_offset * 350) + (min_offset * 5)
+                    t_c = max(5, 85 - (last_octet % 25) - (day_offset * 2) - (min_offset // 50))
+                    t_m = max(5, 78 - ((last_octet + 5) % 25) - (day_offset * 2) - (min_offset // 50))
+                    t_y = max(5, 90 - ((last_octet + 10) % 25) - (day_offset * 2) - (min_offset // 50))
+                    t_k = max(5, 72 - ((last_octet + 15) % 25) - (day_offset * 3) - (min_offset // 30))
+                    d_k = max(10, 92 - ((last_octet + 20) % 20) - (day_offset * 1))
                 else:
                     model = "ApeosPort-VII C3373"
                     vendor_sys = "FujiXerox ApeosPort-VII C3373 Multi-Function Printer"
+                    base_color = 18450 + (last_octet * 180) + (day_offset * 140) + (min_offset * 3)
+                    base_mono = 52300 + (last_octet * 390) + (day_offset * 390) + (min_offset * 6)
+                    t_c = max(5, 92 - (last_octet % 30) - (day_offset * 2) - (min_offset // 45))
+                    t_m = max(5, 88 - ((last_octet + 7) % 30) - (day_offset * 2) - (min_offset // 45))
+                    t_y = max(5, 95 - ((last_octet + 14) % 30) - (day_offset * 2) - (min_offset // 45))
+                    t_k = max(5, 80 - ((last_octet + 21) % 30) - (day_offset * 3) - (min_offset // 25))
+                    d_k = max(10, 88 - ((last_octet + 10) % 20) - (day_offset * 1))
 
                 raw_dev = {
                     "ip": f"192.168.1.{sno_num % 250 + 1}",

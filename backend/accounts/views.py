@@ -1264,9 +1264,9 @@ class AgentIngestBatchView(APIView):
                     if calc_monthly_mono == 0 and c_mono > 0:
                         calc_monthly_mono = int(c_mono * 0.12)
 
-                asset.count_color = c_color
-                asset.count_mono = c_mono
-                asset.count_total = c_total
+                asset.count_color = max(asset.count_color or 0, c_color)
+                asset.count_mono = max(asset.count_mono or 0, c_mono)
+                asset.count_total = asset.count_color + asset.count_mono
                 asset.monthly_usage_color = calc_monthly_color
                 asset.monthly_usage_mono = calc_monthly_mono
                 asset.toner_c = t_c
