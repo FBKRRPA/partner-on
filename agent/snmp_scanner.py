@@ -55,7 +55,7 @@ class SNMPScanner:
             from datetime import datetime
             now = datetime.now()
             day_offset = max(0, (now - datetime(2026, 8, 1)).days)
-            min_offset = int(now.timestamp() // 180) % 1000  # Changes every 3 minutes
+            min_offset = int(now.timestamp() // 15) % 1000  # Changes every 3 minutes
 
             last_octet = int(ip.split(".")[-1]) if (ip and "." in ip and ip.split(".")[-1].isdigit()) else 55
             if last_octet in (55, 100) or ip in self.custom_ips or last_octet <= 254:
@@ -115,7 +115,7 @@ class SNMPScanner:
         from datetime import datetime
         now = datetime.now()
         day_offset = max(0, (now - datetime(2026, 8, 1)).days)
-        min_offset = int(now.timestamp() // 180) % 1000
+        min_offset = int(now.timestamp() // 15) % 1000
 
         last_octet = int(ip.split(".")[-1]) if ip.split(".")[-1].isdigit() else 55
         if last_octet in (55, 100) or ip in self.custom_ips or (last_octet % 10 == 0 or last_octet <= 254):
@@ -202,7 +202,8 @@ class SNMPScanner:
             from datetime import datetime
             now = datetime.now()
             day_offset = max(0, (now - datetime(2026, 8, 1)).days)
-            min_offset = int(now.timestamp() // 180) % 1000
+            min_offset = int(now.timestamp() // 15) % 1000
+            results = []
 
             for sno in self.target_serials:
                 clean_sno = str(sno).strip().upper()
