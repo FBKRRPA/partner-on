@@ -64,6 +64,7 @@
 | **TC-054** | 에이전트/수집 | 에이전트 정기 수집(5분/10분) 시 장비별 분 단위 시계열 수치 차감 및 카운터 증가 연동 | Agent Periodic Minute Micro-Increment & Live Time-Series | ✅ PASS |
 | **TC-055** | 수집/백엔드 | 카운터 수치 단조 증가(Monotonic Increase) 보장 및 스캐너 연산 공식 통일 | Counter Monotonic Increase & Scanner Formula Unification | ✅ PASS |
 | **TC-056** | 문서/협업 | 프로젝트 협업 6대 표준 세부 명세서 체계 수립 (docs/ 6종 표준 명세서 작성) | Standardized Documentation Suite (docs/ 6 Specs) | ✅ PASS |
+| **TC-057** | 문서/동기화 | 프론트/백엔드/에이전트 전체 소스 기반 종합 기술 설계 명세서 100% 동기화 | Full Source-Audited Technical Specifications Sync | ✅ PASS |
 
 ---
 
@@ -353,6 +354,12 @@
 * **발생 원인/배경**: 개발자 협업 및 LLM 코딩 에이전트 가독성을 극대화하기 위해 `docs/` 하위에 6대 전문 표준 명세서를 수립하고자 제안.
 * **조치 내용**: `docs/architecture.md`, `docs/coding-style.md`, `docs/api.md`, `docs/db-schema.md`, `docs/business-rules.md`, `docs/ui-guidelines.md` 6종 문서를 수립하고, `AGENTS.md` 및 `README.md`에 Sitemap 인덱스 연동 완료.
 * **검증 결과**: 문서 6종 일괄 작성 및 백엔드 테스트 9/9 PASS.
+
+### 57. [TC-057] 프론트/백엔드/에이전트 전체 소스 기반 종합 기술 설계 명세서 100% 동기화
+* **발생 원인/배경**: 전체 소스코드(Next.js 15, DRF 5.1, 16개 DB 테이블, Python Agent) 전수 실사 조사를 거쳐 기술 문서 100% 동기화 요구.
+* **조치 내용**: `docs/` 하위 6대 명세서(`architecture.md`, `coding-style.md`, `api.md`, `db-schema.md`, `business-rules.md`, `ui-guidelines.md`)와 `AGENTS.md`, `README.md`를 실제 소스코드 모든 명칭 및 매핑 규칙과 100% 부합하도록 전수 업데이트 완료.
+* **검증 결과**: 전체 소스 전수 조율 완료 및 백엔드 테스트 9/9 PASS.
+
 
 
 

@@ -17,7 +17,7 @@ PartnerOn 시스템의 비즈니스 규칙 및 보안 통제 정책 문서입니
 
 ## 🛡️ 2. 2FA (2차 인증) 종합 통제 메커니즘
 
-1. 유저의 2FA 적용 여부는 `user.requires_2fa()` 메서드를 통해 결정됩니다:
+1. 유저의 2FA 적용 여부는 `user.requires_2fa()` 메서드를 통해 판단됩니다:
    * **개인 2FA 활성화**: `user.is_2fa_enabled == True`
    * **사업장 직급별 2FA 강제 정책**: `workplace.enforce_2fa_owner` 등 해당 직급 강제 켜짐 상태
 2. 2FA 필수 대상자는 ID/비밀번호 통과 후에도 JWT 토큰 대신 `require_2fa: true` 패킷이 리턴되며, 프론트엔드의 `Verify2FAModal` 모달에서 TOTP 또는 6자리 이메일 OTP를 입력해야 최종 JWT가 발급됩니다.

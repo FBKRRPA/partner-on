@@ -1,6 +1,6 @@
 # 📡 PartnerOn v1.0 REST API Specification
 
-PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. 모든 API 요청 및 응답은 JSON 포맷을 기본으로 합니다.
+PartnerOn 백엔드 시스템의 REST API 엔드포인트 명세서입니다. 모든 요청 및 응답은 JSON 표준 규격을 사용합니다.
 
 ---
 
@@ -16,7 +16,7 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
     "device_name": "Chrome / Windows"
   }
   ```
-* **Response (2FA 불필요 시 - 200 OK)**:
+* **Response (2FA 불필요 - 200 OK)**:
   ```json
   {
     "access": "eyJhbGciOi...",
@@ -25,11 +25,12 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
       "id": 1,
       "email": "owner@partneron.com",
       "name": "홍길동",
-      "role": "OWNER"
+      "role": "OWNER",
+      "workplace_name": "파트너온 본사"
     }
   }
   ```
-* **Response (2FA 필수 시 - 200 OK)**:
+* **Response (2FA 필수 - 200 OK)**:
   ```json
   {
     "require_2fa": true,
@@ -39,17 +40,17 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
   ```
 
 ### ② **2차 인증 검증 (`POST /api/v1/auth/verify-2fa/`)**
-* **Request**: `{"email": "owner@partneron.com", "otp_code": "123456"}`
+* **Request**: `{"email": "owner@partneron.com", "otp_code": "123456"}` 또는 비상 복구 코드.
 * **Response (200 OK)**: Access/Refresh JWT 토큰 발급.
 
 ---
 
 ## 🏢 2. 사업장 및 자산 API (/api/v1/workplace)
 
-### ① **등록 복합기 목록 및 추가 (`GET/POST /api/v1/workplace/printers/`)**
-* **GET Response**: 사업장 내 정식 등록 복합기(`PrinterAsset`) 목록 리턴.
-* **POST Request**: 신규 수동 등록 (`serial_no`, `model_name`, `customer_name`, `location`, `ip_address`).
-* **Side Effect**: 등록 완료 시 `unregistered_printers` 테이블에 해당 시리얼/IP 장비가 있으면 `registered=True`, `location`, `confirmed_serial_no` 자동 동기화.
+### ① **등록 복합기 목록 및 등록 (`GET/POST /api/v1/workplace/printers/`)**
+* **GET**: 사업장 소속 `PrinterAsset` 정식 등록 기기 목록 리턴.
+* **POST**: 신규 수동 등록 (`serial_no`, `model_name`, `customer_name`, `location`, `ip_address`).
+* **Side Effect**: 등록 처리 시 `unregistered_printers` 테이블 동종 장비가 있으면 `registered=True`, `confirmed_serial_no` 자동 업데이트.
 
 ---
 
@@ -65,7 +66,8 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
   }
   ```
 
-### ② **배치 데이터 수집 적재 (`POST /api/v1/agent/ingest/`)**
+### ② **배치 수집 적재 (`POST /api/v1/agent/ingest/`)**
+* **Ingest API IP Resolution Directive**: `ip_address` 및 `ip` 키 명칭을 완벽 호환 수용 (`item.get("ip_address") or item.get("ip") or "127.0.0.1"`)하여 고유 IP 상실에 따른 미등록 장비 덮어쓰기 버그 원천 방지.
 * **Request Payload**:
   ```json
   {
@@ -77,6 +79,7 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
         "model_name": "ApeosPort-VII C3373",
         "count_color": 29100,
         "count_mono": 76470,
+        "count_total": 105570,
         "toner_c": 52,
         "toner_m": 42,
         "toner_y": 47,
@@ -86,7 +89,6 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
     ]
   }
   ```
-* **IP Resolution Directive**: `ip_address` 또는 `ip` 키 이름을 완벽 호환 수용하여 IP 누락으로 인한 덮어쓰기 방지.
 
 ---
 
@@ -94,8 +96,8 @@ PartnerOn 시스템의 백엔드 REST API 엔드포인트 명세서입니다. �
 
 ### ① **카운터 사용량 현황 (`GET /api/v1/monitoring/usage/`)**
 * **Query Params**: `start_date`, `end_date`, `serial_no`
-* **Response**: `devices` (최신 기기별 스냅샷) + `history` (일자별 `MonitoringDataRecord` 시계열 목록).
+* **Response**: `devices` (스냅샷) + `history` (`MonitoringDataRecord` 일자별 시계열 이력).
 
 ### ② **소모품 잔량 현황 (`GET /api/v1/monitoring/supplies/`)**
 * **Query Params**: `start_date`, `end_date`, `serial_no`
-* **Response**: 토너 C/M/Y/K 및 드럼 K 잔량 %, 경고 뱃지 상태(`CRITICAL`, `WARNING`, `NORMAL`) 리턴.
+* **Response**: 토너 C/M/Y/K, 드럼 잔량 %, 경고 레벨(`CRITICAL`, `WARNING`, `NORMAL`) 리턴.
