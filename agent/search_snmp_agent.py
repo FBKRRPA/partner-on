@@ -163,7 +163,7 @@ class SNMPDeepSearchAgent:
 def main():
     parser = argparse.ArgumentParser(description="PartnerOn SNMP Deep Search Agent & OID Collector")
     parser.add_argument("--ips", type=str, help="Target IPs (e.g. 192.168.1.55 or 192.168.1.10,192.168.1.50 or 192.168.1.10-50)")
-    parser.add_argument("--subnet", type=str, help="Custom Subnet C-Class (e.g. 192.168.2)")
+    parser.add_argument("--subnet", type=str, default="10.97.200", help="Custom Subnet C-Class (e.g. 192.168.2)")
     parser.add_argument("--community", type=str, default="public", help="SNMP Community String")
     parser.add_argument("-i", "--interactive", action="store_true", help="Enable CLI Interactive Human Review")
     parser.add_argument("--sync-backend", action="store_true", default=True, help="Sync to temp_oid_lists backend table")

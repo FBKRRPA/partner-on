@@ -2195,12 +2195,119 @@ class TempOidListActionView(APIView):
 
             return Response({"status": "CONFIRMED", "message": f"[{rec.printer_model}] OID가 정식 마스터 DB로 승인 이관되었습니다."}, status=status.HTTP_200_OK)
 
-        elif action == "reject":
-            rec.status = TempOidListMaster.Status.REJECTED
-            rec.save()
-            return Response({"status": "REJECTED", "message": "해당 임시 OID가 거절되었습니다."}, status=status.HTTP_200_OK)
-
         return Response({"detail": "잘못된 요청 동작입니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UnregisteredPrinterView(APIView):
+    """
+    GET: unregistered_printers 테이블 목록 및 통계 요약 리턴
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"stats": {}, "records": []}, status=status.HTTP_200_OK)
+
+        qs = UnregisteredPrinter.objects.filter(workplace=workplace)
+        status_filter = request.query_params.get("status", "").strip()
+        if status_filter == "PENDING":
+            qs = qs.filter(registered=False)
+        elif status_filter == "REGISTERED":
+            qs = qs.filter(registered=True)
+
+        total_count = UnregisteredPrinter.objects.filter(workplace=workplace).count()
+        pending_count = UnregisteredPrinter.objects.filter(workplace=workplace, registered=False).count()
+        registered_count = UnregisteredPrinter.objects.filter(workplace=workplace, registered=True).count()
+
+        records_data = []
+        for r in qs.order_by("-updated_at")[:300]:
+            records_data.append(
+                {
+                    "id": r.id,
+                    "ip": r.ip or "-",
+                    "scanned_model": r.scanned_model or "Standard MFP",
+                    "vendor_name": r.vendor_name or "Standard",
+                    "mac_address": r.mac_address or "-",
+                    "serial_no": r.serial_no or "-",
+                    "confirmed_serial_no": r.confirmed_serial_no or "-",
+                    "location": r.location or "-",
+                    "registered": r.registered,
+                    "count_total": r.count_total,
+                    "count_color": r.count_color,
+                    "count_mono": r.count_mono,
+                    "toner_k": r.toner_k,
+                    "toner_c": r.toner_c,
+                    "toner_m": r.toner_m,
+                    "toner_y": r.toner_y,
+                    "last_scanned_at": timezone.localtime(r.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if r.last_scanned_at else "미수집",
+                }
+            )
+
+        return Response(
+            {
+                "stats": {
+                    "total": total_count,
+                    "pending": pending_count,
+                    "registered": registered_count,
+                },
+                "records": records_data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class UnregisteredPrinterRegisterView(APIView):
+    """
+    POST: 미등록 장비(UnregisteredPrinter)를 정식 복합기 자산(PrinterAsset)으로 전환 등록
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk: int) -> Response:
+        workplace = request.user.workplace
+        unreg = UnregisteredPrinter.objects.filter(pk=pk, workplace=workplace).first()
+        if not unreg:
+            return Response({"detail": "해당 미등록 장비를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+        customer_name = request.data.get("customer_name", "").strip() or "자사 본사"
+        location = request.data.get("location", "").strip() or unreg.location or "사무실"
+        custom_serial = request.data.get("serial_no", "").strip() or unreg.serial_no
+
+        # 1. Create or Update PrinterAsset
+        asset, created = PrinterAsset.objects.update_or_create(
+            workplace=workplace,
+            serial_no=custom_serial,
+            defaults={
+                "model_name": unreg.scanned_model or "복합기 표준 모델",
+                "customer_name": customer_name,
+                "location": location,
+                "ip_address": unreg.ip,
+                "count_color": unreg.count_color,
+                "count_mono": unreg.count_mono,
+                "count_total": unreg.count_total,
+                "toner_c": unreg.toner_c or 100,
+                "toner_m": unreg.toner_m or 100,
+                "toner_y": unreg.toner_y or 100,
+                "toner_k": unreg.toner_k or 100,
+                "status": PrinterAsset.Status.APPROVED,
+                "last_scanned_at": unreg.last_scanned_at or timezone.now(),
+            },
+        )
+
+        # 2. Update UnregisteredPrinter status
+        unreg.registered = True
+        unreg.location = location
+        unreg.confirmed_serial_no = custom_serial
+        unreg.save()
+
+        return Response(
+            {
+                "status": "SUCCESS",
+                "message": f"[{custom_serial}] 장비가 정식 복합기 자산(PrinterAsset)으로 등록 완료되었습니다.",
+                "asset_id": asset.id,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 

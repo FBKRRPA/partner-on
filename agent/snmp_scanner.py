@@ -32,7 +32,7 @@ def get_local_ip_subnet() -> str:
         parts = ip.split(".")
         return f"{parts[0]}.{parts[1]}.{parts[2]}"
     except Exception:
-        return "192.168.1"
+        return "192.168.0"
 
 class SNMPScanner:
     def __init__(self, target_ips: List[str] = None, target_serials: List[str] = None, custom_ips: List[str] = None, oid_map: Dict[str, str] = None, mode: str = "auto"):

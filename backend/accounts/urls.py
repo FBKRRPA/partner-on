@@ -28,6 +28,8 @@ from .views import (
     SignUpWithInviteView,
     TempOidListInspectionView,
     TempOidListActionView,
+    UnregisteredPrinterView,
+    UnregisteredPrinterRegisterView,
     Toggle2FAView,
     UserProfileView,
     Verify2FAView,
@@ -65,6 +67,9 @@ urlpatterns = [
     path("workplace/collectors/generate-code/", CollectorCodeGenerateView.as_view(), name="collector-generate-code"),
     path("workplace/oid-inspection/", TempOidListInspectionView.as_view(), name="oid-inspection-list"),
     path("workplace/oid-inspection/<int:pk>/<str:action>/", TempOidListActionView.as_view(), name="oid-inspection-action"),
+
+    path("workplace/unregistered-printers/", UnregisteredPrinterView.as_view(), name="unregistered-printer-list"),
+    path("workplace/unregistered-printers/<int:pk>/register/", UnregisteredPrinterRegisterView.as_view(), name="unregistered-printer-register"),
 
     # Monitoring APIs
     path("monitoring/usage/", MonitoringUsageView.as_view(), name="monitoring-usage"),

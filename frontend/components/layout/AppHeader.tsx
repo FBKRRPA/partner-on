@@ -45,6 +45,7 @@ const PATH_TO_KEY_MAP: Record<string, string> = {
   "/operations/assets/inventory": "assets_inventory",
   "/operations/assets/collectors": "assets_collectors",
   "/operations/assets/email-collectors": "assets_email_collectors",
+  "/operations/assets/unregistered": "assets_unregistered",
   "/operations/monitoring/usage": "monitoring_usage",
   "/operations/monitoring/supplies": "monitoring_supplies",
   "/operations/monitoring/customers": "monitoring_customers",
@@ -155,6 +156,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "부소모품 재고", href: "/operations/assets/inventory", key: "assets_inventory" },
         { name: "장비관리 (수집장비)", href: "/operations/assets/collectors", key: "assets_collectors" },
         { name: "메일수집 장비등록", href: "/operations/assets/email-collectors", key: "assets_email_collectors" },
+        { name: "미등록 장비 관리", href: "/operations/assets/unregistered", key: "assets_unregistered" },
       ],
     },
     {
