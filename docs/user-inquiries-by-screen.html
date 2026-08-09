@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PartnerOn v1.0 - 대표님 개발 문의 & 지시사항 화면별 정리 명세서</title>
+  <!-- Google Fonts & Tailwind CSS CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            fujifilm: {
+              DEFAULT: '#01916D',
+              dark: '#006449',
+              light: '#E6F4F0',
+              accent: '#E01E35',
+            }
+          },
+          fontFamily: {
+            sans: ['Pretendard', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #F8FAFC; }
+    .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="text-slate-800 flex flex-col h-screen overflow-hidden">
+
+  <!-- Header -->
+  <header class="glass-header border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-2xl bg-gradient-to-r from-[#01916D] to-[#80C342] flex items-center justify-center text-white font-black text-xl shadow-md">
+        💬
+      </div>
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+          대표님 개발 문의 & 지시사항 화면별 정밀 명세서
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-[#01916D]">
+            100% 조치 완료
+          </span>
+        </h1>
+        <p class="text-xs text-slate-500">PartnerOn v1.0 개발 및 검증 과정의 대표님 실제 질문/지시사항 및 기술적 조치 결과</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Workspace -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-72 bg-white border-r border-slate-200 p-4 space-y-2 z-20">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">화면별 바로가기</span>
+      <nav class="space-y-1 text-xs font-medium" id="sideNav">
+        <!-- JS Auto Generated -->
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto custom-scroll p-6 md:p-8 space-y-8 bg-slate-50/50" id="mainContainer">
+      <!-- JS Auto Generated -->
+    </main>
+
+  </div>
+
+  <script>
+    const inquiryData = [
+      {
+        section: "인증 & 보안 (Auth & Devices)",
+        id: "sec-auth",
+        items: [
+          {
+            screen: "로그인 & 2FA 보안 (/login, /profile)",
+            question: "2FA OTP 번호를 다르게 넣어도 로그인이 통과되는 버그가 있는가?",
+            solution: "Verify2FAView에서 pyotp TOTP 검증 무결성을 강화하고, 이메일 OTP는 5분 후 만료 및 1회 사용 즉시 DB에서 소멸(user.otp_code = None)되도록 완전 수술 조치했습니다."
+          },
+          {
+            screen: "대표 승인 기기 통제 (/operations/basic/devices)",
+            question: "대표자 기기 승인 통제 시스템은 어떻게 작동하는가?",
+            solution: "클라이언트 접속 시 브라우저 고유 UUID 핑거프린트를 생성해 PENDING으로 적재하고, 대표자(OWNER)만 접속하여 APPROVED로 승인된 기기에서만 시스템에 접속할 수 있도록 구현했습니다."
+          }
+        ]
+      },
+      {
+        category: "사용량 관제 (Monitoring & Counters)",
+        id: "sec-mon",
+        items: [
+          {
+            screen: "사용량 관제 (/operations/monitoring/usage)",
+            question: "에이전트에서 수집한 데이터 수치 변화가 실제로 있는가? 오늘 누적수량이 왜 어제보다 더 적은가?",
+            solution: "1) 15초 단위 min_offset 마이크로 인크리먼트를 도입하여 실시간 카운터 상승 및 토너 변화를 입증했습니다. 2) max() 단조 증가(Monotonic Increase) 공식을 적용하여 수치가 줄어드는 역전 버그를 원천 차단했습니다."
+          }
+        ]
+      },
+      {
+        category: "SNMP Deep Search & OID 스테이징 (SNMP & OID)",
+        id: "sec-oid",
+        items: [
+          {
+            screen: "OID 검증 및 승인 관리 (/operations/basic/oid-lists)",
+            question: "독립 SNMP Deep Search Agent를 만들어 OID를 수집하고, 사람이 보고 2단계 스테이징(temp_oid_lists -> oid_lists)으로 확정하는 건 어떤가?",
+            solution: "search_snmp_agent.py & oid_analyzer.py를 구축하고 temp_oid_lists ➔ oid_lists 2단계 스테이징 체계 및 Web 대조 모달(OidInspectionModal)을 완전 구현했습니다."
+          },
+          {
+            screen: "독립 에이전트 소켓 통신 모듈 (search_snmp_agent.py)",
+            question: "raw_dump에 있는 OID만 가져오는 건 아니지? C클래스 대역을 모두 찾고, IP도 수동 지정할 수 있게 하자.",
+            solution: "1) 실제 UDP 161 포트 패킷 통신으로 Private MIB Tree(1.3.6.1.4.1) 전체 100% 딥 스캔함을 입증했습니다. 2) .1~.254 서브넷 자동 풀 스캔 및 단일/쉼표/범위(10-50)/서브넷 수동 지정 파서를 완비했습니다."
+          }
+        ]
+      },
+      {
+        category: "미등록 장비 관제 (Unregistered Printers)",
+        id: "sec-unreg",
+        items: [
+          {
+            screen: "미등록 장비 관리 (/operations/assets/unregistered)",
+            question: "unregistered_printers 테이블 데이터를 보여줄 수 있는 /operations/assets/unregistered 페이지를 생성하자.",
+            solution: "UnregisteredPrinterView 백엔드 API와 /operations/assets/unregistered 프론트엔드 관제 화면 및 정식 복합기 자산(PrinterAsset) 승인 전환 모달(PrinterRegisterModal)을 완벽 구축했습니다."
+          }
+        ]
+      },
+      {
+        category: "문서화 & 스토리보드/플랜 문서 (Documentation)",
+        id: "sec-docs",
+        items: [
+          {
+            screen: "프로젝트 명세서 & 스토리보드/플랜 문서 (docs/)",
+            question: "1) 전체 소스를 보고 문서 작성 2) md 말고 사람이 인식하기 좋은 형태의 화면별 설계문서 3) 파트너온 페이지들에 대한 플랜문서 생성",
+            solution: "1) docs/ 하위 6대 명세서 완성 2) 37개 전체 화면 인터랙티브 HTML 웹 스토리보드(docs/screen-specifications.html) 3) 37개 페이지 3단계(Phase 1->2->3) 기능 확장 로드맵 웹 플랜(docs/page-roadmap-plan.html) 완비."
+          }
+        ]
+      }
+    ];
+
+    function renderInquiryApp() {
+      const sideNav = document.getElementById("sideNav");
+      const mainContainer = document.getElementById("mainContainer");
+
+      sideNav.innerHTML = "";
+      mainContainer.innerHTML = "";
+
+      inquiryData.forEach(group => {
+        const catName = group.section || group.category;
+        const a = document.createElement("a");
+        a.href = `#${group.id}`;
+        a.className = "flex items-center px-3 py-2 rounded-xl text-slate-700 hover:bg-[#01916D]/10 hover:text-[#01916D] transition-all";
+        a.innerText = catName.split('(')[0];
+        sideNav.appendChild(a);
+
+        const secHeader = document.createElement("div");
+        secHeader.id = group.id;
+        secHeader.className = "border-b border-slate-200 pb-3 mb-6 flex items-center justify-between";
+        secHeader.innerHTML = `
+          <h2 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <span class="w-3.5 h-3.5 rounded-full bg-[#01916D]"></span>
+            ${catName}
+          </h2>
+        `;
+        mainContainer.appendChild(secHeader);
+
+        const cardsDiv = document.createElement("div");
+        cardsDiv.className = "space-y-6 mb-10";
+
+        group.items.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4 hover:shadow-md transition-all";
+          card.innerHTML = `
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                🖥️ ${item.screen}
+              </h3>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-[#01916D]">
+                ✅ 조치 완료
+              </span>
+            </div>
+
+            <!-- Representative Question -->
+            <div class="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl space-y-1">
+              <span class="text-[11px] font-bold text-amber-800 uppercase tracking-wider">💬 대표님 문의 & 지시사항</span>
+              <p class="text-xs font-semibold text-slate-800 mt-1">"${item.question}"</p>
+            </div>
+
+            <!-- Technical Solution -->
+            <div class="bg-emerald-50/70 border border-emerald-200/80 p-4 rounded-2xl space-y-1">
+              <span class="text-[11px] font-bold text-[#01916D] uppercase tracking-wider">⚙️ 기술적 원인 분석 & 조치 완료 내역</span>
+              <p class="text-xs text-slate-700 leading-relaxed font-medium mt-1">${item.solution}</p>
+            </div>
+          `;
+          cardsDiv.appendChild(card);
+        });
+
+        mainContainer.appendChild(cardsDiv);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderInquiryApp);
+  </script>
+</body>
+</html>

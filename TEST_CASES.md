@@ -70,6 +70,7 @@
 | **TC-060** | 프론트/자산 | 미등록 복합기 장비 관제 페이지 (/operations/assets/unregistered) 및 정식 자산 승인 전환 구축 | Unregistered Printers Management Web UI & Asset Promotion | ✅ PASS |
 | **TC-061** | 문서/스토리보드 | 37개 전체 화면 인터랙티브 HTML 웹 스토리보드 설계 명세서 구축 (docs/screen-specifications.html) | 37 Screen Interactive HTML Web Storyboard Specifications | ✅ PASS |
 | **TC-062** | 문서/플랜 | 37개 전체 페이지별 기능 확장 & AI 고도화 로드맵 플랜 명세서 구축 (docs/page-roadmap-plan.md & .html) | 37 Page Enhancement & AI Roadmap Plan Specifications | ✅ PASS |
+| **TC-063** | 문서/문의이력 | 대표님 개발 문의 & 지시사항 화면별 정밀 정리 명세서 구축 (docs/user-inquiries-by-screen.md & .html) | User Inquiries & Technical Solutions Specification | ✅ PASS |
 
 ---
 
