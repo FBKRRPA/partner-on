@@ -329,25 +329,31 @@ export default function CrmCustomersPage() {
               {/* 1) 관리파트너사정보 */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
                 <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  1) 관리 파트너사 정보
+                  1) 관리 파트너사 정보 (소속 사업장)
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">관리사업자</label>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      관리 파트너사 (소속 사업장명)
+                    </label>
                     <input
                       type="text"
                       value={formData.partner_company}
                       onChange={(e) => setFormData({ ...formData, partner_company: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                      placeholder="로그인 유저 소속 사업장명"
+                      className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">담당사원</label>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      담당사원 (로그인 유저)
+                    </label>
                     <input
                       type="text"
                       value={formData.partner_employee}
                       onChange={(e) => setFormData({ ...formData, partner_employee: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      placeholder="로그인 유저 실명"
+                      className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
                     />
                   </div>
                 </div>
@@ -647,11 +653,11 @@ export default function CrmCustomersPage() {
               {/* Section 1 */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
                 <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  1) 관리 파트너사 정보
+                  1) 관리 파트너사 정보 (소속 사업장)
                 </h3>
                 <div className="grid grid-cols-2 gap-4 pt-1">
-                  <div><span className="text-slate-400">관리사업자:</span> <strong className="text-slate-900">{selectedCustomer.partner_company}</strong></div>
-                  <div><span className="text-slate-400">담당사원:</span> <strong className="text-slate-900">{selectedCustomer.partner_employee}</strong></div>
+                  <div><span className="text-slate-400">관리 파트너사 (소속 사업장명):</span> <strong className="text-slate-900 font-bold">{selectedCustomer.partner_company}</strong></div>
+                  <div><span className="text-slate-400">담당사원 (로그인 유저):</span> <strong className="text-slate-900 font-bold">{selectedCustomer.partner_employee}</strong></div>
                 </div>
               </div>
 
