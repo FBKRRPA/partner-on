@@ -1040,10 +1040,19 @@ class AgentAuthView(APIView):
                     last_scanned_at=now,
                 )
 
+        workplace_name = collector.workplace.name if collector and collector.workplace else "기본 사업장"
+        c_name = collector.customer_name if collector else "자사 본사"
+        c_id = collector.customer.customer_id if (collector and collector.customer) else "CUST-DEFAULT"
+
         return Response(
             {
                 "detail": "에이전트 인증 성공",
                 "token": agent_token,
+                "workplace_name": workplace_name,
+                "customer_name": c_name,
+                "customer_id": c_id,
+                "collector_id": collector.id if collector else None,
+                "auth_code": auth_code,
                 "expires_in": 31536000,
             },
             status=status.HTTP_200_OK,
@@ -1168,6 +1177,7 @@ class AgentIngestBatchView(APIView):
 
         matched_asset_ids = set()
         workplace = collector.workplace if collector else Workplace.objects.first()
+        collector_customer_name = collector.customer_name if (collector and collector.customer_name) else "자사 본사"
         today_str = now.strftime("%Y%m%d")
         month_prefix = now.strftime("%Y%m")
 
@@ -1297,6 +1307,7 @@ class AgentIngestBatchView(APIView):
                         defaults={
                             "printer_model": m_name,
                             "scanned_model": m_name,
+                            "customer_name": collector_customer_name,
                             "ip": ip_addr,
                             "state": "active",
                             "updated_at": now,
@@ -1306,6 +1317,7 @@ class AgentIngestBatchView(APIView):
                 else:
                     m_printer.printer_model = m_name
                     m_printer.scanned_model = m_name
+                    m_printer.customer_name = collector_customer_name
                     m_printer.ip = ip_addr
                     m_printer.state = "active"
                     m_printer.updated_at = now
@@ -1806,18 +1818,26 @@ class CollectorCodeGenerateView(APIView):
         code_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
         auth_code = f"AST-{code_str}"
 
-        AgentCollector.objects.create(
+        c_name = request.data.get("customer_name", "").strip() or workplace.name
+        c_id = request.data.get("customer_id")
+        customer_obj = None
+        if c_id:
+            customer_obj = MonitoringCustomer.objects.filter(workplace=workplace, id=c_id).first()
+
+        collector = AgentCollector.objects.create(
             workplace=workplace,
+            customer=customer_obj,
             auth_code=auth_code,
-            name=f"현장 에이전트 수집기 ({auth_code})",
-            customer_name=workplace.name,
+            name=f"현장 수집기 Agent ({auth_code})",
+            customer_name=c_name,
             status=AgentCollector.Status.PENDING,
         )
 
         return Response(
             {
-                "detail": "신규 수집기 인증 코드가 발급되었습니다.",
+                "detail": f"[{c_name}] 고객사 매칭 신규 수집기 인증 코드가 발급되었습니다.",
                 "auth_code": auth_code,
+                "customer_name": c_name,
                 "expires_in_hours": 24,
             },
             status=status.HTTP_201_CREATED,
@@ -1850,14 +1870,16 @@ class CollectorListView(APIView):
                     "id": c.id,
                     "auth_code": c.auth_code,
                     "name": c.name,
-                    "customer_name": c.customer_name,
+                    "customer_name": c.customer_name or (c.customer.customer_name if c.customer else "자사 본사"),
+                    "customer_id": c.customer.customer_id if c.customer else None,
                     "ip_range": c.ip_range,
                     "custom_ips": c.custom_ips,
                     "status": c.status,
-                    "last_scanned_at": timezone.localtime(c.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
                     "detected_count": c.detected_count,
+                    "last_scanned_at": timezone.localtime(c.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if c.last_scanned_at else "-",
                 }
             )
+
         return Response(data, status=status.HTTP_200_OK)
 
 

@@ -191,6 +191,7 @@ class AgentCollector(models.Model):
         PENDING = "PENDING", "인증 대기"
 
     workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="collectors")
+    customer = models.ForeignKey("MonitoringCustomer", on_delete=models.SET_NULL, null=True, blank=True, related_name="collectors", help_text="매칭된 사업장 하위 특정 고객사")
     auth_code = models.CharField(max_length=32, unique=True, help_text="8자리 수집기 인증 코드 (AST-XXXXXX)")
     agent_token = models.CharField(max_length=120, blank=True, null=True)
     name = models.CharField(max_length=150, default="현장 수집기 Agent")
@@ -347,6 +348,7 @@ class MonitoringCustomer(models.Model):
     """
     workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="monitoring_customers")
     customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
+    name = models.CharField(max_length=120, default="고객사", help_text="고객사명")
     employee_count = models.IntegerField(default=0, help_text="종업원 수")
     pc = models.IntegerField(default=0, help_text="PC 대수")
     mfp = models.IntegerField(default=0, help_text="복합기 대수")

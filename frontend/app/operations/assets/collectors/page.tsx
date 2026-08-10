@@ -53,14 +53,17 @@ export default function AgentCollectorsPage() {
     }
   }
 
+  const [selectedCustomerName, setSelectedCustomerName] = useState("자사 본사");
+
   async function handleGenerateCode() {
     try {
       setGenerating(true);
       setCopySuccess(false);
-      const res = await generateAgentCode(accessToken);
+      const res = await generateAgentCode(accessToken, selectedCustomerName);
       setGeneratedCode(res.auth_code);
       setIsModalOpen(true);
       setGuideTab("CODE");
+      if (accessToken) loadCollectors(accessToken, true);
     } catch (err) {
       alert(err instanceof Error ? err.message : "코드 발급 실패");
     } finally {
@@ -131,13 +134,23 @@ export default function AgentCollectorsPage() {
                 <span>비동기 새로고침</span>
               </button>
 
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={selectedCustomerName}
+                onChange={(e) => setSelectedCustomerName(e.target.value)}
+                placeholder="매칭 설치 고객사명 (예: 자사 본사)"
+                className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-800 font-semibold text-xs rounded-xl focus:outline-none focus:border-[#01916D]"
+              />
+
               <button
                 onClick={handleGenerateCode}
                 disabled={generating}
-                className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="px-5 py-3 bg-[#01916D] hover:bg-[#006449] active:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
               >
-                <span>+ 신규 Agent 인증 코드 발급</span>
+                <span>+ 고객사 수집기 인증 코드 발급</span>
               </button>
+            </div>
             </div>
           </div>
         </div>

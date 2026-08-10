@@ -562,16 +562,27 @@ export async function getCollectors(token: string): Promise<CollectorDto[]> {
   return body as CollectorDto[];
 }
 
-export async function generateAgentCode(token: string): Promise<{ detail: string; auth_code: string; expires_in_hours: number }> {
+export async function generateAgentCode(
+  token: string,
+  customerName?: string,
+  customerId?: string
+): Promise<{ detail: string; auth_code: string; customer_name?: string; expires_in_hours: number }> {
   const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/collectors/generate-code/`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      customer_name: customerName || "자사 본사",
+      customer_id: customerId,
+    }),
   });
   const body = await readJsonResponse(response);
   if (!response.ok) {
     throw new Error(parseErrorMessage(body, "인증 코드 발급에 실패했습니다."));
   }
-  return body as { detail: string; auth_code: string; expires_in_hours: number };
+  return body as { detail: string; auth_code: string; customer_name?: string; expires_in_hours: number };
 }
 
 export interface MonitoringUsageRecordDto {
