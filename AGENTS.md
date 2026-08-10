@@ -55,10 +55,12 @@
 * **텍스트/배경 컬러**: `#333333` (주요 헤딩), `#5C5C5C` (보조 텍스트), `#FAFAFA` (기본 배경)
 * **브랜드 그라데이션**: 헤더 상단 `fujifilm-gradation-bg` (`linear-gradient(90deg, #01916D, #80C342)`) 유지
 
-### ③ **UI/UX 디자인 패러다임 (Rich & Premium UI)**
-* **Glassmorphism**: 헤더 및 모달 패널에 `backdrop-blur-md`, `bg-white/95`, `border-slate-200/80` 적용.
-* **Rounded Card Aesthetic**: 모달 및 대시보드 카드 레이아웃은 `rounded-2xl` 또는 `rounded-3xl`의 부드러운 라운딩 적용.
-* **Micro-Animations**: 드롭다운 및 모달 팝업 시 `animate-in fade-in slide-in-from-top-2`, 버튼 및 링크 클릭 시 `transition-all duration-150` 유지.
+### ③ **UI/UX 디자인 패러다임 & 단일 전사 표준 (Standard B2B UI Guidelines)**
+* **단일 표준 모델 (Authoritative Reference UI)**: 전사 시스템의 모든 뷰페이지(CRM, 기초정보, 자산/수집, 계약, 모니터링 등)는 **`기초정보 관리 > 계약 관리` (`/operations/basic/contracts`)** 페이지의 디자인 구조를 **100% 절대적 단일 표준**으로 삼습니다.
+* **Canvas Background**: 메인 바탕 캔버스는 깨끗하고 눈의 피로도가 적은 **`bg-[#FAFAFA]`**를 사용합니다.
+* **Header Breadcrumb**: 상단 브랜치 빵부스러기는 `text-xs font-semibold text-[#5C5C5C]` 카테고리 헤더와 대형 메인 타이틀 `text-2xl sm:text-3xl font-black text-[#333333] tracking-tight`를 적용합니다.
+* **B2B Table Container**: 데이터 표 카드는 부드러우면서 정돈된 **`bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden`**을 사용하며, 셀 패딩은 **`p-4`**를 적용합니다.
+* **Clean Glass Overlay Modal**: 팝업 모달은 **`bg-white rounded-3xl max-w-md` (또는 `max-w-3xl/4xl`) `p-6 shadow-2xl space-y-5 border border-slate-200`** 및 상단 우측 원형 닫기(✕) 버튼(`w-8 h-8 rounded-full bg-slate-100`)을 표준 구조로 전수 통합 적용합니다.
 * **Status Badges 규격**:
   * ✅ 승인 완료 / 활성: `bg-emerald-100 text-[#01916D]`
   * ⏳ 승인 대기 / 2FA 필수: `bg-amber-100 text-amber-800`
@@ -72,8 +74,8 @@
 * ❌ **금지**: 헤더, 버튼, 카테고리 빵부스러기, 카드 타이틀 등에 임의의 유니코드 이모지(📌, 👥, 📱, 📈 등) 및 조잡한 아이콘 삽입을 금지합니다.
 * ✅ **원칙**: 텍스트 중심의 차분하고 정돈된 B2B 프리미엄 UI 레이아웃을 유지하며, 시각적 강조가 필요한 경우 Fujifilm 브랜드 컬러 뱃지(`bg-[#01916D]/10 text-[#01916D]`)와 상태 컬러 태그만 활용합니다.
 
-### ⑥ **CRM/영업 관리 모달 & B2B 데이터 테이블 표준 규격 (Modal & Table Guidelines)**
-* **Pure Text-First Data Table 원칙**: 모든 CRM 리스트 View는 카드가 아닌 정통 B2B HTML `<table>` 구조를 사용하며, 아이콘/이모지 0건의 텍스트 중심 레이아웃을 준수합니다.
+### ⑥ **CRM/영업/구성원/권한관리 모달 & B2B 데이터 테이블 표준 규격 (Modal & Table Guidelines)**
+* **Pure Text-First Data Table 원칙**: 모든 CRM 및 관리 모듈 List View는 카드가 아닌 `operations/basic/contracts` 표준 규격의 정통 B2B HTML `<table>` 구조를 사용하며, 아이콘/이모지 0건의 텍스트 중심 레이아웃을 준수합니다.
 * **고객관리 (`/crm/customers`) 5대 섹션 등록 & 상세보기 모달**:
   * **1) 관리 파트너사 정보 (소속 사업장)**: 로그인 유저의 소속 사업장명(`sessionStorage.getItem("workplaceName")`) 및 실명(`userName`)을 동적 자동 바인딩.
   * **2) 고객 정보**: 고객명, 사무실 유형(5종), 거점, 계약상태(2종), 사업자번호, 관리등급(4종), 임직원 규모(7종).
@@ -84,6 +86,8 @@
   * **1) 영업기회 관리**: 고객명(고객 테이블 DB 연동 선택), 영업명, 거래처(Workspace 명), 영업단계(5종), 장비모델명, 영업타입(5종), 영업유형(3종), 활동시작일, 계약형태(3종), 예상매출금액, 예상계약월도, 예상매출월도, 기타 사유.
   * **2) 활동 결과**: FBKR/타팀 지원여부, 지원방법(5종), 지원팀 처리 코멘트.
   * **Row Click 상세보기 모달**: 테이블 행(Row) 클릭 시 `2대 섹션 전수 영업 정보` 팝업 조회.
+* **구성원관리 (`/crm/members`) & 메뉴 권한 관리 (`/operations/basic/permissions`)**:
+  * `contracts` 표준 UI (`bg-[#FAFAFA]`, `rounded-2xl`, Clean Glass Modal, Text-First 0% 이모지)로 100% 동일하게 레이아웃 동기화 완비.
 
 ---
 

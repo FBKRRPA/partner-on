@@ -384,7 +384,15 @@
 * **조치 내용**: `agent/search_snmp_agent.py`, `agent/oid_analyzer.py`, `TempOidListMaster` (`temp_oid_lists`), `TempOidListInspectionView`, `TempOidListActionView`, `/operations/basic/oid-lists` 웹 화면 및 `OidInspectionModal` 모달 구축 완료.
 * **검증 결과**: 2단계 이관 실측 성공, 백엔드 테스트 9/9 PASS, 프론트엔드 빌드 36/36 SUCCESS.
 
+### 59. [TC-067 ~ TC-070] CRM 고객관리 5대 섹션 & 영업관리 2대 섹션 모달 완결 수술 및 로그인 세션 자동 바인딩
+* **발생 원인/배경**: CRM 고객관리 및 영업관리 등록 모달의 필드 부족(주/보조 담당자, 영업 상세) 및 소속 사업장명/담당자명 수동 입력 불편 개선 요구.
+* **조치 내용**: 고객관리 5대 섹션(파트너사, 고객기본, 주담당자, 보조담당자 2/3) 및 영업관리 2대 섹션(영업기회, 활동결과) 입력 폼 완비, 세션 기반 관리 파트너사 및 담당자 실명 동적 자동 세팅.
+* **검증 결과**: 등록 및 상세보기 팝업 세션 자동 세팅 및 데이터 100% 정상 연동.
 
+### 60. [TC-071 ~ TC-076] 전사 포털 표준 디자인 통일 피팅 (`기초정보 관리 > 계약 관리` 기준)
+* **발생 원인/배경**: CRM 및 주요 관리 페이지의 UI 톤앤매너가 사무적 B2B 포털 스타일과 일치하지 않는 현상 지적.
+* **조치 내용**: **`기초정보 관리 > 계약 관리` (`/operations/basic/contracts`)** 페이지를 전사 단일 표준 UI로 삼아 `bg-[#FAFAFA]` 캔버스, `rounded-2xl` B2B Table, `rounded-3xl` Clean Glass Modal, Text-First 0% 이모지 수칙을 CRM 고객/영업/구성원 관리 및 메뉴 권한 관리 페이지에 전수 통합 피팅.
+* **검증 결과**: 백엔드 테스트 9/9 PASS, 프론트엔드 빌드 37/37 static pages 100% SUCCESS.
 
 
 
