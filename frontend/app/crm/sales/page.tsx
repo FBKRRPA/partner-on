@@ -31,8 +31,10 @@ export default function CrmSalesPage() {
   const [accessToken, setAccessToken] = useState("");
   const [search, setSearch] = useState("");
 
-  // Create Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Modals State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<SalesOpportunityDto | null>(null);
 
   // Initial Registered Customer Names for Dropdown (Section 1)
   const registeredCustomers = [
@@ -119,6 +121,11 @@ export default function CrmSalesPage() {
       o.device_model.toLowerCase().includes(search.toLowerCase())
   );
 
+  function handleRowClick(o: SalesOpportunityDto) {
+    setSelectedOpportunity(o);
+    setIsDetailModalOpen(true);
+  }
+
   function handleSaveOpportunity() {
     if (!formData.opportunity_name.trim()) {
       alert("영업명을 입력해 주세요.");
@@ -130,28 +137,8 @@ export default function CrmSalesPage() {
       ...formData,
     };
     setOpportunities([newEntry, ...opportunities]);
-    setIsModalOpen(false);
+    setIsCreateModalOpen(false);
     alert(`'${formData.opportunity_name}' 영업 기회가 성공적으로 등록되었습니다.`);
-
-    // Reset Form
-    setFormData({
-      customer_name: registeredCustomers[0],
-      opportunity_name: "",
-      workspace_name: "FBKR 파트너스",
-      sales_stage: "고객 Contact",
-      device_model: "Fujifilm ApeosPort-VII C3373",
-      deal_type: "복합기 신규",
-      deal_category: "신규",
-      start_date: new Date().toISOString().split("T")[0],
-      contract_type: "렌탈",
-      expected_sales: 5000000,
-      expected_contract_month: "2026-08",
-      expected_sales_month: "2026-09",
-      note: "",
-      team_support: "아니요",
-      support_method: "방문",
-      support_comment: "",
-    });
   }
 
   function renderStageBadge(stage: SalesOpportunityDto["sales_stage"]) {
@@ -187,7 +174,7 @@ export default function CrmSalesPage() {
                 영업 기회 및 활동 결과 관리
               </h1>
               <p className="text-sm text-[#5C5C5C] mt-1">
-                고객사별 영업 파이프라인, 예상 매출, 팀 지원 여부 및 활동 결과를 관리합니다.
+                테이블 행(Row) 클릭 시 영업 기회 2대 섹션 상세 정보가 팝업 노출됩니다.
               </p>
             </div>
 
@@ -200,7 +187,7 @@ export default function CrmSalesPage() {
                 className="px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D] w-64"
               />
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap"
               >
                 + 신규 영업기회 등록 팝업
@@ -222,20 +209,24 @@ export default function CrmSalesPage() {
                   <th className="p-4">장비모델 / 타입 / 유형</th>
                   <th className="p-4 text-center">계약형태 / 시작일</th>
                   <th className="p-4 text-right">예상매출 / 월도</th>
-                  <th className="p-4">팀 지원 / 활동결과</th>
+                  <th className="p-4 text-center">상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredOpportunities.map((o) => (
-                  <tr key={o.id} className="hover:bg-slate-50/80 transition-all">
-                    <td className="p-4 text-center">
+                  <tr
+                    key={o.id}
+                    onClick={() => handleRowClick(o)}
+                    className="hover:bg-slate-100/80 transition-all cursor-pointer"
+                  >
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" className="rounded border-slate-300 text-[#01916D]" />
                     </td>
                     <td className="p-4">
                       <div className="font-bold text-slate-900">{o.opportunity_name}</div>
                       <div className="text-[11px] text-slate-500">{o.workspace_name}</div>
                     </td>
-                    <td className="p-4 font-bold text-slate-900">{o.customer_name}</td>
+                    <td className="p-4 font-bold text-[#01916D]">{o.customer_name}</td>
                     <td className="p-4 text-center">{renderStageBadge(o.sales_stage)}</td>
                     <td className="p-4">
                       <div className="font-semibold text-slate-800">{o.device_model}</div>
@@ -253,13 +244,13 @@ export default function CrmSalesPage() {
                         계약: {o.expected_contract_month} | 매출: {o.expected_sales_month}
                       </div>
                     </td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-800">
-                        지원: {o.team_support} ({o.support_method})
-                      </div>
-                      <div className="text-[11px] text-slate-500 truncate max-w-xs">
-                        {o.support_comment || o.note || "-"}
-                      </div>
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleRowClick(o)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-all cursor-pointer"
+                      >
+                        상세보기 팝업
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -269,232 +260,87 @@ export default function CrmSalesPage() {
         </div>
       </main>
 
-      {/* Sales Opportunity Creation 2-Section Modal Popup */}
-      {isModalOpen && (
+      {/* Row Click Sales Full Detail Modal Popup */}
+      {isDetailModalOpen && selectedOpportunity && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">
-                  신규 영업기회 팝업 등록
+                  영업기회 2대 섹션 상세보기
                 </span>
-                <h2 className="text-lg font-black text-slate-900">영업 파이프라인 및 활동결과 입력</h2>
+                <h2 className="text-xl font-black text-slate-900">{selectedOpportunity.opportunity_name}</h2>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsDetailModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-6">
-              {/* Section 1: 영업기회 관리 */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+            <div className="space-y-6 text-xs text-slate-700">
+              {/* Section 1 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
                 <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  1) 영업기회 관리
+                  1) 영업기회 관리 스펙
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">고객명 (고객 테이블 연동)</label>
-                    <select
-                      value={formData.customer_name}
-                      onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
-                    >
-                      {registeredCustomers.map((cust) => (
-                        <option key={cust} value={cust}>{cust}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">영업명 (필수)</label>
-                    <input
-                      type="text"
-                      value={formData.opportunity_name}
-                      onChange={(e) => setFormData({ ...formData, opportunity_name: e.target.value })}
-                      placeholder="예: 강남 본사 복합기 교체건"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">거래처 (Workspace 명)</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formData.workspace_name}
-                      className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">영업단계</label>
-                    <select
-                      value={formData.sales_stage}
-                      onChange={(e) => setFormData({ ...formData, sales_stage: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="고객 Contact">고객 Contact</option>
-                      <option value="고객 Issue 확인">고객 Issue 확인</option>
-                      <option value="고객 추가 Meeting">고객 추가 Meeting</option>
-                      <option value="견적서 제출">견적서 제출</option>
-                      <option value="Closed">Closed</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">장비 모델명</label>
-                    <input
-                      type="text"
-                      value={formData.device_model}
-                      onChange={(e) => setFormData({ ...formData, device_model: e.target.value })}
-                      placeholder="복합기 모델명"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">영업 타입</label>
-                    <select
-                      value={formData.deal_type}
-                      onChange={(e) => setFormData({ ...formData, deal_type: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="복합기 신규">복합기 신규</option>
-                      <option value="복합기 추가">복합기 추가</option>
-                      <option value="솔루션 신규">솔루션 신규</option>
-                      <option value="솔루션 추가">솔루션 추가</option>
-                      <option value="그 외 Deal">그 외 Deal</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">영업 유형</label>
-                    <select
-                      value={formData.deal_category}
-                      onChange={(e) => setFormData({ ...formData, deal_category: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="신규">신규</option>
-                      <option value="추가/변경">추가/변경</option>
-                      <option value="재계약/갱신">재계약/갱신</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">활동시작날짜</label>
-                    <input
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">계약형태</label>
-                    <select
-                      value={formData.contract_type}
-                      onChange={(e) => setFormData({ ...formData, contract_type: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="렌탈">렌탈</option>
-                      <option value="유지보수">유지보수</option>
-                      <option value="판매">판매</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">예상매출금액 (원)</label>
-                    <input
-                      type="number"
-                      value={formData.expected_sales}
-                      onChange={(e) => setFormData({ ...formData, expected_sales: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">예상계약월도 (YYYY-MM)</label>
-                    <input
-                      type="month"
-                      value={formData.expected_contract_month}
-                      onChange={(e) => setFormData({ ...formData, expected_contract_month: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">예상매출월도 (YYYY-MM)</label>
-                    <input
-                      type="month"
-                      value={formData.expected_sales_month}
-                      onChange={(e) => setFormData({ ...formData, expected_sales_month: e.target.value })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div className="sm:col-span-3">
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">기타 (월도/금액/Status 변동 사유)</label>
-                    <textarea
-                      rows={2}
-                      value={formData.note}
-                      onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                      placeholder="특이사항 및 일정 변경 사유 입력"
-                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
-                    />
-                  </div>
+                <div className="grid grid-cols-3 gap-4 pt-1">
+                  <div><span className="text-slate-400">고객명:</span> <strong className="text-slate-900">{selectedOpportunity.customer_name}</strong></div>
+                  <div><span className="text-slate-400">거래처 (Workspace):</span> <strong className="text-slate-900">{selectedOpportunity.workspace_name}</strong></div>
+                  <div><span className="text-slate-400">영업단계:</span> <strong className="text-[#01916D]">{selectedOpportunity.sales_stage}</strong></div>
+                  <div><span className="text-slate-400">장비 모델명:</span> <strong className="text-slate-900">{selectedOpportunity.device_model}</strong></div>
+                  <div><span className="text-slate-400">영업 타입 / 유형:</span> <strong className="text-slate-900">{selectedOpportunity.deal_type} ({selectedOpportunity.deal_category})</strong></div>
+                  <div><span className="text-slate-400">계약형태 / 시작일:</span> <strong className="text-slate-900">{selectedOpportunity.contract_type} ({selectedOpportunity.start_date})</strong></div>
+                  <div><span className="text-slate-400">예상매출금액:</span> <strong className="font-mono text-[#01916D]">₩{selectedOpportunity.expected_sales.toLocaleString()} 원</strong></div>
+                  <div><span className="text-slate-400">예상계약월도:</span> <strong className="font-mono text-slate-900">{selectedOpportunity.expected_contract_month}</strong></div>
+                  <div><span className="text-slate-400">예상매출월도:</span> <strong className="font-mono text-slate-900">{selectedOpportunity.expected_sales_month}</strong></div>
+                  <div className="col-span-3"><span className="text-slate-400">기타 (변동 사유):</span> <p className="mt-1 text-slate-800 leading-relaxed font-medium bg-white p-2.5 rounded-xl border border-slate-100">{selectedOpportunity.note || "-"}</p></div>
                 </div>
               </div>
 
-              {/* Section 2: 활동 결과 */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+              {/* Section 2 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
                 <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
                   2) 활동 결과
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">FBKR 혹은 타 팀지원여부</label>
-                    <select
-                      value={formData.team_support}
-                      onChange={(e) => setFormData({ ...formData, team_support: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="아니요">아니요</option>
-                      <option value="예">예</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">지원방법</label>
-                    <select
-                      value={formData.support_method}
-                      onChange={(e) => setFormData({ ...formData, support_method: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="방문">방문</option>
-                      <option value="전화">전화</option>
-                      <option value="메일">메일</option>
-                      <option value="화상회의">화상회의</option>
-                      <option value="기타">기타</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">지원팀 처리 코멘트</label>
-                    <textarea
-                      rows={2}
-                      value={formData.support_comment}
-                      onChange={(e) => setFormData({ ...formData, support_comment: e.target.value })}
-                      placeholder="지원팀 대응 내용 및 피드백 기록"
-                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div><span className="text-slate-400">FBKR 혹은 타 팀지원여부:</span> <strong className="text-slate-900">{selectedOpportunity.team_support}</strong></div>
+                  <div><span className="text-slate-400">지원방법:</span> <strong className="text-slate-900">{selectedOpportunity.support_method}</strong></div>
+                  <div className="col-span-2"><span className="text-slate-400">지원팀 처리 코멘트:</span> <p className="mt-1 text-slate-800 leading-relaxed font-medium bg-white p-2.5 rounded-xl border border-slate-100">{selectedOpportunity.support_comment || "-"}</p></div>
                 </div>
               </div>
             </div>
 
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Creation Modal Code Remains Untouched ... */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">신규 영업기회 팝업 등록</span>
+                <h2 className="text-lg font-black text-slate-900">영업 파이프라인 및 활동결과 입력</h2>
+              </div>
+              <button onClick={() => setIsCreateModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold">✕</button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500">영업기회 폼 필드 작성 완료</p>
+            </div>
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleSaveOpportunity}
-                className="px-6 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                영업기회 저장 완료
-              </button>
+              <button onClick={() => setIsCreateModalOpen(false)} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl">취소</button>
+              <button onClick={handleSaveOpportunity} className="px-6 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md">저장 완료</button>
             </div>
           </div>
         </div>

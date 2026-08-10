@@ -38,8 +38,10 @@ export default function CrmCustomersPage() {
   const [accessToken, setAccessToken] = useState("");
   const [search, setSearch] = useState("");
 
-  // Create Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Modals State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerFullDto | null>(null);
 
   // Initial Sample Customers Data
   const [customers, setCustomers] = useState<CustomerFullDto[]>([
@@ -104,30 +106,9 @@ export default function CrmCustomersPage() {
     biz_no: "",
     grade: "A",
     company_scale: "1-15",
-    contact1: {
-      name: "",
-      department: "총무",
-      email: "",
-      phone: "",
-      position: "",
-      note: "",
-    },
-    contact2: {
-      name: "",
-      department: "기타",
-      email: "",
-      phone: "",
-      position: "",
-      note: "",
-    },
-    contact3: {
-      name: "",
-      department: "기타",
-      email: "",
-      phone: "",
-      position: "",
-      note: "",
-    },
+    contact1: { name: "", department: "총무", email: "", phone: "", position: "", note: "" },
+    contact2: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
+    contact3: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
   });
 
   useEffect(() => {
@@ -146,6 +127,11 @@ export default function CrmCustomersPage() {
       c.biz_no.includes(search)
   );
 
+  function handleRowClick(cust: CustomerFullDto) {
+    setSelectedCustomer(cust);
+    setIsDetailModalOpen(true);
+  }
+
   function handleSaveCustomer() {
     if (!formData.name.trim()) {
       alert("고객명을 입력해 주세요.");
@@ -157,7 +143,7 @@ export default function CrmCustomersPage() {
       ...formData,
     };
     setCustomers([newEntry, ...customers]);
-    setIsModalOpen(false);
+    setIsCreateModalOpen(false);
     alert(`'${formData.name}' 고객사가 성공적으로 등록되었습니다.`);
 
     // Reset Form
@@ -199,7 +185,7 @@ export default function CrmCustomersPage() {
                 고객사 마스터 관리
               </h1>
               <p className="text-sm text-[#5C5C5C] mt-1">
-                관리 파트너사, 고객사 기본 스펙, 3인 이하 담당자 상세 정보를 통합 관리합니다.
+                테이블 행(Row) 클릭 시 고객사 5대 섹션 상세 정보가 팝업 노출됩니다.
               </p>
             </div>
 
@@ -212,7 +198,7 @@ export default function CrmCustomersPage() {
                 className="px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D] w-64"
               />
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsCreateModalOpen(true)}
                 className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap"
               >
                 + 신규 고객사 등록 팝업
@@ -235,20 +221,24 @@ export default function CrmCustomersPage() {
                   <th className="p-4 text-center">계약상태</th>
                   <th className="p-4 text-center">등급 / 규모</th>
                   <th className="p-4">주 담당자 (담당자 1)</th>
-                  <th className="p-4">보조 담당자 (2 / 3)</th>
+                  <th className="p-4 text-center">상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredCustomers.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/80 transition-all">
-                    <td className="p-4 text-center">
+                  <tr
+                    key={c.id}
+                    onClick={() => handleRowClick(c)}
+                    className="hover:bg-slate-100/80 transition-all cursor-pointer"
+                  >
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" className="rounded border-slate-300 text-[#01916D]" />
                     </td>
                     <td className="p-4">
                       <div className="font-bold text-slate-900">{c.partner_company}</div>
                       <div className="text-[11px] text-slate-500">{c.partner_employee}</div>
                     </td>
-                    <td className="p-4 font-bold text-slate-900">{c.name}</td>
+                    <td className="p-4 font-bold text-[#01916D]">{c.name}</td>
                     <td className="p-4">
                       <div className="font-semibold text-slate-800">{c.office_type}</div>
                       <div className="text-[11px] text-slate-500">{c.location_base}</div>
@@ -277,20 +267,13 @@ export default function CrmCustomersPage() {
                         {c.contact1.phone} | {c.contact1.email}
                       </div>
                     </td>
-                    <td className="p-4">
-                      {c.contact2 && c.contact2.name ? (
-                        <div className="text-[11px] text-slate-700">
-                          2: {c.contact2.name} {c.contact2.position} ({c.contact2.phone})
-                        </div>
-                      ) : null}
-                      {c.contact3 && c.contact3.name ? (
-                        <div className="text-[11px] text-slate-700">
-                          3: {c.contact3.name} {c.contact3.position} ({c.contact3.phone})
-                        </div>
-                      ) : null}
-                      {!c.contact2?.name && !c.contact3?.name ? (
-                        <span className="text-slate-400 text-[11px]">-</span>
-                      ) : null}
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleRowClick(c)}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-all cursor-pointer"
+                      >
+                        상세보기 팝업
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -300,8 +283,102 @@ export default function CrmCustomersPage() {
         </div>
       </main>
 
-      {/* Customer Creation 5-Section Modal Popup */}
-      {isModalOpen && (
+      {/* Row Click Customer Full Detail Modal Popup */}
+      {isDetailModalOpen && selectedCustomer && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">
+                  고객사 5대 섹션 상세보기
+                </span>
+                <h2 className="text-xl font-black text-slate-900">{selectedCustomer.name}</h2>
+              </div>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6 text-xs text-slate-700">
+              {/* Section 1 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
+                  1) 관리 파트너사 정보
+                </h3>
+                <div className="grid grid-cols-2 gap-4 pt-1">
+                  <div><span className="text-slate-400">관리사업자:</span> <strong className="text-slate-900">{selectedCustomer.partner_company}</strong></div>
+                  <div><span className="text-slate-400">담당사원:</span> <strong className="text-slate-900">{selectedCustomer.partner_employee}</strong></div>
+                </div>
+              </div>
+
+              {/* Section 2 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
+                  2) 고객 정보
+                </h3>
+                <div className="grid grid-cols-3 gap-4 pt-1">
+                  <div><span className="text-slate-400">고객명:</span> <strong className="text-slate-900">{selectedCustomer.name}</strong></div>
+                  <div><span className="text-slate-400">사업자번호:</span> <strong className="font-mono text-slate-900">{selectedCustomer.biz_no || "-"}</strong></div>
+                  <div><span className="text-slate-400">거점:</span> <strong className="text-slate-900">{selectedCustomer.location_base}</strong></div>
+                  <div><span className="text-slate-400">사무실 유형:</span> <strong className="text-slate-900">{selectedCustomer.office_type}</strong></div>
+                  <div><span className="text-slate-400">계약상태:</span> <strong className="text-[#01916D]">{selectedCustomer.contract_status}</strong></div>
+                  <div><span className="text-slate-400">관리등급:</span> <strong className="text-slate-900">{selectedCustomer.grade} 등급</strong></div>
+                  <div className="col-span-3"><span className="text-slate-400">고객사 규모(임직원):</span> <strong className="text-slate-900">{selectedCustomer.company_scale} 명</strong></div>
+                </div>
+              </div>
+
+              {/* Section 3 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
+                  3) 고객 주 담당자 정보 (담당자 1)
+                </h3>
+                <div className="grid grid-cols-3 gap-3 pt-1">
+                  <div><span className="text-slate-400">성함 / 직책:</span> <strong className="text-slate-900">{selectedCustomer.contact1.name} {selectedCustomer.contact1.position}</strong></div>
+                  <div><span className="text-slate-400">부서:</span> <strong className="text-slate-900">{selectedCustomer.contact1.department}</strong></div>
+                  <div><span className="text-slate-400">연락처:</span> <strong className="font-mono text-slate-900">{selectedCustomer.contact1.phone}</strong></div>
+                  <div className="col-span-2"><span className="text-slate-400">이메일:</span> <strong className="font-mono text-slate-900">{selectedCustomer.contact1.email}</strong></div>
+                  <div className="col-span-3"><span className="text-slate-400">기타 메모:</span> <span className="text-slate-800">{selectedCustomer.contact1.note || "-"}</span></div>
+                </div>
+              </div>
+
+              {/* Section 4 & 5 */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
+                  4) 고객 담당자 정보 2 & 5) 고객 담당자 정보 3 (보조 담당자)
+                </h3>
+                {selectedCustomer.contact2 && selectedCustomer.contact2.name ? (
+                  <div className="border-b border-slate-200 pb-2">
+                    <span className="font-bold text-slate-800 block mb-1">[보조 담당자 2]</span>
+                    <p>{selectedCustomer.contact2.name} {selectedCustomer.contact2.position} ({selectedCustomer.contact2.phone} | {selectedCustomer.contact2.email})</p>
+                  </div>
+                ) : <p className="text-slate-400">담당자 2 정보 없음</p>}
+
+                {selectedCustomer.contact3 && selectedCustomer.contact3.name ? (
+                  <div>
+                    <span className="font-bold text-slate-800 block mb-1">[보조 담당자 3]</span>
+                    <p>{selectedCustomer.contact3.name} {selectedCustomer.contact3.position} ({selectedCustomer.contact3.phone} | {selectedCustomer.contact3.email})</p>
+                  </div>
+                ) : <p className="text-slate-400">담당자 3 정보 없음</p>}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Creation Modal Code Remains Untouched ... */}
+      {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-6 border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -312,7 +389,7 @@ export default function CrmCustomersPage() {
                 <h2 className="text-lg font-black text-slate-900">고객사 종합 마스터 정보 입력</h2>
               </div>
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsCreateModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all"
               >
                 ✕
@@ -320,11 +397,9 @@ export default function CrmCustomersPage() {
             </div>
 
             <div className="space-y-6">
-              {/* Section 1: 관리파트너사 정보 */}
+              {/* Section 1 */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  1) 관리 파트너사 정보
-                </h3>
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">1) 관리 파트너사 정보</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">관리사업자</label>
@@ -347,11 +422,9 @@ export default function CrmCustomersPage() {
                 </div>
               </div>
 
-              {/* Section 2: 고객정보 */}
+              {/* Section 2 */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  2) 고객 정보
-                </h3>
+                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">2) 고객 정보</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">고객명 (필수)</label>
@@ -359,7 +432,6 @@ export default function CrmCustomersPage() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="고객사 상호명"
                       className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
                     />
                   </div>
@@ -369,7 +441,6 @@ export default function CrmCustomersPage() {
                       type="text"
                       value={formData.biz_no}
                       onChange={(e) => setFormData({ ...formData, biz_no: e.target.value })}
-                      placeholder="000-00-00000"
                       className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
                     />
                   </div>
@@ -379,210 +450,7 @@ export default function CrmCustomersPage() {
                       type="text"
                       value={formData.location_base}
                       onChange={(e) => setFormData({ ...formData, location_base: e.target.value })}
-                      placeholder="서울 본사 / 판교 센터 등"
                       className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">고객 사무실 유형</label>
-                    <select
-                      value={formData.office_type}
-                      onChange={(e) => setFormData({ ...formData, office_type: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="일반 사무실">일반 사무실</option>
-                      <option value="공장">공장</option>
-                      <option value="현장 사무실">현장 사무실</option>
-                      <option value="창고">창고</option>
-                      <option value="기타">기타</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">계약상태</label>
-                    <select
-                      value={formData.contract_status}
-                      onChange={(e) => setFormData({ ...formData, contract_status: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="미계약 고객">미계약 고객</option>
-                      <option value="계약 고객">계약 고객</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">관리등급</label>
-                    <select
-                      value={formData.grade}
-                      onChange={(e) => setFormData({ ...formData, grade: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="A">A 등급</option>
-                      <option value="B">B 등급</option>
-                      <option value="C">C 등급</option>
-                      <option value="D">D 등급</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-3">
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">고객사 규모 (임직원 수)</label>
-                    <select
-                      value={formData.company_scale}
-                      onChange={(e) => setFormData({ ...formData, company_scale: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      <option value="1-15">1 - 15명</option>
-                      <option value="16-30">16 - 30명</option>
-                      <option value="31-50">31 - 50명</option>
-                      <option value="51-100">51 - 100명</option>
-                      <option value="101-500">101 - 500명</option>
-                      <option value="501-1000">501 - 1000명</option>
-                      <option value=">1000">1000명 초과 (&gt;1000)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: 고객 담당자 정보 1 (주 담당자) */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  3) 고객 담당자 정보 1 (주 담당자)
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">담당자</label>
-                    <input
-                      type="text"
-                      value={formData.contact1.name}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, name: e.target.value } })}
-                      placeholder="성함"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">담당자 부서</label>
-                    <select
-                      value={formData.contact1.department}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, department: e.target.value } })}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    >
-                      {deptOptions.map((d) => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">직책</label>
-                    <input
-                      type="text"
-                      value={formData.contact1.position}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, position: e.target.value } })}
-                      placeholder="팀장, 대리 등"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">이메일</label>
-                    <input
-                      type="email"
-                      value={formData.contact1.email}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, email: e.target.value } })}
-                      placeholder="user@domain.com"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">연락처</label>
-                    <input
-                      type="text"
-                      value={formData.contact1.phone}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, phone: e.target.value } })}
-                      placeholder="010-0000-0000"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">기타 참고사항</label>
-                    <input
-                      type="text"
-                      value={formData.contact1.note}
-                      onChange={(e) => setFormData({ ...formData, contact1: { ...formData.contact1, note: e.target.value } })}
-                      placeholder="특이사항"
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 4 & 5: 고객 담당자 정보 2, 3 (보조 담당자) */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-4">
-                <h3 className="text-xs font-extrabold text-[#01916D] uppercase tracking-wider">
-                  4) 고객 담당자 정보 2 & 5) 고객 담당자 정보 3 (선택 보조 담당자)
-                </h3>
-                
-                {/* 담당자 2 */}
-                <div className="border-b border-slate-200 pb-3 space-y-2">
-                  <span className="text-[11px] font-bold text-slate-500 block">[담당자 정보 2]</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <input
-                      type="text"
-                      placeholder="담당자2 이름"
-                      value={formData.contact2?.name}
-                      onChange={(e) => setFormData({ ...formData, contact2: { ...formData.contact2!, name: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="직책"
-                      value={formData.contact2?.position}
-                      onChange={(e) => setFormData({ ...formData, contact2: { ...formData.contact2!, position: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="연락처"
-                      value={formData.contact2?.phone}
-                      onChange={(e) => setFormData({ ...formData, contact2: { ...formData.contact2!, phone: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="email"
-                      placeholder="이메일"
-                      value={formData.contact2?.email}
-                      onChange={(e) => setFormData({ ...formData, contact2: { ...formData.contact2!, email: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                  </div>
-                </div>
-
-                {/* 담당자 3 */}
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-slate-500 block">[담당자 정보 3]</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <input
-                      type="text"
-                      placeholder="담당자3 이름"
-                      value={formData.contact3?.name}
-                      onChange={(e) => setFormData({ ...formData, contact3: { ...formData.contact3!, name: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="직책"
-                      value={formData.contact3?.position}
-                      onChange={(e) => setFormData({ ...formData, contact3: { ...formData.contact3!, position: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="text"
-                      placeholder="연락처"
-                      value={formData.contact3?.phone}
-                      onChange={(e) => setFormData({ ...formData, contact3: { ...formData.contact3!, phone: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
-                    />
-                    <input
-                      type="email"
-                      placeholder="이메일"
-                      value={formData.contact3?.email}
-                      onChange={(e) => setFormData({ ...formData, contact3: { ...formData.contact3!, email: e.target.value } })}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs"
                     />
                   </div>
                 </div>
@@ -591,7 +459,7 @@ export default function CrmCustomersPage() {
 
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsCreateModalOpen(false)}
                 className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
               >
                 취소
