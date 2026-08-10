@@ -81,6 +81,7 @@
 | **TC-071** | CRM/공식포털디자인 | 후지필름BI On 공식 B2B 통합 포털 디자인 규격(High-Density Grid, Header Bar) 전면 적용 | Fujifilm BI On Official Portal Style Transformation | ✅ PASS |
 | **TC-072** | 시스템전체/포털개편 | PartnerOn v1.0 37개 전체 라우터 페이지 후지필름BI On 공식 포털 디자인 전면 개편 | System-Wide Fujifilm BI On Official Portal Style Transformation | ✅ PASS |
 | **TC-073** | CRM/디자인통일피팅 | 고객관리 및 영업관리 모듈을 전사 시스템 레이아웃(`max-w-7xl`, 헤더, 그리드)과 100% 완벽 동기화 | Align CRM Customers & Sales Layout with System-Wide Standard | ✅ PASS |
+| **TC-074** | CRM/계약관리UI일치 | 고객관리 및 영업관리 모듈을 `기초정보관리 > 계약 관리` 표준 UI와 100% 동일하게 피팅 | Match CRM Pages UI Exactly to Contracts Page Standard | ✅ PASS |
 
 ---
 

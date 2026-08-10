@@ -26,79 +26,75 @@ export function MenuScaffoldPage({
   modules = [],
 }: MenuScaffoldPageProps) {
   return (
-    <div className="min-h-screen bg-[#F4F6F8] text-[#333333] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FAFAFA] text-[#333333] flex flex-col font-sans">
       <AppHeader />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Fujifilm BI On Portal Page Header */}
-        <div className="bg-white border border-slate-300 border-t-4 border-t-[#01916D] rounded-md p-5 mb-6 shadow-sm">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
-            <span>FUJIFILM BI ON PORTAL</span>
-            <span>&rsaquo;</span>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Breadcrumb (Matches Contracts Page Exactly) */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#5C5C5C] mb-2">
             <span>{categoryTitle}</span>
             <span>&rsaquo;</span>
             <span className="text-[#01916D] font-bold">{menuTitle}</span>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
                 {menuTitle} 레저 (Standard Ledger)
               </h1>
-              <p className="text-xs text-slate-600 mt-1">{description}</p>
+              <p className="text-sm text-[#5C5C5C] mt-1">{description}</p>
             </div>
             <div>
-              <span className="px-3 py-1 bg-emerald-50 text-[#01916D] border border-[#01916D]/30 font-bold text-xs rounded-sm">
-                후지필름 BI On 포털 표준 모듈
+              <span className="px-3.5 py-1.5 bg-emerald-50 text-[#01916D] border border-emerald-200 font-bold text-xs rounded-xl">
+                기준정보 표준 모듈
               </span>
             </div>
           </div>
         </div>
 
-        {/* High-Density Enterprise B2B Data Table / Grid Section */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-md border border-slate-300 shadow-sm overflow-hidden p-5">
-            <div className="border-l-4 border-[#01916D] pl-3 mb-4">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                {menuTitle} 세부 관제 모듈 목록
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                실시간 데이터 통합 관제 및 렌탈 자산 운용 서식
-              </p>
-            </div>
+        {/* Pure B2B Data Section (Matches Contracts Page Exactly) */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">
+              {menuTitle} 세부 관제 모듈 목록
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              실시간 데이터 통합 관제 및 렌탈 자산 운용 서식
+            </p>
+          </div>
 
-            {modules.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {modules.map((m, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white border border-slate-300 rounded-md p-4 hover:border-[#01916D] hover:shadow-md transition-all border-l-4 border-l-[#01916D]"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-sm font-bold text-slate-900">{m.title}</h3>
-                      {m.statusBadge && (
-                        <span className="px-2 py-0.5 rounded-sm text-[11px] font-bold bg-emerald-100 text-[#01916D] border border-emerald-300">
-                          {m.statusBadge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-                      {m.description}
-                    </p>
-                    {m.metricsLabel && (
-                      <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
-                        <span className="text-slate-500">{m.metricsLabel}</span>
-                        <strong className="font-mono text-slate-900">{m.metricsValue}</strong>
-                      </div>
+          {modules.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+              {modules.map((m, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 hover:border-[#01916D] hover:shadow-md transition-all space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <h3 className="text-sm font-bold text-slate-900">{m.title}</h3>
+                    {m.statusBadge && (
+                      <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-100 text-[#01916D]">
+                        {m.statusBadge}
+                      </span>
                     )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-slate-50 border border-slate-200 rounded p-8 text-center text-slate-500 text-xs font-medium">
-                등록된 데이터가 없습니다. 관리자 권한으로 시스템을 운용하십시오.
-              </div>
-            )}
-          </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {m.description}
+                  </p>
+                  {m.metricsLabel && (
+                    <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-xs">
+                      <span className="text-slate-500">{m.metricsLabel}</span>
+                      <strong className="font-mono text-slate-900">{m.metricsValue}</strong>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-xs font-medium">
+              등록된 데이터가 없습니다. 관리자 권한으로 시스템을 운용하십시오.
+            </div>
+          )}
         </div>
       </main>
 
