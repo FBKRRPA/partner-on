@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PartnerOn v1.0 - 전체 데이터베이스 ERD (16개 테이블) 명세서</title>
+  <!-- Google Fonts & Tailwind CSS CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mermaid JS for Visual Diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            fujifilm: {
+              DEFAULT: '#01916D',
+              dark: '#006449',
+              light: '#E6F4F0',
+            }
+          },
+          fontFamily: {
+            sans: ['Pretendard', 'sans-serif'],
+          }
+        }
+      }
+    }
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+  </script>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #F8FAFC; }
+    .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="glass-header border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
+    <div class="flex items-center space-x-3">
+      <div class="w-9 h-9 rounded-2xl bg-gradient-to-r from-[#01916D] to-[#80C342] flex items-center justify-center text-white font-black text-xl shadow-md">
+        🗄️
+      </div>
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+          PartnerOn v1.0 데이터베이스 ERD (16개 전체 테이블)
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-[#01916D]">
+            Hot/Cold 시계열 & 2단계 스테이징
+          </span>
+        </h1>
+        <p class="text-xs text-slate-500">PostgreSQL / Django ORM 16개 데이터베이스 테이블 관계도 및 필드 명세서</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-8">
+
+    <!-- Visual ERD Diagram Card -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          🗺️ 16개 데이터베이스 테이블 시각적 ERD 관계도 (Mermaid Visual Diagram)
+        </h2>
+        <span class="text-xs font-semibold text-slate-500">1:N & 1:1 관계 조인</span>
+      </div>
+
+      <div class="mermaid overflow-x-auto p-4 bg-slate-50 rounded-2xl flex justify-center">
+erDiagram
+    accounts_workplace ||--|{ accounts_user : "1:N 소속 유저"
+    accounts_workplace ||--|{ accounts_rolemenupermission : "1:N 메뉴 권한"
+    accounts_workplace ||--|{ accounts_printerasset : "1:N 복합기 자산"
+    accounts_workplace ||--|{ accounts_agentcollector : "1:N 수집 에이전트"
+    accounts_workplace ||--|{ unregistered_printers : "1:N 미등록 장비"
+    accounts_workplace ||--|{ temp_oid_lists : "1:N 임시 OID 덤프"
+    
+    accounts_user ||--|{ accounts_device : "1:N 접속 승인 기기"
+    
+    accounts_workplace ||--|{ monitoring_printers : "1:N 관제 대상 기기"
+    monitoring_printers ||--|| monitoring_data : "1:1 최신 관제 수치"
+    monitoring_printers ||--|{ monitoring_data_records : "1:N 일별/월별 누적 이력"
+    
+    temp_oid_lists }|--|| oid_lists : "Stage 2 이관 승인"
+    oid_lists ||--|{ accounts_printeroidmapping : "OID 1:1 맵"
+    
+    monitoring_printers ||--|{ supplies : "1:N 소모품 경고"
+    monitoring_printers ||--|{ supply_usages : "1:N 소모품 교체 이력"
+      </div>
+    </div>
+
+    <!-- 16 Tables Detailed Specifications Grid -->
+    <div class="space-y-6">
+      <h2 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3 flex items-center gap-2">
+        <span class="w-3.5 h-3.5 rounded-full bg-[#01916D]"></span>
+        16개 테이블 상세 엔티티 & PK/FK 필드 명세
+      </h2>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="tablesGrid">
+        <!-- JS Auto Generates Tables Spec Cards -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const tablesData = [
+      {
+        name: "accounts_workplace (Workplace 모델)",
+        desc: "사업장/대리점 마스터 테이블",
+        pk: "id (BigInt PK)",
+        fields: [
+          "name: CharField(120, unique=True) - 사업장 명칭",
+          "address: CharField(255) - 주소",
+          "enforce_2fa_owner / admin_staff / sales / ce: Boolean - 4개 직급별 2FA 강제 정책"
+        ],
+        rel: "1:N 관계 (User, PrinterAsset, AgentCollector, UnregisteredPrinter의 FK 최상위 부모)"
+      },
+      {
+        name: "accounts_user (User 모델)",
+        desc: "사용자 및 4단계 직급 정보 (AbstractUser 상속)",
+        pk: "id (BigInt PK)",
+        fields: [
+          "email: EmailField(unique=True) - 로그인 ID",
+          "role: Enum (OWNER, ADMIN_STAFF, SALES, CE)",
+          "workplace_id: FK(Workplace)",
+          "totp_secret: CharField(64) / backup_codes: JSONField(10개 비상복구코드)",
+          "invite_code: CharField(32, unique=True) - 8자리 초대 코드 (INV-XXXXXX)"
+        ],
+        rel: "N:1 -> Workplace / 1:N -> Device"
+      },
+      {
+        name: "accounts_device (Device 모델)",
+        desc: "대표 승인 기기 통제 테이블 (UUID 핑거프린트)",
+        pk: "id (BigInt PK)",
+        fields: [
+          "user_id: FK(User)",
+          "device_uuid: CharField(100) - 브라우저 고유 UUID",
+          "ip_address: GenericIPAddressField - 접속 IP",
+          "status: Enum (PENDING, APPROVED, REJECTED)"
+        ],
+        rel: "N:1 -> User (OWNER 권한 승인 통제)"
+      },
+      {
+        name: "accounts_rolemenupermission (RoleMenuPermission)",
+        desc: "4단계 직급별 25개 소분류 RBAC 메뉴 접근 권한",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "role: Enum (ADMIN_STAFF, SALES, CE)",
+          "menu_key: CharField(60) - 25개 메뉴 라우트 키",
+          "is_allowed: Boolean (기본값 True)"
+        ],
+        rel: "N:1 -> Workplace"
+      },
+      {
+        name: "accounts_printerasset (PrinterAsset 모델)",
+        desc: "정식 등록된 복합기/프린터 자산 마스터",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "serial_no: CharField(120, unique=True) - 고유 시리얼",
+          "model_name: CharField(120) / customer_name: CharField(120)",
+          "location: CharField(150) / ip_address: GenericIPAddressField",
+          "count_color / count_mono / count_total: IntegerField",
+          "toner_c / m / y / k: IntegerField (잔량 %)"
+        ],
+        rel: "N:1 -> Workplace / 1:1 매핑 -> MonitoringPrinter"
+      },
+      {
+        name: "accounts_agentcollector (AgentCollector 모델)",
+        desc: "현장 Python 수집기 에이전트 마스터",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "auth_code: CharField(32, unique=True) - 8자리 인증 코드 (AST-XXXXXX)",
+          "ip_range: CharField(100) / custom_ips: JSONField",
+          "status: Enum (ONLINE, OFFLINE, PENDING)"
+        ],
+        rel: "N:1 -> Workplace"
+      },
+      {
+        name: "temp_oid_lists (TempOidListMaster 모델)",
+        desc: "Stage 1 SNMP Deep Search Agent 1차 임시 스캔 덤프",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace, null=True)",
+          "scanned_ip / serial_no / manufacturer / printer_model",
+          "count1 (컬러) / count2 (흑백) / count4 (전체) OID",
+          "toner_c / m / y / k / drum_k OID",
+          "raw_walk_dump: JSONField / status: PENDING / CONFIRMED / REJECTED"
+        ],
+        rel: "Stage 2 이관 승인 시 -> oid_lists 및 PrinterOidMapping 승인 इ관"
+      },
+      {
+        name: "oid_lists (OidListMaster 모델)",
+        desc: "Stage 2 사람이 확정한 정식 제조사/모델별 OID 마스터",
+        pk: "id (BigInt PK)",
+        fields: [
+          "manufacturer: CharField(60) / printer_model: CharField(120)",
+          "serial_no / count1 / count2 / count4 OID 주소",
+          "toner_c / m / y / k / drum_k OID 주소"
+        ],
+        rel: "정식 마스터 OID 참조 테이블"
+      },
+      {
+        name: "unregistered_printers (UnregisteredPrinter 모델)",
+        desc: "에이전트 탐지 미등록 복합기 분리 관제 저장소",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "ip: GenericIPAddressField (unique_together: workplace, ip)",
+          "scanned_model / vendor_name / serial_no / mac_address",
+          "registered: Boolean (정식 자산 전환 여부)",
+          "count_total / color / mono / toner_k / c / m / y"
+        ],
+        rel: "N:1 -> Workplace / 승인 시 -> PrinterAsset 생성"
+      },
+      {
+        name: "accounts_printeroidmapping (PrinterOidMapping)",
+        desc: "제조사별 OID 1:1 주소 맵",
+        pk: "id (BigInt PK)",
+        fields: [
+          "vendor_name: CharField(60)",
+          "oid_key: CharField(60) (serial_no, count_color 등)",
+          "oid_value: CharField(150) - MIB OID 주소"
+        ],
+        rel: "SNMP 스캐너 OID 주소 참조"
+      },
+      {
+        name: "monitoring_customers (MonitoringCustomer 모델)",
+        desc: "관제 대상 고객사 정보",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "customer_id: CharField(60)",
+          "customer_name: CharField(120)"
+        ],
+        rel: "N:1 -> Workplace"
+      },
+      {
+        name: "monitoring_printers (MonitoringPrinter 모델)",
+        desc: "실시간 관제 대상 복합기 기기 마스터",
+        pk: "id (BigInt PK)",
+        fields: [
+          "workplace_id: FK(Workplace)",
+          "serial_no: CharField(120, unique=True)",
+          "customer_name / location / model_name"
+        ],
+        rel: "1:1 매핑 -> MonitoringData / 1:N -> MonitoringDataRecord"
+      },
+      {
+        name: "monitoring_data (MonitoringData 모델)",
+        desc: "최신 실시간 관제 수치 (Hot Data)",
+        pk: "id (BigInt PK)",
+        fields: [
+          "monitoring_printer: 1:1 OneToOne(MonitoringPrinter)",
+          "count_total / color / mono / large_color / large_mono",
+          "toner_k / c / m / y / waste_toner / drum_k / c / m / y",
+          "spec_max_count_color / mono 등 Spec Max 10종"
+        ],
+        rel: "1:1 -> MonitoringPrinter (최신 단 1개 레코드 갱신)"
+      },
+      {
+        name: "monitoring_data_records (MonitoringDataRecord)",
+        desc: "관제 데이터 일별/월별 누적 이력 (Cold Time-Series)",
+        pk: "id (BigInt PK)",
+        fields: [
+          "monitoring_printer: FK(MonitoringPrinter)",
+          "yyyymmdd: CharField(8) (unique_together: monitoring_printer, yyyymmdd)",
+          "count_total / color / mono / toner_k / c / m / y"
+        ],
+        rel: "N:1 -> MonitoringPrinter (당일 갱신 및 일자 변경 시 자율 누적 적재)"
+      },
+      {
+        name: "supplies (SuppliesAlert 모델)",
+        desc: "소모품 잔량 경고 및 상태 트래킹",
+        pk: "id (BigInt PK)",
+        fields: [
+          "monitoring_printer: FK(MonitoringPrinter)",
+          "supply_type: CharField(40) (toner_k, drum_k 등)",
+          "remained_percent: IntegerField",
+          "status: Enum (NORMAL, WARNING, CRITICAL)"
+        ],
+        rel: "N:1 -> MonitoringPrinter"
+      },
+      {
+        name: "supply_usages (SupplyUsage 모델)",
+        desc: "소모품 수동/자동 교체 이력 레코드",
+        pk: "id (BigInt PK)",
+        fields: [
+          "monitoring_printer: FK(MonitoringPrinter)",
+          "supply_type: CharField(40)",
+          "replaced_at: DateTimeField",
+          "replaced_by: CharField(80)"
+        ],
+        rel: "N:1 -> MonitoringPrinter"
+      }
+    ];
+
+    function renderTablesApp() {
+      const grid = document.getElementById("tablesGrid");
+      grid.innerHTML = "";
+
+      tablesData.forEach((t) => {
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4 hover:shadow-md transition-all";
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-base font-bold text-slate-900 font-mono">
+              🗄️ ${t.name}
+            </h3>
+            <span class="text-[11px] font-bold text-[#01916D] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60">
+              ${t.pk}
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-600 font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            ${t.desc}
+          </p>
+
+          <div class="space-y-1 text-xs">
+            <span class="font-bold text-slate-700">📌 주요 컬럼 (Fields):</span>
+            <ul class="list-disc pl-4 space-y-1 font-mono text-[11px] text-slate-600">
+              ${t.fields.map(f => `<li>${f}</li>`).join('')}
+            </ul>
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
+            🔗 테이블 관계 (Relationships): <span class="text-slate-800 font-semibold">${t.rel}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderTablesApp);
+  </script>
+</body>
+</html>
