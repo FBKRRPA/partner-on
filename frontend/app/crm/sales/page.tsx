@@ -44,7 +44,7 @@ export default function CrmSalesPage() {
     "ABC 상사 (본사)",
   ];
 
-  // Initial Sample Sales Opportunities Data (Fujifilm BI Portal Style)
+  // Sample Sales Opportunities Data (Consistent with System Standard)
   const [opportunities, setOpportunities] = useState<SalesOpportunityDto[]>([
     {
       id: 1,
@@ -86,7 +86,7 @@ export default function CrmSalesPage() {
     },
   ]);
 
-  // Modal Form State (Fujifilm BI Portal Form Standard)
+  // Modal Form State (Session Auto-Bound)
   const [formData, setFormData] = useState<Omit<SalesOpportunityDto, "id">>({
     customer_name: registeredCustomers[0],
     opportunity_name: "",
@@ -186,13 +186,13 @@ export default function CrmSalesPage() {
     <div className="min-h-screen bg-[#F4F6F8] text-[#333333] flex flex-col font-sans">
       <AppHeader />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Fujifilm BI Portal Style Top Page Header */}
-        <div className="bg-white border border-slate-300 border-t-4 border-t-[#01916D] rounded-md p-5 mb-6 shadow-sm">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Page Header Container (Identical to Dashboard / Other Pages) */}
+        <div className="bg-white border border-slate-300 border-t-4 border-t-[#01916D] rounded-md p-5 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1.5">
             <span>FUJIFILM BI ON PORTAL</span>
             <span>&rsaquo;</span>
-            <span>CRM SYSTEM</span>
+            <span>영업관리</span>
             <span>&rsaquo;</span>
             <span className="text-[#01916D] font-bold">영업 기회 및 활동 결과 관리</span>
           </div>
@@ -212,11 +212,11 @@ export default function CrmSalesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="영업명 / 고객명 / 모델명"
-                className="px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded focus:outline-none focus:bg-white focus:border-[#01916D] w-64"
+                className="px-3 py-2 bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-md focus:outline-none focus:bg-white focus:border-[#01916D] w-64"
               />
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded shadow-sm transition-all cursor-pointer whitespace-nowrap"
+                className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-md shadow-sm transition-all cursor-pointer whitespace-nowrap"
               >
                 + 신규 영업기회 등록
               </button>
@@ -224,8 +224,17 @@ export default function CrmSalesPage() {
           </div>
         </div>
 
-        {/* Fujifilm BI Portal High-Density B2B Grid Table */}
-        <div className="bg-white rounded-md border border-slate-300 shadow-sm overflow-hidden">
+        {/* High-Density Data Grid Section */}
+        <div className="bg-white rounded-md border border-slate-300 shadow-sm overflow-hidden p-5">
+          <div className="border-l-4 border-[#01916D] pl-3 mb-4">
+            <h2 className="text-sm font-bold text-slate-900 uppercase">
+              영업기회 레저 리스트 (High-Density Sales Opportunity Grid)
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              고객사별 렌탈 영업 단계 및 활동 지원 결과 통합 관제
+            </p>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-normal text-slate-800 border-collapse">
               <thead className="bg-slate-100 border-b border-slate-300 text-[11px] font-extrabold text-slate-700 uppercase">
@@ -273,7 +282,7 @@ export default function CrmSalesPage() {
                     <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleRowClick(o)}
-                        className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-800 font-semibold text-[11px] rounded border border-slate-300 shadow-2xs cursor-pointer"
+                        className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-800 font-semibold text-[11px] rounded border border-slate-300 cursor-pointer"
                       >
                         상세보기
                       </button>
@@ -286,11 +295,10 @@ export default function CrmSalesPage() {
         </div>
       </main>
 
-      {/* Fujifilm BI On Portal Standard 2-Section Registration Modal Popup */}
+      {/* 2-Section Registration Modal Popup */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-md max-w-3xl w-full shadow-2xl border border-slate-300 max-h-[92vh] flex flex-col overflow-hidden">
-            {/* Official Emerald Header Bar */}
             <div className="bg-[#01916D] text-white px-5 py-3.5 flex items-center justify-between shadow-sm">
               <div>
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-100 block">
@@ -518,7 +526,7 @@ export default function CrmSalesPage() {
         </div>
       )}
 
-      {/* Fujifilm BI On Portal Standard Sales Detail Modal Popup */}
+      {/* Sales Detail Modal Popup */}
       {isDetailModalOpen && selectedOpportunity && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-md max-w-3xl w-full shadow-2xl border border-slate-300 max-h-[90vh] flex flex-col overflow-hidden">

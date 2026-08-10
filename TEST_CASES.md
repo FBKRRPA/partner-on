@@ -80,6 +80,7 @@
 | **TC-070** | CRM/세션자동바인딩 | 등록 팝업 내 관리파트너사 및 담당사원에 로그인 유저 회사명/실명 자동 세팅 | Auto-bind Logged-in User Workplace & Name in Registration Modals | ✅ PASS |
 | **TC-071** | CRM/공식포털디자인 | 후지필름BI On 공식 B2B 통합 포털 디자인 규격(High-Density Grid, Header Bar) 전면 적용 | Fujifilm BI On Official Portal Style Transformation | ✅ PASS |
 | **TC-072** | 시스템전체/포털개편 | PartnerOn v1.0 37개 전체 라우터 페이지 후지필름BI On 공식 포털 디자인 전면 개편 | System-Wide Fujifilm BI On Official Portal Style Transformation | ✅ PASS |
+| **TC-073** | CRM/디자인통일피팅 | 고객관리 및 영업관리 모듈을 전사 시스템 레이아웃(`max-w-7xl`, 헤더, 그리드)과 100% 완벽 동기화 | Align CRM Customers & Sales Layout with System-Wide Standard | ✅ PASS |
 
 ---
 
