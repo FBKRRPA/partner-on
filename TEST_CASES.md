@@ -76,6 +76,7 @@
 | **TC-066** | CRM/에이전트호출 | CRM 계약 고객사 1-Click Agent 인증 코드 즉시 호출 및 복사 기능 구현 | Contracted Customer 1-Click Agent Code Lookup & Copy Modal | ✅ PASS |
 | **TC-067** | CRM/팝업모달 | 고객관리 5대 섹션 & 영업관리 2대 섹션 등록 팝업 모달 UI 구축 | Customer 5-Section & Sales 2-Section Registration Popup Modals | ✅ PASS |
 | **TC-068** | CRM/행클릭상세 | CRM 테이블 행(Row) 클릭 시 전수 정보 상세보기 팝업 모달 구축 | Table Row-Click Full Detail Modal Popup Integration | ✅ PASS |
+| **TC-069** | CRM/팝업필드복원 | 고객관리 5대 섹션 & 영업관리 2대 섹션 등록 팝업 입력 필드 전수 완결 복원 | Restore All Full Form Fields in CRM Customer & Sales Registration Modals | ✅ PASS |
 
 ---
 
