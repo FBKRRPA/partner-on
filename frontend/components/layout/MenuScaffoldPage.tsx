@@ -1,153 +1,110 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import React from "react";
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
-import { RoleMenuPermissionDto } from "../../lib/auth-api";
 
-type MenuScaffoldPageProps = {
-  category: string;
+interface ModuleCardProps {
   title: string;
   description: string;
-  icon?: string;
-  children?: React.ReactNode;
-};
+  metricsLabel?: string;
+  metricsValue?: string;
+  statusBadge?: string;
+}
 
-const PATH_TO_KEY_MAP: Record<string, string> = {
-  "/profile": "profile",
-  "/crm/customers": "crm_customers",
-  "/crm/sales": "crm_sales",
-  "/crm/members": "crm_members",
-  "/operations/basic/dashboard": "basic_dashboard",
-  "/operations/basic/workplaces": "basic_workplaces",
-  "/operations/basic/warehouses": "basic_warehouses",
-  "/operations/basic/models": "basic_models",
-  "/operations/basic/consumable-codes": "basic_consumable_codes",
-  "/operations/basic/contracts": "basic_contracts",
-  "/operations/basic/permissions": "basic_permissions",
-  "/operations/assets/devices": "assets_devices",
-  "/operations/assets/in-out": "assets_in_out",
-  "/operations/assets/inventory": "assets_inventory",
-  "/operations/assets/collectors": "assets_collectors",
-  "/operations/assets/email-collectors": "assets_email_collectors",
-  "/operations/monitoring/usage": "monitoring_usage",
-  "/operations/monitoring/supplies": "monitoring_supplies",
-  "/operations/monitoring/customers": "monitoring_customers",
-  "/operations/monitoring/as/today": "monitoring_as_today",
-  "/operations/monitoring/as/tickets": "monitoring_as_tickets",
-  "/operations/monitoring/consumables-usage": "monitoring_consumables_usage",
-  "/operations/contracts/uncontracted": "contracts_uncontracted",
-  "/operations/contracts/list": "contracts_list",
-  "/operations/contracts/invoices": "contracts_invoices",
-  "/operations/contracts/sales": "contracts_sales",
-};
+interface MenuScaffoldPageProps {
+  category?: string;
+  categoryTitle?: string;
+  title?: string;
+  menuTitle?: string;
+  description: string;
+  icon?: string;
+  modules?: ModuleCardProps[];
+}
 
 export function MenuScaffoldPage({
   category,
+  categoryTitle,
   title,
+  menuTitle,
   description,
-  children,
+  modules = [],
 }: MenuScaffoldPageProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [workplaceName, setWorkplaceName] = useState("");
-  const [authorized, setAuthorized] = useState(true);
-
-  useEffect(() => {
-    const rawUser = sessionStorage.getItem("user") || sessionStorage.getItem("partneron.user");
-    const rawPerms = sessionStorage.getItem("partneron.permissions");
-
-    if (rawUser) {
-      try {
-        const u = JSON.parse(rawUser);
-        if (u.workplace?.name) setWorkplaceName(u.workplace.name);
-
-        const userRole = u.role;
-        const currentMenuKey = pathname ? PATH_TO_KEY_MAP[pathname] : undefined;
-
-        // OWNER is always authorized
-        if (userRole !== "OWNER" && currentMenuKey && rawPerms) {
-          const perms: RoleMenuPermissionDto[] = JSON.parse(rawPerms);
-          const match = perms.find((p) => p.role === userRole && p.menu_key === currentMenuKey);
-          if (match && match.is_allowed === false) {
-            setAuthorized(false);
-            router.replace("/dashboard");
-            return;
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, [pathname, router]);
-
-  const handleLogout = () => {
-    sessionStorage.clear();
-    router.push("/login");
-  };
-
-  if (!authorized) {
-    return null; // Don't render content if unauthorized
-  }
+  const displayCategory = categoryTitle || category || "기준정보";
+  const displayTitle = menuTitle || title || "모듈";
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans flex flex-col justify-between">
-      <div>
-        <AppHeader workplaceName={workplaceName} onLogout={handleLogout} />
+    <div className="min-h-screen bg-[#FAFAFA] text-[#333333] flex flex-col font-sans">
+      <AppHeader />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          {/* Breadcrumb & Category Badge */}
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#01916D]/10 text-[#01916D] font-bold text-xs">
-              <span>{category}</span>
-              <span>›</span>
-              <span>{title}</span>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Breadcrumb (Matches Contracts Page Exactly) */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#5C5C5C] mb-2">
+            <span>{displayCategory}</span>
+            <span>&rsaquo;</span>
+            <span className="text-[#01916D] font-bold">{displayTitle}</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
+                {displayTitle} 레저 (Standard Ledger)
+              </h1>
+              <p className="text-sm text-[#5C5C5C] mt-1">{description}</p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#333333] tracking-tight">
-              {title}
-            </h1>
-            <p className="text-xs sm:text-sm text-[#5C5C5C]">{description}</p>
+            <div>
+              <span className="px-3.5 py-1.5 bg-emerald-50 text-[#01916D] border border-emerald-200 font-bold text-xs rounded-xl">
+                기준정보 표준 모듈
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pure B2B Data Section */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">
+              {displayTitle} 세부 관제 모듈 목록
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              실시간 데이터 통합 관제 및 렌탈 자산 운용 서식
+            </p>
           </div>
 
-          {/* Interactive Feature Children or Default Scaffold Card */}
-          {children ? (
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs">
-              {children}
+          {modules.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+              {modules.map((m, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 hover:border-[#01916D] hover:shadow-md transition-all space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <h3 className="text-sm font-bold text-slate-900">{m.title}</h3>
+                    {m.statusBadge && (
+                      <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-100 text-[#01916D]">
+                        {m.statusBadge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {m.description}
+                  </p>
+                  {m.metricsLabel && (
+                    <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-xs">
+                      <span className="text-slate-500">{m.metricsLabel}</span>
+                      <strong className="font-mono text-slate-900">{m.metricsValue}</strong>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm text-center space-y-6">
-              <div className="max-w-md mx-auto space-y-2">
-                <h2 className="text-xl font-bold text-slate-800">
-                  {title} 서비스 대시보드
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                  현재 <strong>{category} › {title}</strong> 모듈이 연결되어 있습니다.
-                  실시간 통합 관리 기능 및 세부 데이터가 이곳에 표시됩니다.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4 text-left">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                  <div className="text-[11px] font-bold text-slate-400">데이터 수집 상태</div>
-                  <div className="text-sm font-bold text-[#01916D] flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#01916D] animate-ping" />
-                    실시간 정상 동기화
-                  </div>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                  <div className="text-[11px] font-bold text-slate-400">보안 관리 수준</div>
-                  <div className="text-sm font-bold text-[#01916D]">최상 (RBAC 통제)</div>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1">
-                  <div className="text-[11px] font-bold text-slate-400">권한 세션</div>
-                  <div className="text-sm font-bold text-slate-800">인증됨 (JWT)</div>
-                </div>
-              </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-xs font-medium">
+              등록된 데이터가 없습니다. 관리자 권한으로 시스템을 운용하십시오.
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
       <AppFooter />
     </div>

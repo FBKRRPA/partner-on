@@ -101,7 +101,6 @@ export default function RoleMenuPermissionsPage() {
       setLoading(true);
       const data = await getMenuPermissions(token);
 
-      // Initialize default state (all allowed by default)
       const initialState: Record<string, Record<string, boolean>> = {
         ADMIN_STAFF: {},
         SALES: {},
@@ -114,7 +113,6 @@ export default function RoleMenuPermissionsPage() {
         });
       });
 
-      // Override with DB values
       data.forEach((p) => {
         if (initialState[p.role]) {
           initialState[p.role][p.menu_key] = p.is_allowed;
@@ -183,191 +181,185 @@ export default function RoleMenuPermissionsPage() {
     }
   }
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    router.push("/login");
-  };
-
   const groups = Array.from(new Set(MENU_LIST.map((m) => m.group)));
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 font-sans flex flex-col justify-between">
-      <div>
-        <AppHeader workplaceName={workplaceName} onLogout={handleLogout} />
+    <div className="min-h-screen bg-[#FAFAFA] text-[#333333] flex flex-col font-sans">
+      <AppHeader />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-          {/* Header Breadcrumb */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#01916D]/10 text-[#01916D] font-bold text-xs">
-                <span>기초정보</span>
-                <span>›</span>
-                <span>메뉴 권한 관리</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#333333] tracking-tight">
-                🛡️ 직급별 메뉴 접근 권한 설정
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header Breadcrumb (Matches Contracts Page Exactly) */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#5C5C5C] mb-2">
+            <span>기준정보 관리</span>
+            <span>&rsaquo;</span>
+            <span className="text-[#01916D] font-bold">메뉴 권한 관리</span>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-[#333333] tracking-tight">
+                직급별 메뉴 접근 권한 관리
               </h1>
-              <p className="text-xs sm:text-sm text-[#5C5C5C]">
-                사업장 관리자 계정에서 <strong>관리자(사무직원)</strong>, <strong>영업</strong>, <strong>CE</strong> 직급별 8대 메뉴 접근 권한을 관리합니다.
+              <p className="text-sm text-[#5C5C5C] mt-1">
+                관리자 계정에서 <strong>관리자(사무직원)</strong>, <strong>영업</strong>, <strong>CE</strong> 3개 직급별 메뉴 접근 권한을 조율합니다.
               </p>
             </div>
 
             <button
               onClick={handleSavePermissions}
               disabled={saving || loading}
-              className="px-6 py-3 rounded-2xl bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap"
             >
-              {saving ? "저장 중..." : "💾 권한 설정 저장하기"}
+              {saving ? "저장 중..." : "권한 설정 저장하기"}
             </button>
           </div>
+        </div>
 
-          {/* Alert Message */}
-          {message && (
-            <div
-              className={`p-4 rounded-2xl text-sm font-bold border shadow-xs ${
-                isError
-                  ? "bg-rose-50 border-rose-200 text-[#E01E35]"
-                  : "bg-emerald-50 border-emerald-200 text-[#01916D]"
+        {/* Alert Message */}
+        {message && (
+          <div
+            className={`p-4 rounded-xl text-sm font-bold border ${
+              isError
+                ? "bg-rose-50 border-rose-200 text-[#E01E35]"
+                : "bg-emerald-50 border-emerald-200 text-[#01916D]"
+            }`}
+          >
+            {message}
+          </div>
+        )}
+
+        {/* Role Tabs Selection */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            권한 설정 대상 직급 선택
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              onClick={() => setSelectedRole("ADMIN_STAFF")}
+              className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
+                selectedRole === "ADMIN_STAFF"
+                  ? "bg-indigo-50 border-indigo-300 text-indigo-900 font-bold shadow-xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
               }`}
             >
-              {message}
-            </div>
-          )}
+              <div className="text-sm font-bold flex items-center justify-between">
+                <span>관리자 (사무직원)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-200 text-indigo-800 font-bold">ADMIN_STAFF</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">사무 및 행정 서포트 담당 직급</div>
+            </button>
 
-          {/* Role Tabs Selection */}
-          <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
-              권한 설정 대상 직급 선택
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                onClick={() => setSelectedRole("ADMIN_STAFF")}
-                className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
-                  selectedRole === "ADMIN_STAFF"
-                    ? "bg-indigo-50/80 border-indigo-300 text-indigo-900 ring-2 ring-indigo-500/20 font-bold shadow-xs"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <div className="text-sm font-extrabold flex items-center justify-between">
-                  <span>💼 관리자 (사무직원)</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800">ADMIN_STAFF</span>
-                </div>
-                <div className="text-xs text-slate-500 mt-1">사무 및 행정 서포트 담당 직급</div>
-              </button>
+            <button
+              onClick={() => setSelectedRole("SALES")}
+              className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
+                selectedRole === "SALES"
+                  ? "bg-blue-50 border-blue-300 text-blue-900 font-bold shadow-xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <div className="text-sm font-bold flex items-center justify-between">
+                <span>영업</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-blue-200 text-blue-800 font-bold">SALES</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">고객 파이프라인 및 영업 담당 직급</div>
+            </button>
 
-              <button
-                onClick={() => setSelectedRole("SALES")}
-                className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
-                  selectedRole === "SALES"
-                    ? "bg-blue-50/80 border-blue-300 text-blue-900 ring-2 ring-blue-500/20 font-bold shadow-xs"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <div className="text-sm font-extrabold flex items-center justify-between">
-                  <span>📈 영업</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-200 text-blue-800">SALES</span>
-                </div>
-                <div className="text-xs text-slate-500 mt-1">고객 파이프라인 및 영업 담당 직급</div>
-              </button>
-
-              <button
-                onClick={() => setSelectedRole("CE")}
-                className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
-                  selectedRole === "CE"
-                    ? "bg-emerald-50/80 border-emerald-300 text-emerald-900 ring-2 ring-emerald-500/20 font-bold shadow-xs"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <div className="text-sm font-extrabold flex items-center justify-between">
-                  <span>🔧 CE (엔지니어)</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800">CE</span>
-                </div>
-                <div className="text-xs text-slate-500 mt-1">현장 방문 및 장비 A/S 담당 직급</div>
-              </button>
-            </div>
+            <button
+              onClick={() => setSelectedRole("CE")}
+              className={`p-4 rounded-xl text-left border transition-all cursor-pointer ${
+                selectedRole === "CE"
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-900 font-bold shadow-xs"
+                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <div className="text-sm font-bold flex items-center justify-between">
+                <span>CE (엔지니어)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-200 text-emerald-800 font-bold">CE</span>
+              </div>
+              <div className="text-xs text-slate-500 mt-1">현장 방문 및 장비 A/S 담당 직급</div>
+            </button>
           </div>
+        </div>
 
-          {/* Menu Permission Matrix Panel */}
-          {loading ? (
-            <div className="py-20 text-center text-slate-400 text-sm font-bold bg-white rounded-3xl border border-slate-200">
-              권한 매트릭스를 불러오는 중...
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {groups.map((groupName) => {
-                const groupMenus = MENU_LIST.filter((m) => m.group === groupName);
-                const roleState = permissionsState[selectedRole] || {};
-                const allAllowed = groupMenus.every((m) => roleState[m.key] !== false);
+        {/* Menu Permission Matrix Panel */}
+        {loading ? (
+          <div className="py-20 text-center text-slate-400 text-sm font-bold bg-white rounded-2xl border border-slate-200 shadow-sm">
+            권한 매트릭스를 불러오는 중...
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {groups.map((groupName) => {
+              const groupMenus = MENU_LIST.filter((m) => m.group === groupName);
+              const roleState = permissionsState[selectedRole] || {};
 
-                return (
-                  <div
-                    key={groupName}
-                    className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden"
-                  >
-                    {/* Group Header */}
-                    <div className="bg-slate-50/90 px-6 py-4 border-b border-slate-200/80 flex items-center justify-between">
-                      <div className="font-extrabold text-[#333333] text-base flex items-center gap-2">
-                        <span>{groupName}</span>
-                        <span className="text-xs font-semibold text-slate-400">({groupMenus.length}개 메뉴)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleToggleGroup(groupName, true)}
-                          className="px-3 py-1 text-xs font-bold text-[#01916D] bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors cursor-pointer"
-                        >
-                          전체 허용
-                        </button>
-                        <button
-                          onClick={() => handleToggleGroup(groupName, false)}
-                          className="px-3 py-1 text-xs font-bold text-[#E01E35] bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer"
-                        >
-                          전체 차단
-                        </button>
-                      </div>
+              return (
+                <div
+                  key={groupName}
+                  className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"
+                >
+                  {/* Group Header */}
+                  <div className="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+                    <div className="font-bold text-[#333333] text-sm flex items-center gap-2">
+                      <span>{groupName}</span>
+                      <span className="text-xs font-normal text-slate-500">({groupMenus.length}개 메뉴)</span>
                     </div>
-
-                    {/* Submenu Item Grid */}
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {groupMenus.map((menu) => {
-                        const isAllowed = roleState[menu.key] !== false;
-                        return (
-                          <div
-                            key={menu.key}
-                            onClick={() => handleToggle(menu.key)}
-                            className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                              isAllowed
-                                ? "bg-white border-slate-200 hover:border-[#01916D]"
-                                : "bg-slate-50/60 border-slate-200 opacity-60"
-                            }`}
-                          >
-                            <div className="space-y-0.5">
-                              <div className="font-bold text-sm text-slate-800">{menu.name}</div>
-                              <div className="text-[11px] text-slate-400 font-mono">{menu.path}</div>
-                            </div>
-
-                            <button
-                              type="button"
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer shrink-0 ml-3 ${
-                                isAllowed ? "bg-[#01916D]" : "bg-slate-300"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                  isAllowed ? "translate-x-6" : "translate-x-1"
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        );
-                      })}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleGroup(groupName, true)}
+                        className="px-3 py-1 text-xs font-bold text-[#01916D] bg-emerald-50 hover:bg-emerald-100 rounded transition-colors cursor-pointer"
+                      >
+                        전체 허용
+                      </button>
+                      <button
+                        onClick={() => handleToggleGroup(groupName, false)}
+                        className="px-3 py-1 text-xs font-bold text-[#E01E35] bg-rose-50 hover:bg-rose-100 rounded transition-colors cursor-pointer"
+                      >
+                        전체 차단
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </main>
-      </div>
+
+                  {/* Submenu Item Grid */}
+                  <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {groupMenus.map((menu) => {
+                      const isAllowed = roleState[menu.key] !== false;
+                      return (
+                        <div
+                          key={menu.key}
+                          onClick={() => handleToggle(menu.key)}
+                          className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                            isAllowed
+                              ? "bg-white border-slate-200 hover:border-[#01916D]"
+                              : "bg-slate-50 border-slate-200 opacity-60"
+                          }`}
+                        >
+                          <div className="space-y-0.5">
+                            <div className="font-bold text-xs text-slate-900">{menu.name}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{menu.path}</div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer shrink-0 ml-3 ${
+                              isAllowed ? "bg-[#01916D]" : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                isAllowed ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
 
       <AppFooter />
     </div>

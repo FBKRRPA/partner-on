@@ -83,6 +83,7 @@
 | **TC-073** | CRM/디자인통일피팅 | 고객관리 및 영업관리 모듈을 전사 시스템 레이아웃(`max-w-7xl`, 헤더, 그리드)과 100% 완벽 동기화 | Align CRM Customers & Sales Layout with System-Wide Standard | ✅ PASS |
 | **TC-074** | CRM/계약관리UI일치 | 고객관리 및 영업관리 모듈을 `기초정보관리 > 계약 관리` 표준 UI와 100% 동일하게 피팅 | Match CRM Pages UI Exactly to Contracts Page Standard | ✅ PASS |
 | **TC-075** | CRM/구성원UI동기화 | 구성원관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Members Page UI Exactly to Contracts Page Standard | ✅ PASS |
+| **TC-076** | 기초정보/메뉴권한UI동기화 | 메뉴 권한 관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Permissions Page UI Exactly to Contracts Page Standard | ✅ PASS |
 
 ---
 
