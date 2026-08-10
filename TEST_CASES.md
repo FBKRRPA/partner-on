@@ -77,6 +77,7 @@
 | **TC-067** | CRM/팝업모달 | 고객관리 5대 섹션 & 영업관리 2대 섹션 등록 팝업 모달 UI 구축 | Customer 5-Section & Sales 2-Section Registration Popup Modals | ✅ PASS |
 | **TC-068** | CRM/행클릭상세 | CRM 테이블 행(Row) 클릭 시 전수 정보 상세보기 팝업 모달 구축 | Table Row-Click Full Detail Modal Popup Integration | ✅ PASS |
 | **TC-069** | CRM/팝업필드복원 | 고객관리 5대 섹션 & 영업관리 2대 섹션 등록 팝업 입력 필드 전수 완결 복원 | Restore All Full Form Fields in CRM Customer & Sales Registration Modals | ✅ PASS |
+| **TC-070** | CRM/세션자동바인딩 | 등록 팝업 내 관리파트너사 및 담당사원에 로그인 유저 회사명/실명 자동 세팅 | Auto-bind Logged-in User Workplace & Name in Registration Modals | ✅ PASS |
 
 ---
 

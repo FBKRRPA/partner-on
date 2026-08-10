@@ -112,6 +112,12 @@ export default function CrmSalesPage() {
       sessionStorage.getItem("partneron.accessToken") ||
       "";
     setAccessToken(token);
+
+    const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
+    setFormData((prev) => ({
+      ...prev,
+      workspace_name: savedWorkplace,
+    }));
   }, []);
 
   const filteredOpportunities = opportunities.filter(

@@ -127,6 +127,16 @@ export default function CrmCustomersPage() {
       sessionStorage.getItem("partneron.accessToken") ||
       "";
     setAccessToken(token);
+
+    // 로그인한 유저의 회사명(Workplace) 및 실명 가져오기
+    const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
+    const savedUserName = sessionStorage.getItem("userName") || "김영업 과장";
+
+    setFormData((prev) => ({
+      ...prev,
+      partner_company: savedWorkplace,
+      partner_employee: savedUserName,
+    }));
   }, []);
 
   const filteredCustomers = customers.filter(
@@ -157,9 +167,12 @@ export default function CrmCustomersPage() {
     alert(`'${formData.name}' 고객사가 성공적으로 등록되었습니다.`);
 
     // Reset Form
+    const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
+    const savedUserName = sessionStorage.getItem("userName") || "김영업 과장";
+
     setFormData({
-      partner_company: "FBKR 파트너스",
-      partner_employee: "김영업 과장",
+      partner_company: savedWorkplace,
+      partner_employee: savedUserName,
       name: "",
       office_type: "일반 사무실",
       location_base: "서울 본사",
