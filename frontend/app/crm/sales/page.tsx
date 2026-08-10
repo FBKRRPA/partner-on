@@ -34,7 +34,11 @@ export default function CrmSalesPage() {
   // Modals State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<SalesOpportunityDto | null>(null);
+
+  // Editable Form inside Detail Modal
+  const [editFormData, setEditFormData] = useState<SalesOpportunityDto | null>(null);
 
   // Registered Customer Names for Dropdown (Section 1)
   const registeredCustomers = [
@@ -129,10 +133,12 @@ export default function CrmSalesPage() {
 
   function handleRowClick(o: SalesOpportunityDto) {
     setSelectedOpportunity(o);
+    setEditFormData(JSON.parse(JSON.stringify(o)));
+    setIsEditMode(false);
     setIsDetailModalOpen(true);
   }
 
-  function handleSaveOpportunity() {
+  function handleSaveNewOpportunity() {
     if (!formData.opportunity_name.trim()) {
       alert("영업명을 입력해 주세요.");
       return;
@@ -165,6 +171,27 @@ export default function CrmSalesPage() {
       support_method: "방문",
       support_comment: "",
     });
+  }
+
+  function handleUpdateOpportunity() {
+    if (!editFormData || !editFormData.opportunity_name.trim()) {
+      alert("영업명을 입력해 주세요.");
+      return;
+    }
+    setOpportunities((prev) =>
+      prev.map((o) => (o.id === editFormData.id ? editFormData : o))
+    );
+    setSelectedOpportunity(editFormData);
+    setIsEditMode(false);
+    alert(`'${editFormData.opportunity_name}' 영업 기회가 성공적으로 수정되었습니다.`);
+  }
+
+  function handleDeleteOpportunity(id: number, name: string) {
+    if (confirm(`정말로 '${name}' 영업기회를 삭제하시겠습니까?`)) {
+      setOpportunities((prev) => prev.filter((o) => o.id !== id));
+      setIsDetailModalOpen(false);
+      alert(`'${name}' 영업기회가 삭제되었습니다.`);
+    }
   }
 
   function renderStageBadge(stage: SalesOpportunityDto["sales_stage"]) {
@@ -200,7 +227,7 @@ export default function CrmSalesPage() {
                 영업 기회 레저 (Sales Opportunity Ledger)
               </h1>
               <p className="text-sm text-[#5C5C5C] mt-1">
-                파트너 영업 파이프라인, 예상 매출, 타팀 지원 대응 코멘트를 관제합니다.
+                파트너 영업 파이프라인, 예상 매출, 타팀 지원 대응 코멘트를 관제합니다. (행 클릭 시 팝업에서 실시간 수정 가능)
               </p>
             </div>
 
@@ -235,7 +262,7 @@ export default function CrmSalesPage() {
                   <th className="p-4">장비모델명 / 영업타입 / 유형</th>
                   <th className="p-4 text-center">계약형태 / 시작일</th>
                   <th className="p-4 text-right">예상매출금액 / 월도</th>
-                  <th className="p-4 text-center">상세조회</th>
+                  <th className="p-4 text-center">수정 / 상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -273,7 +300,7 @@ export default function CrmSalesPage() {
                         onClick={() => handleRowClick(o)}
                         className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
                       >
-                        상세보기
+                        수정 / 조회
                       </button>
                     </td>
                   </tr>
@@ -284,7 +311,7 @@ export default function CrmSalesPage() {
         </div>
       </main>
 
-      {/* 2-Section Registration Modal Popup (Clean Glass Modal Standard) */}
+      {/* 2-Section Registration Modal Popup */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden space-y-5">
@@ -505,7 +532,7 @@ export default function CrmSalesPage() {
                 취소
               </button>
               <button
-                onClick={handleSaveOpportunity}
+                onClick={handleSaveNewOpportunity}
                 className="px-6 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer"
               >
                 영업기회 저장
@@ -515,16 +542,18 @@ export default function CrmSalesPage() {
         </div>
       )}
 
-      {/* Sales Detail Modal Popup */}
-      {isDetailModalOpen && selectedOpportunity && (
+      {/* Sales Detail & Direct Edit Modal Popup */}
+      {isDetailModalOpen && selectedOpportunity && editFormData && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden space-y-5">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col overflow-hidden space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">
-                  SALES OPPORTUNITY DETAIL
+                  SALES OPPORTUNITY DETAIL & EDIT
                 </span>
-                <h2 className="text-xl font-black text-slate-900">{selectedOpportunity.opportunity_name}</h2>
+                <h2 className="text-xl font-black text-slate-900">
+                  {isEditMode ? `[수정 모드] ${editFormData.opportunity_name}` : selectedOpportunity.opportunity_name}
+                </h2>
               </div>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
@@ -534,42 +563,272 @@ export default function CrmSalesPage() {
               </button>
             </div>
 
-            <div className="space-y-4 overflow-y-auto flex-1 text-xs text-slate-800">
-              {/* Section 1 */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
-                <h3 className="font-bold text-[#01916D] text-xs">1) 영업기회 관리 스펙</h3>
-                <div className="grid grid-cols-3 gap-3 pt-1">
-                  <div><span className="text-slate-500">고객명:</span> <strong>{selectedOpportunity.customer_name}</strong></div>
-                  <div><span className="text-slate-500">거래처 (소속 사업장):</span> <strong>{selectedOpportunity.workspace_name}</strong></div>
-                  <div><span className="text-slate-500">영업단계:</span> <strong className="text-[#01916D]">{selectedOpportunity.sales_stage}</strong></div>
-                  <div><span className="text-slate-500">장비 모델명:</span> <strong>{selectedOpportunity.device_model}</strong></div>
-                  <div><span className="text-slate-500">영업 타입/유형:</span> <strong>{selectedOpportunity.deal_type} ({selectedOpportunity.deal_category})</strong></div>
-                  <div><span className="text-slate-500">계약형태/시작일:</span> <strong>{selectedOpportunity.contract_type} ({selectedOpportunity.start_date})</strong></div>
-                  <div><span className="text-slate-500">예상매출금액:</span> <strong className="font-mono text-[#01916D]">₩{selectedOpportunity.expected_sales.toLocaleString()} 원</strong></div>
-                  <div><span className="text-slate-500">예상계약월도:</span> <strong className="font-mono">{selectedOpportunity.expected_contract_month}</strong></div>
-                  <div><span className="text-slate-500">예상매출월도:</span> <strong className="font-mono">{selectedOpportunity.expected_sales_month}</strong></div>
-                  <div className="col-span-3"><span className="text-slate-500">기타 (변동 사유):</span> <p className="mt-1 bg-white p-2.5 border border-slate-200 rounded-xl">{selectedOpportunity.note || "-"}</p></div>
+            {/* Modal Body: Toggle View vs Edit */}
+            {!isEditMode ? (
+              <div className="space-y-4 overflow-y-auto flex-1 text-xs text-slate-800">
+                {/* Section 1 */}
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                  <h3 className="font-bold text-[#01916D] text-xs">1) 영업기회 관리 스펙</h3>
+                  <div className="grid grid-cols-3 gap-3 pt-1">
+                    <div><span className="text-slate-500">고객명:</span> <strong>{selectedOpportunity.customer_name}</strong></div>
+                    <div><span className="text-slate-500">거래처 (소속 사업장):</span> <strong>{selectedOpportunity.workspace_name}</strong></div>
+                    <div><span className="text-slate-500">영업단계:</span> <strong className="text-[#01916D]">{selectedOpportunity.sales_stage}</strong></div>
+                    <div><span className="text-slate-500">장비 모델명:</span> <strong>{selectedOpportunity.device_model}</strong></div>
+                    <div><span className="text-slate-500">영업 타입/유형:</span> <strong>{selectedOpportunity.deal_type} ({selectedOpportunity.deal_category})</strong></div>
+                    <div><span className="text-slate-500">계약형태/시작일:</span> <strong>{selectedOpportunity.contract_type} ({selectedOpportunity.start_date})</strong></div>
+                    <div><span className="text-slate-500">예상매출금액:</span> <strong className="font-mono text-[#01916D]">₩{selectedOpportunity.expected_sales.toLocaleString()} 원</strong></div>
+                    <div><span className="text-slate-500">예상계약월도:</span> <strong className="font-mono">{selectedOpportunity.expected_contract_month}</strong></div>
+                    <div><span className="text-slate-500">예상매출월도:</span> <strong className="font-mono">{selectedOpportunity.expected_sales_month}</strong></div>
+                    <div className="col-span-3"><span className="text-slate-500">기타 (변동 사유):</span> <p className="mt-1 bg-white p-2.5 border border-slate-200 rounded-xl">{selectedOpportunity.note || "-"}</p></div>
+                  </div>
+                </div>
+
+                {/* Section 2 */}
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                  <h3 className="font-bold text-[#01916D] text-xs">2) 활동 결과</h3>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div><span className="text-slate-500">FBKR/타팀 지원여부:</span> <strong>{selectedOpportunity.team_support}</strong></div>
+                    <div><span className="text-slate-500">지원방법:</span> <strong>{selectedOpportunity.support_method}</strong></div>
+                    <div className="col-span-2"><span className="text-slate-500">지원팀 처리 코멘트:</span> <p className="mt-1 bg-white p-2.5 border border-slate-200 rounded-xl">{selectedOpportunity.support_comment || "-"}</p></div>
+                  </div>
                 </div>
               </div>
+            ) : (
+              /* Edit Form Mode */
+              <div className="p-1 space-y-4 overflow-y-auto flex-1 text-xs">
+                {/* Section 1: 영업기회 관리 */}
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2.5">
+                  <h3 className="text-xs font-bold text-[#01916D] uppercase">1) 영업기회 관리 스펙</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">고객명</label>
+                      <select
+                        value={editFormData.customer_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                      >
+                        {registeredCustomers.map((cust) => (
+                          <option key={cust} value={cust}>{cust}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">영업명</label>
+                      <input
+                        type="text"
+                        value={editFormData.opportunity_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, opportunity_name: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">거래처 (소속 사업장명)</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={editFormData.workspace_name}
+                        className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">영업단계</label>
+                      <select
+                        value={editFormData.sales_stage}
+                        onChange={(e) => setEditFormData({ ...editFormData, sales_stage: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="고객 Contact">고객 Contact</option>
+                        <option value="고객 Issue 확인">고객 Issue 확인</option>
+                        <option value="고객 추가 Meeting">고객 추가 Meeting</option>
+                        <option value="견적서 제출">견적서 제출</option>
+                        <option value="Closed">Closed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">장비 모델명</label>
+                      <input
+                        type="text"
+                        value={editFormData.device_model}
+                        onChange={(e) => setEditFormData({ ...editFormData, device_model: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">영업 타입</label>
+                      <select
+                        value={editFormData.deal_type}
+                        onChange={(e) => setEditFormData({ ...editFormData, deal_type: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="복합기 신규">복합기 신규</option>
+                        <option value="복합기 추가">복합기 추가</option>
+                        <option value="솔루션 신규">솔루션 신규</option>
+                        <option value="솔루션 추가">솔루션 추가</option>
+                        <option value="그 외 Deal">그 외 Deal</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">영업 유형</label>
+                      <select
+                        value={editFormData.deal_category}
+                        onChange={(e) => setEditFormData({ ...editFormData, deal_category: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="신규">신규</option>
+                        <option value="추가/변경">추가/변경</option>
+                        <option value="재계약/갱신">재계약/갱신</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">활동시작날짜</label>
+                      <input
+                        type="date"
+                        value={editFormData.start_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">계약형태</label>
+                      <select
+                        value={editFormData.contract_type}
+                        onChange={(e) => setEditFormData({ ...editFormData, contract_type: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="렌탈">렌탈</option>
+                        <option value="유지보수">유지보수</option>
+                        <option value="판매">판매</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">예상매출금액 (원)</label>
+                      <input
+                        type="number"
+                        value={editFormData.expected_sales}
+                        onChange={(e) => setEditFormData({ ...editFormData, expected_sales: Number(e.target.value) })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">예상계약월도</label>
+                      <input
+                        type="month"
+                        value={editFormData.expected_contract_month}
+                        onChange={(e) => setEditFormData({ ...editFormData, expected_contract_month: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">예상매출월도</label>
+                      <input
+                        type="month"
+                        value={editFormData.expected_sales_month}
+                        onChange={(e) => setEditFormData({ ...editFormData, expected_sales_month: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">기타 (변동 사유)</label>
+                      <textarea
+                        rows={2}
+                        value={editFormData.note || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, note: e.target.value })}
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-              {/* Section 2 */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
-                <h3 className="font-bold text-[#01916D] text-xs">2) 활동 결과</h3>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div><span className="text-slate-500">FBKR/타팀 지원여부:</span> <strong>{selectedOpportunity.team_support}</strong></div>
-                  <div><span className="text-slate-500">지원방법:</span> <strong>{selectedOpportunity.support_method}</strong></div>
-                  <div className="col-span-2"><span className="text-slate-500">지원팀 처리 코멘트:</span> <p className="mt-1 bg-white p-2.5 border border-slate-200 rounded-xl">{selectedOpportunity.support_comment || "-"}</p></div>
+                {/* Section 2: 활동 결과 */}
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2.5">
+                  <h3 className="text-xs font-bold text-[#01916D] uppercase">2) 활동 결과</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">FBKR/타팀 지원여부</label>
+                      <select
+                        value={editFormData.team_support}
+                        onChange={(e) => setEditFormData({ ...editFormData, team_support: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="아니요">아니요</option>
+                        <option value="예">예</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">지원방법</label>
+                      <select
+                        value={editFormData.support_method}
+                        onChange={(e) => setEditFormData({ ...editFormData, support_method: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                      >
+                        <option value="방문">방문</option>
+                        <option value="전화">전화</option>
+                        <option value="메일">메일</option>
+                        <option value="화상회의">화상회의</option>
+                        <option value="기타">기타</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">지원팀 처리 코멘트</label>
+                      <textarea
+                        rows={2}
+                        value={editFormData.support_comment || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, support_comment: e.target.value })}
+                        className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <button
-                onClick={() => setIsDetailModalOpen(false)}
-                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
-              >
-                닫기
-              </button>
+            {/* Modal Actions Footer */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <button
+                  onClick={() => handleDeleteOpportunity(selectedOpportunity.id, selectedOpportunity.opportunity_name)}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-xl cursor-pointer transition-all"
+                >
+                  영업기회 삭제
+                </button>
+              </div>
+
+              <div className="flex gap-2">
+                {!isEditMode ? (
+                  <>
+                    <button
+                      onClick={() => setIsDetailModalOpen(false)}
+                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                    >
+                      닫기
+                    </button>
+                    <button
+                      onClick={() => setIsEditMode(true)}
+                      className="px-6 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all"
+                    >
+                      수정하기 (수정 모드)
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsEditMode(false);
+                        setEditFormData(JSON.parse(JSON.stringify(selectedOpportunity)));
+                      }}
+                      className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                    >
+                      수정 취소
+                    </button>
+                    <button
+                      onClick={handleUpdateOpportunity}
+                      className="px-6 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all"
+                    >
+                      수정 내용 저장하기
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

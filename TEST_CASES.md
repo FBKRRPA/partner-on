@@ -84,6 +84,7 @@
 | **TC-074** | CRM/계약관리UI일치 | 고객관리 및 영업관리 모듈을 `기초정보관리 > 계약 관리` 표준 UI와 100% 동일하게 피팅 | Match CRM Pages UI Exactly to Contracts Page Standard | ✅ PASS |
 | **TC-075** | CRM/구성원UI동기화 | 구성원관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Members Page UI Exactly to Contracts Page Standard | ✅ PASS |
 | **TC-076** | 기초정보/메뉴권한UI동기화 | 메뉴 권한 관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Permissions Page UI Exactly to Contracts Page Standard | ✅ PASS |
+| **TC-077** | CRM/팝업내실시간수정 | CRM 고객/영업관리 행 클릭 팝업 모달 내 데이터 실시간 수정/저장/삭제 기능 구축 | Enable Real-time Data Edit & Delete Inside CRM Detail Modals | ✅ PASS |
 
 ---
 
