@@ -73,6 +73,7 @@
 | **TC-063** | 문서/문의이력 | 대표님 개발 문의 & 지시사항 화면별 정밀 정리 명세서 구축 (docs/user-inquiries-by-screen.md & .html) | User Inquiries & Technical Solutions Specification | ✅ PASS |
 | **TC-064** | 문서/DB-ERD | 16개 전체 테이블 시각적 ERD 다이어그램 명세서 구축 (docs/db-erd.html) | 16 Tables Interactive Visual DB ERD Diagram Specification | ✅ PASS |
 | **TC-065** | 에이전트/고객매칭 | 사업장 하위 고객사 레벨 수집기 에이전트 1:1 매칭 및 스캔 자동분류 구현 | Customer-Level Agent Collector 1:1 Mapping & Auto Ingestion | ✅ PASS |
+| **TC-066** | CRM/에이전트호출 | CRM 계약 고객사 1-Click Agent 인증 코드 즉시 호출 및 복사 기능 구현 | Contracted Customer 1-Click Agent Code Lookup & Copy Modal | ✅ PASS |
 
 ---
 

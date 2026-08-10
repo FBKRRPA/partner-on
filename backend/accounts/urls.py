@@ -6,6 +6,7 @@ from .views import (
     AgentStatusUpdateView,
     AgentTargetAssetsView,
     CollectorCodeGenerateView,
+    CollectorCustomerLookupView,
     CollectorListView,
     DeviceActionView,
     DeviceDetailView,
@@ -65,6 +66,7 @@ urlpatterns = [
     # Workplace Agent/Collector Management APIs
     path("workplace/collectors/", CollectorListView.as_view(), name="collector-list"),
     path("workplace/collectors/generate-code/", CollectorCodeGenerateView.as_view(), name="collector-generate-code"),
+    path("workplace/collectors/by-customer/", CollectorCustomerLookupView.as_view(), name="collector-by-customer"),
     path("workplace/oid-inspection/", TempOidListInspectionView.as_view(), name="oid-inspection-list"),
     path("workplace/oid-inspection/<int:pk>/<str:action>/", TempOidListActionView.as_view(), name="oid-inspection-action"),
 

@@ -585,6 +585,22 @@ export async function generateAgentCode(
   return body as { detail: string; auth_code: string; customer_name?: string; expires_in_hours: number };
 }
 
+export async function getAgentCodeByCustomer(
+  token: string,
+  customerName: string
+): Promise<{ has_collector: boolean; customer_name: string; auth_code: string; status?: string; last_scanned_at?: string }> {
+  const encoded = encodeURIComponent(customerName);
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/workplace/collectors/by-customer/?customer_name=${encoded}&auto_generate=true`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(body, "고객사 Agent 인증 코드를 불러오지 못했습니다."));
+  }
+  return body as { has_collector: boolean; customer_name: string; auth_code: string; status?: string; last_scanned_at?: string };
+}
+
 export interface MonitoringUsageRecordDto {
   id: number;
   yyyymmdd: string;

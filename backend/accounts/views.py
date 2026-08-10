@@ -1883,6 +1883,61 @@ class CollectorListView(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
 
+class CollectorCustomerLookupView(APIView):
+    """
+    Returns existing AgentCollector code for a specific customer or auto-generates if requested
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        workplace = request.user.workplace
+        if not workplace:
+            return Response({"detail": "소속 사업장이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        c_name = request.query_params.get("customer_name", "").strip()
+        auto_gen = request.query_params.get("auto_generate", "true").lower() == "true"
+
+        if not c_name:
+            return Response({"detail": "customer_name 파라미터가 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        collector = AgentCollector.objects.filter(workplace=workplace, customer_name__iexact=c_name).first()
+
+        if not collector and auto_gen:
+            # Auto generate agent code for this customer if none exists
+            code_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            auth_code = f"AST-{code_str}"
+            collector = AgentCollector.objects.create(
+                workplace=workplace,
+                auth_code=auth_code,
+                name=f"현장 수집기 Agent ({c_name})",
+                customer_name=c_name,
+                status=AgentCollector.Status.PENDING,
+            )
+
+        if not collector:
+            return Response(
+                {
+                    "has_collector": False,
+                    "customer_name": c_name,
+                    "auth_code": None,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "has_collector": True,
+                "collector_id": collector.id,
+                "customer_name": collector.customer_name,
+                "auth_code": collector.auth_code,
+                "status": collector.status,
+                "detected_count": collector.detected_count,
+                "last_scanned_at": timezone.localtime(collector.last_scanned_at).strftime("%Y-%m-%d %H:%M:%S") if collector.last_scanned_at else "-",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class MonitoringUsageView(APIView):
     """
     Returns real PrinterAsset SNMP counter usage data & full MonitoringDataRecord time-series history
