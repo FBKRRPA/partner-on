@@ -912,109 +912,177 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
 
       {/* TAB 3: 2FA 역할별 강제 정책 관리 */}
       {activeTab === "POLICY" && (
-        <div className="space-y-6 max-w-2xl">
-          <div>
-            <h3 className="text-lg font-bold text-[#333333]">사업장 2FA 역할별 필수 정책 설정</h3>
-            <p className="text-xs text-slate-500 mt-1">
-              특정 직급(관리자 대표, 관리자 사무직원, 영업, CE)에 대해 2차 인증(2FA) 사용을 강제하도록 지정할 수 있습니다.
-            </p>
+        <div className="space-y-4 w-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-[#333333]">사업장 2FA 역할별 필수 정책 설정</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                소속 파트너 사업자의 직급별(대표, 사무직원, 영업, CE) 2차 인증(2FA) 로그인 의무화 여부를 통제합니다.
+              </p>
+            </div>
           </div>
 
           {policyFetching ? (
-            <div className="py-8 text-center text-slate-400 text-sm">보안 정책을 불러오는 중...</div>
+            <div className="py-12 text-center text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
+              보안 정책을 불러오는 중...
+            </div>
           ) : (
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
-              {/* OWNER Enforcement */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div>
-                  <div className="font-bold text-slate-800 text-sm">관리자(대표) 2FA 필수화</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    대표 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_owner")}
-                  disabled={loading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_owner ? "bg-[#01916D]" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_owner ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3.5 px-4">직급 (Role)</th>
+                    <th className="py-3.5 px-4">2FA 보안 정책 설명</th>
+                    <th className="py-3.5 px-4">강제 정책 상태</th>
+                    <th className="py-3.5 px-4 text-right">정책 설정</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {/* OWNER Policy */}
+                  <tr className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold">
+                      {getRoleBadge("OWNER")}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                      대표 계정 로그인 시 2FA (TOTP / Email OTP / 비상복구코드) 2차 검증을 의무 적용합니다.
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          policy.enforce_2fa_owner
+                            ? "bg-emerald-100 text-[#01916D]"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {policy.enforce_2fa_owner ? "2FA 의무 적용" : "선택 적용"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleTogglePolicyField("enforce_2fa_owner")}
+                        disabled={loading}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          policy.enforce_2fa_owner ? "bg-[#01916D]" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            policy.enforce_2fa_owner ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                  </tr>
 
-              {/* ADMIN_STAFF Enforcement */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div>
-                  <div className="font-bold text-slate-800 text-sm">관리자(사무직원) 2FA 필수화</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    관리자 사무직원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_admin_staff")}
-                  disabled={loading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_admin_staff ? "bg-[#01916D]" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_admin_staff ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
+                  {/* ADMIN_STAFF Policy */}
+                  <tr className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold">
+                      {getRoleBadge("ADMIN_STAFF")}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                      관리자 사무직원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          policy.enforce_2fa_admin_staff
+                            ? "bg-emerald-100 text-[#01916D]"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {policy.enforce_2fa_admin_staff ? "2FA 의무 적용" : "선택 적용"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleTogglePolicyField("enforce_2fa_admin_staff")}
+                        disabled={loading}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          policy.enforce_2fa_admin_staff ? "bg-[#01916D]" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            policy.enforce_2fa_admin_staff ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                  </tr>
 
-              {/* SALES Enforcement */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div>
-                  <div className="font-bold text-slate-800 text-sm">영업 (SALES) 2FA 필수화</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    영업 담당 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_sales")}
-                  disabled={loading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_sales ? "bg-[#01916D]" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_sales ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
+                  {/* SALES Policy */}
+                  <tr className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold">
+                      {getRoleBadge("SALES")}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                      영업 담당 사원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          policy.enforce_2fa_sales
+                            ? "bg-emerald-100 text-[#01916D]"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {policy.enforce_2fa_sales ? "2FA 의무 적용" : "선택 적용"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleTogglePolicyField("enforce_2fa_sales")}
+                        disabled={loading}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          policy.enforce_2fa_sales ? "bg-[#01916D]" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            policy.enforce_2fa_sales ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                  </tr>
 
-              {/* CE Enforcement */}
-              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 shadow-2xs">
-                <div>
-                  <div className="font-bold text-slate-800 text-sm">CE (엔지니어) 2FA 필수화</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    CE 엔지니어 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleTogglePolicyField("enforce_2fa_ce")}
-                  disabled={loading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-                    policy.enforce_2fa_ce ? "bg-[#01916D]" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      policy.enforce_2fa_ce ? "translate-x-6" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
+                  {/* CE Policy */}
+                  <tr className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4 font-bold">
+                      {getRoleBadge("CE")}
+                    </td>
+                    <td className="py-3.5 px-4 text-xs text-slate-600">
+                      CE 엔지니어 현장 요원 계정 로그인 시 2FA 2차 검증을 의무 적용합니다.
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          policy.enforce_2fa_ce
+                            ? "bg-emerald-100 text-[#01916D]"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {policy.enforce_2fa_ce ? "2FA 의무 적용" : "선택 적용"}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleTogglePolicyField("enforce_2fa_ce")}
+                        disabled={loading}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                          policy.enforce_2fa_ce ? "bg-[#01916D]" : "bg-slate-300"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            policy.enforce_2fa_ce ? "translate-x-6" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </div>
