@@ -96,6 +96,7 @@
 | **TC-086** | UI동기화/2FA정책탭표준화 | `2FA 역할별 강제 정책` 탭 본문을 B2B 단일전사 표준 `w-full` 테이블 카드 UI로 100% 동기화 | Refactor 2FA Policy Tab to Full-Width B2B Table Card UI Standard | ✅ PASS |
 | **TC-087** | UI동기화/수집기현황페이지표준화 | `/operations/assets/collectors` 수집기 현황 페이지를 단일 B2B UI 표준 카드로 100% 동기화 | Refactor Collectors Ledger Page to Single Authoritative B2B Table UI Standard | ✅ PASS |
 | **TC-088** | Next.js설정/allowedDevOrigins경고제거 | `next.config.mjs`에 `allowedDevOrigins` 추가로 로컬 네트워크 IP 접속 경고 원천 차단 | Add allowedDevOrigins in next.config.mjs to Suppress Cross-Origin Dev Warnings | ✅ PASS |
+| **TC-089** | UI동기화/홈대시보드표준화 | `/dashboard` 홈 대시보드 테이블 및 통계 카드를 단일 B2B UI 표준으로 100% 동기화 | Refactor Dashboard Page Table & Stat Cards to Single Authoritative B2B UI Standard | ✅ PASS |
 
 ---
 
