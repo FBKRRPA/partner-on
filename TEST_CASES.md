@@ -94,6 +94,7 @@
 | **TC-084** | 메뉴버그수정/상위카테고리검증 | `AppHeader.tsx` 상위 카테고리 `category.key` 검증 구문 추가로 `admin@partneron.co.kr` 메뉴 숨김 완벽 조치 | Fix Category.key Filter to 100% Hide Partner Admin for Non-HQ Roles | ✅ PASS |
 | **TC-085** | CRM구성원/CleanGlassModal팝업 | `/crm/members` 테이블 Row Click 및 `[수정]` 클릭 시 Clean Glass Overlay Modal 팝업 상세화면 완전 연동 | Implement Clean Glass Overlay Popup Modal for CRM Members Row Click & Edit | ✅ PASS |
 | **TC-086** | UI동기화/2FA정책탭표준화 | `2FA 역할별 강제 정책` 탭 본문을 B2B 단일전사 표준 `w-full` 테이블 카드 UI로 100% 동기화 | Refactor 2FA Policy Tab to Full-Width B2B Table Card UI Standard | ✅ PASS |
+| **TC-087** | UI동기화/수집기현황페이지표준화 | `/operations/assets/collectors` 수집기 현황 페이지를 단일 B2B UI 표준 카드로 100% 동기화 | Refactor Collectors Ledger Page to Single Authoritative B2B Table UI Standard | ✅ PASS |
 
 ---
 
