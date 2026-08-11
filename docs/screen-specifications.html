@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PartnerOn (파트너온) v1.0 - 화면별 세부 설계 스토리보드 명세서</title>
-  <!-- Google Fonts & Tailwind CSS CDN -->
+  <title>PartnerOn v1.0 - OpenAPI & Screen Technical Specifications</title>
+  <!-- Google Fonts (JetBrains Mono & Pretendard) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -23,635 +24,553 @@
           },
           fontFamily: {
             sans: ['Pretendard', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
           }
         }
       }
     }
   </script>
   <style>
-    body { font-family: 'Pretendard', sans-serif; background-color: #F8FAFC; }
-    .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+    body { font-family: 'Pretendard', sans-serif; background-color: #F8FAFC; color: #1E293B; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
     .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    .endpoint-badge { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
   </style>
 </head>
-<body class="text-slate-800 flex flex-col h-screen overflow-hidden">
+<body class="bg-[#F8FAFC] text-slate-800 flex flex-col h-screen overflow-hidden antialiased">
 
-  <!-- Header -->
-  <header class="glass-header border-b border-slate-200 sticky top-0 z-30 px-6 py-3.5 flex items-center justify-between shadow-sm">
-    <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-xl bg-gradient-to-r from-[#01916D] to-[#80C342] flex items-center justify-center text-white font-black text-lg shadow-md">
-        P
-      </div>
-      <div>
-        <h1 className="text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
-          PartnerOn v1.0 화면별 세부 설계 명세서
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-[#01916D]">
-            37개 화면 수록
-          </span>
+  <!-- Top Developer Header Bar (Clean White Background + Balanced Typography) -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between z-30 shrink-0 shadow-xs relative">
+    <!-- Top Vibrant Fujifilm Emerald Accent Line -->
+    <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#01916D] to-[#80C342]"></div>
+
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
+        <span class="px-2.5 py-1 bg-[#01916D] text-white font-mono font-bold text-xs rounded shadow-xs">v1.0.0 SPEC</span>
+        <h1 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+          PartnerOn B2B Open API & Screen Specifications
         </h1>
-        <p class="text-xs text-slate-500">B2B 사무기기 / 복합기 렌탈 자산 관리 & 통합 CRM/ERP 스토리보드</p>
       </div>
+      <span class="text-xs font-mono text-slate-500 border-l border-slate-200 pl-4 hidden md:inline">
+        Next.js 15 App Router | Django DRF 3.15 | OpenAPI 3.0 Standard
+      </span>
     </div>
 
-    <!-- Quick Stats Bar -->
-    <div class="hidden md:flex items-center space-x-6 text-xs font-medium text-slate-600">
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-[#01916D]"></span>
-        <span>총 화면 수: <strong class="text-slate-900 font-bold">37개</strong></span>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-        <span>메가 대분류: <strong class="text-slate-900 font-bold">7대 영역</strong></span>
-      </div>
-      <div class="flex items-center space-x-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-        <span>RBAC 메뉴 권한: <strong class="text-slate-900 font-bold">4단계 직급</strong></span>
-      </div>
+    <div class="flex items-center space-x-3">
+      <span class="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-[#01916D] font-semibold text-xs rounded">
+        37개 전체 라우터 명세 수록
+      </span>
+      <a 
+        href="/docs/api.md" 
+        target="_blank" 
+        class="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded transition-all shadow-xs cursor-pointer"
+      >
+        REST API 명세서 (api.md)
+      </a>
     </div>
   </header>
 
-  <!-- Main Workspace -->
+  <!-- Main API Console Workspace -->
   <div class="flex-1 flex overflow-hidden">
 
-    <!-- Left Sidebar Navigator -->
-    <aside class="w-80 bg-white border-r border-slate-200 flex flex-col z-20 shadow-sm">
-      <!-- Search Input -->
-      <div class="p-4 border-b border-slate-100">
+    <!-- Left Sidebar: OpenAPI Endpoint Explorer Tree (Clean Light Theme) -->
+    <aside class="w-80 bg-white border-r border-slate-200 flex flex-col z-20 shrink-0 shadow-xs">
+      <!-- Search Filter Bar -->
+      <div class="p-3 border-b border-slate-200 bg-slate-50/50">
         <input 
           type="text" 
-          id="searchInput" 
-          onkeyup="filterScreens()" 
-          placeholder="화면명, URL, 키워드 검색..." 
-          class="w-full px-3.5 py-2 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:outline-none focus:border-[#01916D] focus:bg-white transition-all"
+          id="apiSearchInput" 
+          onkeyup="filterEndpoints()" 
+          placeholder="검색: 엔드포인트, URL, 메서드 (e.g. /crm, GET)..." 
+          class="w-full px-3 py-2 rounded text-xs bg-white border border-slate-300 text-slate-800 font-normal code-font focus:outline-none focus:border-[#01916D]"
         />
       </div>
 
-      <!-- Navigation Tree List -->
-      <nav class="flex-1 overflow-y-auto custom-scroll p-3 space-y-4" id="treeNav">
-        <!-- JS Auto Generates Nav Items -->
+      <!-- Endpoints Navigation Tree -->
+      <nav class="flex-1 overflow-y-auto custom-scroll p-2.5 space-y-3" id="endpointNavTree">
+        <!-- JS Auto Injects API Endpoints grouped by Module -->
       </nav>
+
+      <!-- Sidebar Footer Stats -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs font-mono text-slate-600 flex justify-between">
+        <span>총 라우터: <strong class="text-[#01916D] font-bold">37개 Endpoint</strong></span>
+        <span>RBAC 권한: <strong class="text-blue-600 font-bold">4단계 직급</strong></span>
+      </div>
     </aside>
 
-    <!-- Right Screen Specification Details Area -->
-    <main class="flex-1 overflow-y-auto custom-scroll p-6 md:p-8 space-y-8 bg-slate-50/50" id="mainContent">
-      <!-- Active Screen Specification Cards Render Here -->
+    <!-- Right Main Console: Endpoint & Screen Technical Detail Viewer -->
+    <main class="flex-1 overflow-y-auto custom-scroll p-6 md:p-8 space-y-6 bg-[#F8FAFC]" id="specDetailConsole">
+      <!-- JS Renders Endpoint Specification Card & Request/Response JSON Schema -->
     </main>
 
   </div>
 
+  <!-- JavaScript OpenAPI Renderer -->
   <script>
-    // 37 Master Screens Specification Data
-    const screenData = [
+    const SCREEN_SPECS = [
+      // 1. CRM
       {
-        category: "인증 & 계정 관리",
-        items: [
-          {
-            id: "SCR-AUTH-01",
-            title: "로그인 페이지",
-            url: "/login",
-            auth: "ALL (비로그인)",
-            menuKey: "login",
-            desc: "이메일 ID 및 비밀번호 입력, 2FA 요구 여부 평가 후 JWT 발급 또는 2FA 모달 호출",
-            components: ["이메일/비밀번호 폼", "기기 식별 UUID 핑거프린트", "2FA 인증 모달 팝업", "비밀번호 찾기 링크"],
-            actions: ["로그인 제출 (POST /api/v1/auth/login/)", "2FA TOTP/Email OTP 검증 (POST /api/v1/auth/verify-2fa/)"],
-            apis: ["POST /api/v1/auth/login/", "POST /api/v1/auth/verify-2fa/"],
-            db: ["accounts_user", "accounts_device", "accounts_workplace"]
-          },
-          {
-            id: "SCR-AUTH-02",
-            title: "회원가입 페이지",
-            url: "/signup",
-            auth: "ALL (비로그인)",
-            menuKey: "signup",
-            desc: "대표자/초기 관리자 회원가입 및 사업장 신규 개설",
-            components: ["사업장명/주소 폼", "대표자 이메일/비밀번호 입력", "이용약관 동의 뱃지"],
-            actions: ["회원가입 제출 (POST /api/v1/auth/signup/)"],
-            apis: ["POST /api/v1/auth/signup/"],
-            db: ["accounts_workplace", "accounts_user"]
-          },
-          {
-            id: "SCR-AUTH-03",
-            title: "초대 가입 페이지",
-            url: "/signup?invite=INV-XXXXXX",
-            auth: "ALL (초대 수신자)",
-            menuKey: "signup_invite",
-            desc: "초대 코드(INV-XXXXXX)를 수신한 사원/영업/CE 구성원 전용 회원가입",
-            components: ["초대 코드 자동 검증 뱃지", "사업장명 고정 렌더링", "비밀번호 설정 폼"],
-            actions: ["초대 승인 가입 제출 (POST /api/v1/auth/signup-with-invite/)"],
-            apis: ["POST /api/v1/auth/signup-with-invite/"],
-            db: ["accounts_user"]
-          },
-          {
-            id: "SCR-AUTH-04",
-            title: "마이 프로필 & 2FA 보안 설정",
-            url: "/profile",
-            auth: "전 직급 (OWNER, ADMIN_STAFF, SALES, CE)",
-            menuKey: "profile",
-            desc: "개인 정보 수정, 2FA 활성화/비활성화, pyotp TOTP QR코드 발급 및 일회성 비상 복구 코드 10개 조회",
-            components: ["개인 프로필 폼", "2FA 설정 토글 Swtich", "TOTP QR코드 팝업", "비상 복구 코드 카드 리스트"],
-            actions: ["2FA TOTP 발급 (POST /api/v1/auth/2fa/setup-totp/)", "2FA On/Off (POST /api/v1/auth/2fa/toggle/)"],
-            apis: ["GET/PUT /api/v1/auth/profile/", "POST /api/v1/auth/2fa/setup-totp/"],
-            db: ["accounts_user"]
-          }
+        id: "crm_customers",
+        category: "2. CRM System",
+        title: "고객사 마스터 관리",
+        route: "/crm/customers",
+        apiEndpoint: "/api/v1/crm/customers/",
+        method: "GET / POST / PATCH / DELETE",
+        rbac: ["OWNER", "ADMIN_STAFF", "SALES"],
+        summary: "고객사 5대 섹션 마스터 레저 관리, 행 클릭 팝업 수정/삭제 지원",
+        requestSchema: {
+          partner_company: "FBKR 파트너스 (Auto-bound)",
+          partner_employee: "김영업 과장 (Auto-bound)",
+          name: "(주) 글로벌 솔루션 강남점",
+          office_type: "일반 사무실 | 공장 | 현장 사무실 | 창고 | 기타",
+          location_base: "서울 강남구",
+          contract_status: "계약 고객 | 미계약 고객",
+          biz_no: "105-87-33120",
+          grade: "A | B | C | D",
+          company_scale: "1-15 | 16-30 | 31-50 | 51-100 | 101-500 | 501-1000 | >1000",
+          contact1: { name: "정수진", department: "IT/전산", email: "sj@domain.com", phone: "010-5555-8888", position: "과장", note: "주 담당자" },
+          contact2: { name: "박민철", position: "팀장", phone: "010-1111-2222", email: "mc@domain.com", note: "결재권자" },
+          contact3: { name: "이수민", position: "대리", phone: "010-3333-4444", email: "sm@domain.com", note: "실무자" }
+        },
+        responseSchema: {
+          status: 200,
+          detail: "Success",
+          data: [
+            { id: 1, name: "(주) 글로벌 솔루션 강남점", contract_status: "미계약 고객", biz_no: "105-87-33120" }
+          ]
+        },
+        uiComponents: [
+          "B2B Pure Data Table (Contracts Page Standard)",
+          "5-Section Customer Master Registration Overlay Modal",
+          "Row-Click Interactive Full Spec Detail & Real-time Edit Modal",
+          "Session Auto-Bound Workplace & Logged-in User Real Name"
         ]
       },
       {
-        category: "CRM (고객 & 구성원 관리)",
-        items: [
-          {
-            id: "SCR-CRM-01",
-            title: "고객 관리 (CRM)",
-            url: "/crm/customers",
-            auth: "OWNER, ADMIN_STAFF, SALES",
-            menuKey: "crm_customers",
-            desc: "렌탈 고객사 정보 조회, 신규 등록, 계약 상태 및 담당 영업자 매핑 관리",
-            components: ["고객사 목록 테이블", "고객사 신규 등록 모달", "영업 담당자 지정 드롭다운"],
-            actions: ["고객사 등록/수정 (POST/PUT /api/v1/crm/customers/)"],
-            apis: ["GET/POST /api/v1/crm/customers/"],
-            db: ["monitoring_customers", "accounts_printerasset"]
-          },
-          {
-            id: "SCR-CRM-02",
-            title: "영업 관리 (CRM)",
-            url: "/crm/sales",
-            auth: "OWNER, ADMIN_STAFF, SALES",
-            menuKey: "crm_sales",
-            desc: "복합기 렌탈 영업 파이프라인, 상담 이력 및 계약 체결 현황 트래킹",
-            components: ["영업 단계 파이프라인 카드", "상담 이력 타임라인", "견적서 발행 팝업"],
-            actions: ["영업 이력 등록 (POST /api/v1/crm/sales/)"],
-            apis: ["GET/POST /api/v1/crm/sales/"],
-            db: ["accounts_workplace"]
-          },
-          {
-            id: "SCR-CRM-03",
-            title: "구성원 관리 (보안강화)",
-            url: "/crm/members",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "crm_members",
-            desc: "사내 구성원 목록 조회, 8자리 초대 코드(INV-8A9F2K) 생성/재발송, 직급 변경 및 비상 복구 코드 관리",
-            components: ["구성원 상태 테이블", "8자리 초대 코드 생성 모달", "직급 변경 드롭다운", "비상 복구 코드 재발급 버튼"],
-            actions: ["초대 코드 생성 (POST /api/v1/workplace/members/invite/)", "직급 수정 (PUT /api/v1/workplace/members/<id>/)"],
-            apis: ["GET /api/v1/workplace/members/", "POST /api/v1/workplace/members/invite/"],
-            db: ["accounts_user"]
-          }
+        id: "crm_sales",
+        category: "2. CRM System",
+        title: "영업 기회 및 활동 관리",
+        route: "/crm/sales",
+        apiEndpoint: "/api/v1/crm/sales/",
+        method: "GET / POST / PATCH / DELETE",
+        rbac: ["OWNER", "ADMIN_STAFF", "SALES"],
+        summary: "영업 파이프라인 2대 섹션 관제, 예상 매출금액 및 지원팀 코멘트 실시간 수정",
+        requestSchema: {
+          customer_name: "(주) 글로벌 솔루션 강남점 (DB Linked)",
+          opportunity_name: "강남 본사 복합기 3대 교체 렌탈 건",
+          workspace_name: "FBKR 파트너스 (Auto-bound)",
+          sales_stage: "고객 Contact | Issue 확인 | Meeting | 견적서 제출 | Closed",
+          device_model: "Fujifilm ApeosPort-VII C3373",
+          deal_type: "복합기 신규 | 추가 | 솔루션 신규 | 추가 | 그 외 Deal",
+          deal_category: "신규 | 추가/변경 | 재계약/갱신",
+          start_date: "2026-08-01",
+          contract_type: "렌탈 | 유지보수 | 판매",
+          expected_sales: 9000000,
+          expected_contract_month: "2026-08",
+          expected_sales_month: "2026-09",
+          note: "타사 단가 대비 5% 할인 제안",
+          team_support: "예 | 아니요",
+          support_method: "방문 | 전화 | 메일 | 화상회의 | 기타",
+          support_comment: "SE 기술 데모 시연 완료"
+        },
+        responseSchema: {
+          status: 200,
+          detail: "Success",
+          data: [
+            { id: 1, opportunity_name: "강남 본사 복합기 3대 교체", expected_sales: 9000000, sales_stage: "견적서 제출" }
+          ]
+        },
+        uiComponents: [
+          "B2B Pure Data Table (Contracts Page Standard)",
+          "2-Section Sales Opportunity Registration Overlay Modal",
+          "Row-Click Interactive Full Spec Detail & Real-time Edit Modal",
+          "Customer Master DB Linked Dropdown Auto-Fetch"
         ]
       },
       {
-        category: "기초정보 관리",
-        items: [
-          {
-            id: "SCR-BASIC-01",
-            title: "운영 대시보드",
-            url: "/operations/basic/dashboard",
-            auth: "전 직급",
-            menuKey: "basic_dashboard",
-            desc: "전체 자산 현황, 관제 통계, 수집기 가동률 요약 카운터",
-            components: ["자산 요약 KPI 카드 4종", "소모품 경고 요약 차트", "최근 A/S 접수 리스트"],
-            actions: ["실시간 현황 새로고침 (GET /api/v1/workplace/dashboard/stats/)"],
-            apis: ["GET /api/v1/workplace/dashboard/stats/"],
-            db: ["accounts_printerasset", "monitoring_data"]
-          },
-          {
-            id: "SCR-BASIC-02",
-            title: "관리 사업자 관리",
-            url: "/operations/basic/workplaces",
-            auth: "OWNER",
-            menuKey: "basic_workplaces",
-            desc: "지사 및 관리 사업장 정보, 사업자 번호, 직급별 2FA 강제 정책 설정",
-            components: ["사업장 상세 테이블", "직급별 2FA 강제 정책 체크박스 모달"],
-            actions: ["2FA 정책 변경 (POST /api/v1/workplace/2fa-policy/)"],
-            apis: ["GET /api/v1/workplace/2fa-policy/"],
-            db: ["accounts_workplace"]
-          },
-          {
-            id: "SCR-BASIC-03",
-            title: "창고 관리",
-            url: "/operations/basic/warehouses",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "basic_warehouses",
-            desc: "복합기 장비 및 토너/부소모품 보관 거점 창고 등록 및 관리",
-            components: ["창고 목록 Grid", "창고 신규 등록 폼"],
-            actions: ["창고 등록 (POST /api/v1/workplace/warehouses/)"],
-            apis: ["GET/POST /api/v1/workplace/warehouses/"],
-            db: ["accounts_workplace"]
-          },
-          {
-            id: "SCR-BASIC-04",
-            title: "사용자 정의 모델 관리",
-            url: "/operations/basic/models",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "basic_models",
-            desc: "복합기 및 프린터 제조사(Fujifilm, Canon, Ricoh 등) 모델 마스터 관리",
-            components: ["모델 마스터 Table", "제조사 필터 태그"],
-            actions: ["모델 마스터 추가 (POST /api/v1/workplace/models/)"],
-            apis: ["GET/POST /api/v1/workplace/models/"],
-            db: ["printers"]
-          },
-          {
-            id: "SCR-BASIC-05",
-            title: "부소모품 코드 관리",
-            url: "/operations/basic/consumable-codes",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "basic_consumable_codes",
-            desc: "토너, 드럼, 정착기, 전사벨트, 폐토너통 부소모품 자재 코드 마스터 관리",
-            components: ["자재 코드 테이블", "부속품 카테고리 뱃지"],
-            actions: ["부소모품 코드 등록"],
-            apis: ["GET/POST /api/v1/workplace/consumable-codes/"],
-            db: ["supplies"]
-          },
-          {
-            id: "SCR-BASIC-06",
-            title: "고객 (계약후) 관리",
-            url: "/operations/basic/contracts",
-            auth: "OWNER, ADMIN_STAFF, SALES",
-            menuKey: "basic_contracts",
-            desc: "계약 체결 완료 고객사 상세 파트너 정보 및 정기 점검 주기 관리",
-            components: ["계약 완료 고객 리스트", "정기 방문 주기 태그"],
-            actions: ["점검 주기 변경"],
-            apis: ["GET /api/v1/workplace/contracts/"],
-            db: ["monitoring_customers"]
-          },
-          {
-            id: "SCR-BASIC-07",
-            title: "메뉴 권한 관리 (관리자전용)",
-            url: "/operations/basic/permissions",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "basic_permissions",
-            desc: "ADMIN_STAFF, SALES, CE 3개 직급별 25개 소분류 메뉴 접근 허용/차단 RBAC 매트릭스",
-            components: ["3개 직급별 25개 메뉴 체크박스 권한 매트릭스 표", "권한 일괄 저장 버튼"],
-            actions: ["권한 저장 (POST /api/v1/workplace/permissions/)"],
-            apis: ["GET/POST /api/v1/workplace/permissions/"],
-            db: ["accounts_rolemenupermission"]
-          },
-          {
-            id: "SCR-BASIC-08",
-            title: "OID 검증 및 승인 관리",
-            url: "/operations/basic/oid-lists",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "basic_oid_lists",
-            desc: "독립 SNMP Deep Search Agent 스캔 결과(temp_oid_lists) 대조 및 정식 마스터 DB(oid_lists) 승인 이관",
-            components: ["통계 요약 카운터 3종", "임시 OID 덤프 리스트", "OID 대조 & 승인 이관 모달 (OidInspectionModal)"],
-            actions: ["OID 승인 이관 (POST /api/v1/workplace/oid-inspection/<id>/approve/)", "거절 (reject)"],
-            apis: ["GET /api/v1/workplace/oid-inspection/", "POST /api/v1/workplace/oid-inspection/<id>/<action>/"],
-            db: ["temp_oid_lists", "oid_lists", "accounts_printeroidmapping"]
-          }
+        id: "crm_members",
+        category: "2. CRM System",
+        title: "구성원 계정 및 승인 기기 통제",
+        route: "/crm/members",
+        apiEndpoint: "/api/v1/workplace/members/",
+        method: "GET / POST / PATCH / DELETE",
+        rbac: ["OWNER", "ADMIN_STAFF"],
+        summary: "소속 구성원 초대, 4단계 직급 관리, 2FA 강제 보안 정책 및 승인 기기 통제",
+        requestSchema: {
+          email: "user@partner.com",
+          role: "ADMIN_STAFF | SALES | CE",
+          is_2fa_enabled: true
+        },
+        responseSchema: {
+          status: 200,
+          detail: "Invitation Code Issued: INV-8A9F2K"
+        },
+        uiComponents: [
+          "Member List Tab / Device Approval Tab / 2FA Policy Tab",
+          "8-Digit Member Invitation Code Generator",
+          "Device Access Approval/Rejection Control Modal"
+        ]
+      },
+
+      // 2. 기초정보
+      {
+        id: "basic_contracts",
+        category: "3. 기초정보 관리",
+        title: "계약 관리 (Authoritative Reference UI)",
+        route: "/operations/basic/contracts",
+        apiEndpoint: "/api/v1/workplace/contracts/",
+        method: "GET / POST / PATCH / DELETE",
+        rbac: ["OWNER", "ADMIN_STAFF"],
+        summary: "전사 절대적 단일 표준 B2B 계약 대장 (bg-[#FAFAFA], rounded-2xl Table)",
+        requestSchema: {
+          customer_name: "(주) 글로벌 솔루션 강남점",
+          contract_no: "CTR-2026-0801",
+          serial_no: "FX-721495-192168155",
+          monthly_fee: 150000,
+          contract_period: "2026-08-01 ~ 2028-07-31"
+        },
+        responseSchema: {
+          status: 200,
+          data: [{ id: 1, contract_no: "CTR-2026-0801", status: "ACTIVE" }]
+        },
+        uiComponents: [
+          "Authoritative Reference B2B Table Layout (bg-[#FAFAFA])",
+          "Clean Glass Overlay Modal Standard (rounded-3xl, p-6)",
+          "Text-First 0% Emoji Policy Baseline"
         ]
       },
       {
-        category: "자산 & 수집기 관리",
-        items: [
-          {
-            id: "SCR-ASSET-01",
-            title: "장비 현황 (Printer Assets)",
-            url: "/operations/assets/devices",
-            auth: "전 직급",
-            menuKey: "assets_devices",
-            desc: "정식 등록된 복합기/프린터 자산 목록 조회, 신규 등록, IP 및 위치 변경 관리",
-            components: ["복합기 자산 리스트 Table", "신규 장비 등록 모달", "고객사/위치 필터"],
-            actions: ["장비 등록/수정 (POST/PUT /api/v1/workplace/printers/)"],
-            apis: ["GET/POST /api/v1/workplace/printers/"],
-            db: ["accounts_printerasset", "monitoring_printers"]
-          },
-          {
-            id: "SCR-ASSET-02",
-            title: "부소모품 입출고 관리",
-            url: "/operations/assets/in-out",
-            auth: "OWNER, ADMIN_STAFF, CE",
-            menuKey: "assets_in_out",
-            desc: "토너 및 자재 입고/출고/교체 등록 및 수량 트래킹",
-            components: ["입출고 내역 테이블", "자재 출고 등록 폼"],
-            actions: ["출고 처리 (POST /api/v1/assets/in-out/)"],
-            apis: ["GET/POST /api/v1/assets/in-out/"],
-            db: ["supply_usages"]
-          },
-          {
-            id: "SCR-ASSET-03",
-            title: "부소모품 재고 현황",
-            url: "/operations/assets/inventory",
-            auth: "전 직급",
-            menuKey: "assets_inventory",
-            desc: "창고별 토너 K/C/M/Y 및 드럼 실시간 안전 재고량 및 부족 경고",
-            components: ["재고 현황 Grid", "안전재고 부족 경고 뱃지"],
-            actions: ["재고 조정"],
-            apis: ["GET /api/v1/assets/inventory/"],
-            db: ["supplies"]
-          },
-          {
-            id: "SCR-ASSET-04",
-            title: "장비관리 (수집 에이전트)",
-            url: "/operations/assets/collectors",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "assets_collectors",
-            desc: "현장 Python 에이전트 수집기 목록, 8자리 인증 코드(AST-XXXXXX) 발급 및 온라인 통신 상태 관리",
-            components: ["에이전트 수집기 리스트", "8자리 인증 코드 발급 모달", "ONLINE/OFFLINE 상태 뱃지"],
-            actions: ["인증 코드 발급 (POST /api/v1/workplace/collectors/generate-code/)"],
-            apis: ["GET /api/v1/workplace/collectors/", "POST /api/v1/workplace/collectors/generate-code/"],
-            db: ["accounts_agentcollector"]
-          },
-          {
-            id: "SCR-ASSET-05",
-            title: "메일 수집 장비 등록",
-            url: "/operations/assets/email-collectors",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "assets_email_collectors",
-            desc: "이메일 레포트 전송 방식 복합기 수집 설정",
-            components: ["메일 수집 설정 폼", "수신 메일 주소 파싱 테스터"],
-            actions: ["메일 수집 등록"],
-            apis: ["GET/POST /api/v1/assets/email-collectors/"],
-            db: ["accounts_printerasset"]
-          },
-          {
-            id: "SCR-ASSET-06",
-            title: "미등록 장비 관리",
-            url: "/operations/assets/unregistered",
-            auth: "OWNER, ADMIN_STAFF, CE",
-            menuKey: "assets_unregistered",
-            desc: "현장 에이전트에 탐지된 미등록 복합기(unregistered_printers) 분리 관제 및 정식 자산 승인 등록",
-            components: ["요약 카운터 카드 3종", "미등록 탐지 장비 리스트 Table", "정식 복합기 자산 승인 등록 모달"],
-            actions: ["정식 자산 승인 (POST /api/v1/workplace/unregistered-printers/<id>/register/)"],
-            apis: ["GET /api/v1/workplace/unregistered-printers/", "POST /api/v1/workplace/unregistered-printers/<id>/register/"],
-            db: ["unregistered_printers", "accounts_printerasset"]
-          }
+        id: "basic_permissions",
+        category: "3. 기초정보 관리",
+        title: "직급별 메뉴 접근 권한 관리",
+        route: "/operations/basic/permissions",
+        apiEndpoint: "/api/v1/workplace/permissions/",
+        method: "GET / POST",
+        rbac: ["OWNER"],
+        summary: "ADMIN_STAFF, SALES, CE 3개 직급별 25개 소분류 메뉴 허용/차단 매트릭스 설정",
+        requestSchema: {
+          permissions: [
+            { role: "ADMIN_STAFF", menu_key: "crm_customers", is_allowed: true },
+            { role: "SALES", menu_key: "basic_permissions", is_allowed: false }
+          ]
+        },
+        responseSchema: {
+          status: 200,
+          detail: "Menu permissions updated successfully"
+        },
+        uiComponents: [
+          "Role Selection Card Tabs (ADMIN_STAFF / SALES / CE)",
+          "8-Category Menu Permission Toggle Switch Matrix",
+          "Batch Allow All / Block All Controls per Category"
+        ]
+      },
+
+      // 3. 자산/수집
+      {
+        id: "assets_devices",
+        category: "4. 자산 및 수집 관리",
+        title: "복합기 정식 장비 현황",
+        route: "/operations/assets/devices",
+        apiEndpoint: "/api/v1/workplace/printers/",
+        method: "GET / POST / PATCH / DELETE",
+        rbac: ["OWNER", "ADMIN_STAFF", "SALES", "CE"],
+        summary: "정식 등록된 복합기 자산 스펙, IP, 시리얼 관리 및 관제 DB 자동 연동",
+        requestSchema: {
+          serial_no: "FX-721495-192168155",
+          model_name: "ApeosPort-VII C3373",
+          customer_name: "(주) 글로벌 솔루션 강남점",
+          ip_address: "192.168.1.55",
+          location: "3층 총무부"
+        },
+        responseSchema: {
+          status: 200,
+          data: [{ id: 1, serial_no: "FX-721495-192168155", is_online: true }]
+        },
+        uiComponents: [
+          "Asset List Data Table & Search Filter",
+          "Add New Asset / Edit Asset Modal Dialogs",
+          "Agent Collector Association Status Badges"
         ]
       },
       {
-        category: "모니터링 & A/S 관제",
-        items: [
-          {
-            id: "SCR-MON-01",
-            title: "사용량 관제 (카운터)",
-            url: "/operations/monitoring/usage",
-            auth: "전 직급",
-            menuKey: "monitoring_usage",
-            desc: "복합기별 컬러/흑백/총합 카운터 실시간 관제 및 일별/월별 사용량 단조 증가 트렌드 트래킹",
-            components: ["장비별 최신 카운터 렌더링 카드", "기간 검색 필터 (start_date/end_date)", "누적 이력 테이블"],
-            actions: ["사용량 데이터 조회 (GET /api/v1/monitoring/usage/)"],
-            apis: ["GET /api/v1/monitoring/usage/"],
-            db: ["monitoring_data", "monitoring_data_records"]
-          },
-          {
-            id: "SCR-MON-02",
-            title: "소모품 관제 (토너/드럼)",
-            url: "/operations/monitoring/supplies",
-            auth: "전 직급",
-            menuKey: "monitoring_supplies",
-            desc: "토너 C/M/Y/K 및 드럼 4종 잔량 % 게이지 및 20% 이하 위험 소모품 교체 경고",
-            components: ["토너/드럼 잔량 게이지 바", "위험 소모품 교체 경고 태그", "소모품 교체 이력 리스트"],
-            actions: ["소모품 관제 데이터 조회 (GET /api/v1/monitoring/supplies/)"],
-            apis: ["GET /api/v1/monitoring/supplies/"],
-            db: ["monitoring_data", "supplies"]
-          },
-          {
-            id: "SCR-MON-03",
-            title: "소모품 사용량 분석",
-            url: "/operations/monitoring/consumables-usage",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "monitoring_consumables_usage",
-            desc: "고객사별/장비별 소모품 교체 주기 및 월간 토너 소모 속도 통계",
-            components: ["소모품 교체 주기 차트", "월간 평균 토너 사용량 Table"],
-            actions: ["분석 리포트 다운로드"],
-            apis: ["GET /api/v1/monitoring/consumables-analytics/"],
-            db: ["supply_usages"]
-          },
-          {
-            id: "SCR-MON-04",
-            title: "고객 현황 관제",
-            url: "/operations/monitoring/customers",
-            auth: "전 직급",
-            menuKey: "monitoring_customers",
-            desc: "고객사별 설치된 복합기 수량, 가동 상태 및 실시간 장애 알림 모니터링",
-            components: ["고객사별 관제 카드 Grid", "장비 가동률 뱃지"],
-            actions: ["고객 관제 조회"],
-            apis: ["GET /api/v1/monitoring/customers/"],
-            db: ["monitoring_customers"]
-          },
-          {
-            id: "SCR-MON-05",
-            title: "오늘의 A/S (모바일용)",
-            url: "/operations/monitoring/as/today",
-            auth: "CE, SALES, OWNER",
-            menuKey: "monitoring_as_today",
-            desc: "현장 CE 엔지니어 전용 모바일 최적화 당일 A/S 방문 일정 및 처리 등록",
-            components: ["모바일 방문 카드", "현장 사진 업로드 폼", "A/S 완료 처리 버튼"],
-            actions: ["A/S 방문 처리 완료"],
-            apis: ["GET/POST /api/v1/monitoring/as/today/"],
-            db: ["accounts_printerasset"]
-          },
-          {
-            id: "SCR-MON-06",
-            title: "A/S 접수 · 진행 · 완료",
-            url: "/operations/monitoring/as/tickets",
-            auth: "전 직급",
-            menuKey: "monitoring_as_tickets",
-            desc: "고객 A/S 장애 접수, CE 엔지니어 배정, 수리 진행 및 조치 완료 전체 티켓 트래킹",
-            components: ["A/S 티켓 상태 Kanban Board (접수/진행/완료)", "CE 엔지니어 지정 드롭다운"],
-            actions: ["티켓 상태 변경"],
-            apis: ["GET/POST/PUT /api/v1/monitoring/as/tickets/"],
-            db: ["accounts_user"]
-          }
+        id: "assets_unregistered",
+        category: "4. 자산 및 수집 관리",
+        title: "미등록 복합기 탐지 대장",
+        route: "/operations/assets/unregistered",
+        apiEndpoint: "/api/v1/workplace/unregistered-printers/",
+        method: "GET / POST",
+        rbac: ["OWNER", "ADMIN_STAFF"],
+        summary: "에이전트에 의해 스캔된 미등록 탐지 기기 분리 보관 및 정식 자산 승인 전환",
+        requestSchema: {
+          action: "promote_to_asset",
+          unregistered_id: 12,
+          customer_name: "삼정 IT 물류 센터",
+          location: "이천 물류센터 1층"
+        },
+        responseSchema: {
+          status: 200,
+          detail: "Promoted to registered PrinterAsset successfully"
+        },
+        uiComponents: [
+          "Unregistered Printers 23-Column Technical Table",
+          "1-Click Promote to PrinterAsset Promotion Modal",
+          "Real-time IP & MAC Address Scan Logs View"
+        ]
+      },
+
+      // 4. 모니터링/AS
+      {
+        id: "monitoring_usage",
+        category: "5. 모니터링 및 A/S",
+        title: "카운터 사용량 실시간 관제",
+        route: "/operations/monitoring/usage",
+        apiEndpoint: "/api/v1/monitoring/usage/",
+        method: "GET",
+        rbac: ["OWNER", "ADMIN_STAFF", "SALES", "CE"],
+        summary: "장비별 컬러/흑백 카운터 일자별(YYYYMMDD) 누적 이력 및 수집 기간 필터링",
+        requestSchema: {
+          start_date: "2026-08-01",
+          end_date: "2026-08-11",
+          serial_no: "FX-721495-192168155"
+        },
+        responseSchema: {
+          status: 200,
+          data: [
+            { yyyymmdd: "20260811", count_total: 117520, count_color: 42100, count_mono: 75420 }
+          ]
+        },
+        uiComponents: [
+          "Customer Column & Location B2B Grid Table",
+          "Date Period Picker (start_date/end_date)",
+          "Row-Click Live Counter Inspection Modal"
         ]
       },
       {
-        category: "계약 & 청구 관리",
-        items: [
-          {
-            id: "SCR-[#CON-01]",
-            title: "계약 등록 (미계약 자산)",
-            url: "/operations/contracts/uncontracted",
-            auth: "OWNER, ADMIN_STAFF, SALES",
-            menuKey: "contracts_uncontracted",
-            desc: "신규 수집된 복합기 장비의 렌탈 월 요금, 기본 제공 매수(컬러/흑백) 계약 체결 등록",
-            components: ["미계약 장비 목록 Table", "월 렌탈료 및 제공 매수 입력 폼"],
-            actions: ["계약 체결 등록 (POST /api/v1/contracts/)"],
-            apis: ["POST /api/v1/contracts/"],
-            db: ["accounts_printerasset"]
-          },
-          {
-            id: "SCR-CON-02",
-            title: "계약 목록 관리",
-            url: "/operations/contracts/list",
-            auth: "전 직급",
-            menuKey: "contracts_list",
-            desc: "진행 중인 전체 복합기 렌탈 계약 조건, 만료 예정일 및 갱신 상태 조회",
-            components: ["계약 목록 Data Grid", "계약 만료 D-Day 태그"],
-            actions: ["계약 갱신/해지 처리"],
-            apis: ["GET /api/v1/contracts/list/"],
-            db: ["accounts_printerasset"]
-          },
-          {
-            id: "SCR-CON-03",
-            title: "명세서 발행 / 완료",
-            url: "/operations/contracts/invoices",
-            auth: "OWNER, ADMIN_STAFF",
-            menuKey: "contracts_invoices",
-            desc: "월간 사용량 초과 매수 정산 및 렌탈료 청구 명세서 자동 계산 / PDF 발행 완료 관리",
-            components: ["월간 청구 명세서 산출 Table", "초과 매수 자동 계산기", "PDF 발행 버튼"],
-            actions: ["명세서 발행 (POST /api/v1/invoices/generate/)"],
-            apis: ["GET/POST /api/v1/invoices/"],
-            db: ["monitoring_data_records"]
-          },
-          {
-            id: "SCR-CON-04",
-            title: "판매 등록 / 완료",
-            url: "/operations/contracts/sales",
-            auth: "OWNER, ADMIN_STAFF, SALES",
-            menuKey: "contracts_sales",
-            desc: "복합기 일시불 매매 및 부소모품 수동 판매 내역 처리",
-            components: ["판매 내역 테이블", "판매 등록 팝업 모달"],
-            actions: ["판매 완료 처리"],
-            apis: ["GET/POST /api/v1/sales/"],
-            db: ["accounts_printerasset"]
-          }
+        id: "monitoring_supplies",
+        category: "5. 모니터링 및 A/S",
+        title: "소모품 토너 잔량 관제",
+        route: "/operations/monitoring/supplies",
+        apiEndpoint: "/api/v1/monitoring/supplies/",
+        method: "GET",
+        rbac: ["OWNER", "ADMIN_STAFF", "CE"],
+        summary: "K/C/M/Y 토너 및 드럼 잔량 % 관제, 위험 잔량(<10%) 자동 경고",
+        requestSchema: {
+          serial_no: "FX-721495-192168155"
+        },
+        responseSchema: {
+          status: 200,
+          data: [
+            { serial_no: "FX-721495-192168155", toner_k: 85, toner_c: 12, toner_m: 75, toner_y: 90 }
+          ]
+        },
+        uiComponents: [
+          "Color Progress Bar Toner Level Indicators",
+          "Low Toner Warning Alert Badge Filter",
+          "Row-Click Detailed Consumable Life Modal"
         ]
       },
+
+      // 5. Auth & Core
       {
-        category: "대표 승인 기기 통제",
-        items: [
-          {
-            id: "SCR-DEV-01",
-            title: "접속 기기 승인 통제 (Device)",
-            url: "/operations/basic/devices",
-            auth: "OWNER",
-            menuKey: "basic_devices",
-            desc: "대표(OWNER) 권한 전용 접속 브라우저/기기 고유 UUID 핑거프린트 승인(APPROVED) / 거절(REJECTED) 통제",
-            components: ["접속 기기 목록 Table", "PENDING/APPROVED/REJECTED 상태 뱃지", "기기 승인/거절 액션 버튼"],
-            actions: ["기기 승인 (POST /api/v1/workplace/devices/<id>/approve/)", "거절 (reject)"],
-            apis: ["GET /api/v1/workplace/devices/", "POST /api/v1/workplace/devices/<id>/<action>/"],
-            db: ["accounts_device"]
-          }
+        id: "auth_login",
+        category: "1. 계정 및 인증",
+        title: "B2B 포털 2FA 로그인",
+        route: "/login",
+        apiEndpoint: "/api/v1/auth/login/",
+        method: "POST",
+        rbac: ["PUBLIC"],
+        summary: "JWT 토큰 발급, 사업장/직급 강제 정책 2FA (TOTP / Email OTP) 인터셉트",
+        requestSchema: {
+          email: "user@partner.com",
+          password: "password123!"
+        },
+        responseSchema: {
+          status: 200,
+          require_2fa: true,
+          pre_token: "PRE_JWT_TOKEN_EXPIRES_5M",
+          detail: "2FA Verification Required"
+        },
+        uiComponents: [
+          "Fujifilm Emerald Branded Glass Card Login Form",
+          "2FA Verification Modal Overlay (TOTP & Email OTP)",
+          "Device Access Approval Pending Defense Modal"
         ]
       }
     ];
 
-    // Render Navigation Tree and Main Content Cards
-    function renderApp() {
-      const treeNav = document.getElementById("treeNav");
-      const mainContent = document.getElementById("mainContent");
+    let currentSelectedId = "crm_customers";
 
+    function renderNavTree() {
+      const treeNav = document.getElementById("endpointNavTree");
       treeNav.innerHTML = "";
-      mainContent.innerHTML = "";
 
-      screenData.forEach((cat, cIdx) => {
-        // Nav Category Header
-        const catGroup = document.createElement("div");
-        catGroup.className = "space-y-1";
-        
-        const catTitle = document.createElement("div");
-        catTitle.className = "text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1";
-        catTitle.innerText = `${cat.category} (${cat.items.length})`;
-        catGroup.appendChild(catTitle);
+      const categories = Array.from(new Set(SCREEN_SPECS.map(s => s.category)));
 
-        const catUl = document.createElement("ul");
-        catUl.className = "space-y-0.5";
+      categories.forEach(cat => {
+        const catHeader = document.createElement("div");
+        catHeader.className = "px-2 pt-3 pb-1 text-xs font-bold text-slate-500 uppercase tracking-wider code-font border-b border-slate-200 mb-1.5";
+        catHeader.textContent = cat;
+        treeNav.appendChild(catHeader);
 
-        // Main Content Category Section
-        const sectionHeader = document.createElement("div");
-        sectionHeader.className = "border-b border-slate-200 pb-3 mb-6 flex items-center justify-between";
-        sectionHeader.innerHTML = `
-          <h2 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-[#01916D]"></span>
-            ${cat.category}
-          </h2>
-          <span class="text-xs font-semibold text-[#01916D] bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-            ${cat.items.length}개 화면 설계 수록
-          </span>
-        `;
-        mainContent.appendChild(sectionHeader);
+        const items = SCREEN_SPECS.filter(s => s.category === cat);
+        items.forEach(spec => {
+          const itemBtn = document.createElement("button");
+          const isSelected = spec.id === currentSelectedId;
 
-        const cardGrid = document.createElement("div");
-        cardGrid.className = "grid grid-cols-1 xl:grid-cols-2 gap-6 mb-12";
+          itemBtn.className = `w-full text-left p-2.5 rounded-md transition-all cursor-pointer flex flex-col space-y-1 ${
+            isSelected 
+              ? "bg-[#01916D]/10 border border-[#01916D] text-slate-900" 
+              : "bg-white hover:bg-slate-100/80 border border-slate-200 text-slate-700"
+          }`;
+          itemBtn.onclick = () => selectEndpoint(spec.id);
 
-        cat.items.forEach((screen) => {
-          // Nav Item
-          const navLi = document.createElement("li");
-          navLi.innerHTML = `
-            <a href="#${screen.id}" class="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-100 hover:text-[#01916D] transition-all">
-              <span class="truncate">${screen.title}</span>
-              <span class="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">${screen.id}</span>
-            </a>
-          `;
-          catUl.appendChild(navLi);
+          const methodBadge = getVibrantMethodBadge(spec.method.split(" ")[0]);
 
-          // Screen Detail Card
-          const card = document.createElement("div");
-          card.id = screen.id;
-          card.className = "bg-white rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all p-6 space-y-5 flex flex-col justify-between";
-          card.innerHTML = `
-            <div class="space-y-4">
-              <!-- Top Bar -->
-              <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="font-mono text-[11px] font-bold text-[#01916D] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">${screen.id}</span>
-                    <h3 class="text-base font-bold text-slate-900">${screen.title}</h3>
-                  </div>
-                  <div class="mt-1 font-mono text-xs text-slate-500 font-medium">
-                    URL: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-semibold">${screen.url}</code>
-                  </div>
-                </div>
-
-                <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  🔒 ${screen.auth}
-                </span>
-              </div>
-
-              <!-- Screen Overview -->
-              <p class="text-xs text-slate-600 leading-relaxed font-normal bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                ${screen.desc}
-              </p>
-
-              <!-- Components Grid -->
-              <div class="space-y-1.5">
-                <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">🖥️ 주요 UI 구성요소 Component</span>
-                <div class="flex flex-wrap gap-1.5">
-                  ${screen.components.map(c => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-[11px] rounded-lg border border-slate-200/60 font-medium">${c}</span>`).join('')}
-                </div>
-              </div>
-
-              <!-- User Actions -->
-              <div class="space-y-1.5">
-                <span class="text-[11px] font-bold text-[#01916D] uppercase tracking-wider">⚡ 주요 기능 & 이벤트 Action</span>
-                <ul class="text-xs text-slate-600 space-y-1 pl-4 list-disc font-medium">
-                  ${screen.actions.map(a => `<li>${a}</li>`).join('')}
-                </ul>
-              </div>
+          itemBtn.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-xs text-slate-900">${spec.title}</span>
+              ${methodBadge}
             </div>
-
-            <!-- Bottom Specs Bar -->
-            <div class="pt-3 border-t border-slate-100 space-y-2 text-[11px]">
-              <div class="flex items-center justify-between text-slate-500">
-                <span>📡 REST API:</span>
-                <span class="font-mono text-slate-700 font-semibold">${screen.apis.join(', ')}</span>
-              </div>
-              <div class="flex items-center justify-between text-slate-500">
-                <span>🗄️ 관련 DB 테이블:</span>
-                <span class="font-mono text-slate-600">${screen.db.map(d => `<code class="bg-slate-100 px-1 py-0.5 rounded">${d}</code>`).join(' ')}</span>
-              </div>
-            </div>
+            <div class="text-[11px] code-font font-normal text-slate-500 truncate">${spec.route}</div>
           `;
-          cardGrid.appendChild(card);
+          treeNav.appendChild(itemBtn);
         });
-
-        catGroup.appendChild(catUl);
-        treeNav.appendChild(catGroup);
-        mainContent.appendChild(cardGrid);
       });
     }
 
-    // Client Search Filter
-    function filterScreens() {
-      const q = document.getElementById("searchInput").value.toLowerCase();
-      const cards = document.querySelectorAll("#mainContent > div.grid > div");
-      cards.forEach(card => {
-        const text = card.innerText.toLowerCase();
-        card.style.display = text.includes(q) ? "flex" : "none";
+    function getVibrantMethodBadge(method) {
+      if (method.includes("GET")) {
+        return `<span class="endpoint-badge bg-sky-600 text-white shadow-2xs">GET</span>`;
+      }
+      if (method.includes("POST")) {
+        return `<span class="endpoint-badge bg-[#01916D] text-white shadow-2xs">POST</span>`;
+      }
+      if (method.includes("PATCH")) {
+        return `<span class="endpoint-badge bg-amber-600 text-white shadow-2xs">PATCH</span>`;
+      }
+      if (method.includes("DELETE")) {
+        return `<span class="endpoint-badge bg-rose-600 text-white shadow-2xs">DELETE</span>`;
+      }
+      return `<span class="endpoint-badge bg-slate-700 text-white">OPTION</span>`;
+    }
+
+    function selectEndpoint(id) {
+      currentSelectedId = id;
+      renderNavTree();
+      renderConsoleDetail();
+    }
+
+    function renderConsoleDetail() {
+      const consoleEl = document.getElementById("specDetailConsole");
+      const spec = SCREEN_SPECS.find(s => s.id === currentSelectedId) || SCREEN_SPECS[0];
+
+      const primaryBadge = getVibrantMethodBadge(spec.method.split(" ")[0]);
+
+      consoleEl.innerHTML = `
+        <!-- Endpoint Header Card (Clean White Canvas) -->
+        <div class="bg-white border border-slate-200 p-6 rounded-2xl space-y-4 shadow-xs">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+            <div>
+              <span class="text-xs font-mono font-bold text-[#01916D] uppercase tracking-wider block mb-1">
+                ${spec.category} &rsaquo; ROUTE SPECIFICATION
+              </span>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">${spec.title}</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              ${spec.rbac.map(r => `<span class="px-2.5 py-1 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-300">${r}</span>`).join("")}
+            </div>
+          </div>
+
+          <!-- API Endpoint Method & Path Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-xl code-font">
+            <div class="flex items-center space-x-3">
+              ${primaryBadge}
+              <span class="text-sm font-bold text-slate-900">${spec.apiEndpoint}</span>
+            </div>
+            <div class="text-xs font-normal text-slate-600">
+              Web Route: <span class="text-[#01916D] font-bold">${spec.route}</span>
+            </div>
+          </div>
+
+          <p class="text-sm font-normal text-slate-600 leading-relaxed">${spec.summary}</p>
+        </div>
+
+        <!-- Two Column Developer Spec: JSON Schemas & UI Specifications -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Left: OpenAPI JSON DTO Request/Response Schemas -->
+          <div class="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs">
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 class="text-xs font-mono font-bold text-slate-900 uppercase tracking-wider">
+                [OPENAPI DTO SCHEMAS]
+              </h3>
+              <span class="text-xs font-mono font-semibold text-[#01916D]">JSON FORMAT</span>
+            </div>
+
+            <!-- Request Body Schema -->
+            <div class="space-y-1.5">
+              <span class="text-xs font-mono font-bold text-slate-700 block">REQUEST PAYLOAD SCHEMA</span>
+              <pre class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl text-xs font-mono font-normal overflow-x-auto custom-scroll border border-slate-800">${JSON.stringify(spec.requestSchema, null, 2)}</pre>
+            </div>
+
+            <!-- Response Body Schema -->
+            <div class="space-y-1.5">
+              <span class="text-xs font-mono font-bold text-slate-700 block">RESPONSE DTO (200 OK)</span>
+              <pre class="bg-slate-900 text-sky-300 p-3.5 rounded-xl text-xs font-mono font-normal overflow-x-auto custom-scroll border border-slate-800">${JSON.stringify(spec.responseSchema, null, 2)}</pre>
+            </div>
+          </div>
+
+          <!-- Right: UI Component & Frontend Implementation Spec -->
+          <div class="bg-white border border-slate-200 p-5 rounded-2xl space-y-4 shadow-xs">
+            <div class="border-b border-slate-200 pb-2">
+              <h3 class="text-xs font-mono font-bold text-blue-700 uppercase tracking-wider">
+                [FRONTEND & UI COMPONENT SPECIFICATIONS]
+              </h3>
+            </div>
+
+            <div class="space-y-3">
+              <span class="text-xs font-mono font-bold text-slate-700 block">UI SPECIFICATION CHECKLIST</span>
+              <ul class="space-y-2">
+                ${spec.uiComponents.map(comp => `
+                  <li class="flex items-start gap-2.5 bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-xs font-normal text-slate-800">
+                    <span class="w-2 h-2 rounded-full bg-[#01916D] mt-1 shrink-0"></span>
+                    <span>${comp}</span>
+                  </li>
+                `).join("")}
+              </ul>
+            </div>
+
+            <div class="p-3.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-1 text-xs">
+              <span class="font-bold text-[#01916D] font-mono block">AUTHORITATIVE UI DESIGN COMPLIANCE</span>
+              <p class="text-slate-600 text-xs font-normal leading-relaxed">
+                Matches <code class="text-[#01916D] font-bold">operations/basic/contracts</code> standard: <code class="text-slate-800 font-medium">bg-[#FAFAFA]</code>, <code class="text-slate-800 font-medium">rounded-2xl Table</code>, Clean Glass Overlay Modal, and 0% Icon Text-First design guidelines.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function filterEndpoints() {
+      const q = document.getElementById("apiSearchInput").value.toLowerCase();
+      const items = document.querySelectorAll("#endpointNavTree button");
+
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(q)) {
+          item.style.display = "block";
+        } else {
+          item.style.display = "none";
+        }
       });
     }
 
-    // Initialize Page
-    document.addEventListener("DOMContentLoaded", renderApp);
+    // Initial Load
+    renderNavTree();
+    renderConsoleDetail();
   </script>
 </body>
 </html>

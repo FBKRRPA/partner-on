@@ -128,11 +128,22 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
       key: "dashboard",
     },
     {
+      name: "파트너 관리자 (Admin)",
+      key: "partner_admin",
+      children: [
+        { name: "구성원 & 초대 코드 관리", href: "/crm/members", badge: "대표전용", key: "crm_members" },
+        { name: "직급별 메뉴 권한 관리", href: "/operations/basic/permissions", badge: "권한통제", key: "basic_permissions" },
+        { name: "2FA 보안 정책 & 기기 승인", href: "/crm/members", badge: "보안통제", key: "crm_members" },
+        { name: "소속 파트너 사업자 정보", href: "/operations/basic/workplaces", key: "basic_workplaces" },
+        { name: "계약 대장 & 명세서 관리", href: "/operations/basic/contracts", key: "basic_contracts" },
+      ],
+    },
+    {
       name: "CRM",
       children: [
-        { name: "고객관리", href: "/crm/customers", key: "crm_customers" },
-        { name: "영업관리", href: "/crm/sales", key: "crm_sales" },
-        { name: "구성원관리", href: "/crm/members", badge: "보안강화", key: "crm_members" },
+        { name: "고객관리 (계약 전)", href: "/crm/customers", key: "crm_customers" },
+        { name: "영업관리 (기회)", href: "/crm/sales", key: "crm_sales" },
+        { name: "구성원관리 (관리자)", href: "/crm/members", badge: "보안강화", key: "crm_members" },
       ],
     },
     {
@@ -143,7 +154,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "창고", href: "/operations/basic/warehouses", key: "basic_warehouses" },
         { name: "사용자 정의 모델", href: "/operations/basic/models", key: "basic_models" },
         { name: "부소모품 코드", href: "/operations/basic/consumable-codes", key: "basic_consumable_codes" },
-        { name: "고객(계약후)", href: "/operations/basic/contracts", key: "basic_contracts" },
+        { name: "고객 (계약 후)", href: "/operations/basic/contracts", key: "basic_contracts" },
         { name: "메뉴 권한 관리", href: "/operations/basic/permissions", badge: "관리자전용", key: "basic_permissions" },
         { name: "OID 검증 및 승인", href: "/operations/basic/oid-lists", key: "basic_oid_lists" },
       ],
@@ -165,7 +176,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
         { name: "사용량", href: "/operations/monitoring/usage", key: "monitoring_usage" },
         { name: "소모품", href: "/operations/monitoring/supplies", key: "monitoring_supplies" },
         { name: "고객현황", href: "/operations/monitoring/customers", key: "monitoring_customers" },
-        { name: "오늘의 A/S (모바일용)", href: "/operations/monitoring/as/today", badge: "Mobile", key: "monitoring_as_today" },
+        { name: "오늘의 A/S (모바일)", href: "/operations/monitoring/as/today", badge: "Mobile", key: "monitoring_as_today" },
         { name: "A/S 접수 · 진행 · 완료", href: "/operations/monitoring/as/tickets", key: "monitoring_as_tickets" },
         { name: "부소모품 사용 현황", href: "/operations/monitoring/consumables-usage", key: "monitoring_consumables_usage" },
       ],
@@ -173,10 +184,10 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
     {
       name: "계약",
       children: [
-        { name: "계약 등록", href: "/operations/contracts/uncontracted", key: "contracts_uncontracted" },
+        { name: "미계약 장비", href: "/operations/contracts/uncontracted", key: "contracts_uncontracted" },
         { name: "계약 목록", href: "/operations/contracts/list", key: "contracts_list" },
-        { name: "명세서 발행/완료", href: "/operations/contracts/invoices", key: "contracts_invoices" },
-        { name: "판매 등록/완료", href: "/operations/contracts/sales", key: "contracts_sales" },
+        { name: "명세서 발행 / 완료", href: "/operations/contracts/invoices", key: "contracts_invoices" },
+        { name: "판매 등록 / 완료", href: "/operations/contracts/sales", key: "contracts_sales" },
       ],
     },
     {
@@ -189,8 +200,17 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
   // Helper to check if a specific menu key is allowed for current user role
   const isMenuKeyAllowed = (menuKey?: string) => {
     if (!menuKey || menuKey === "dashboard") return True;
-    if (userRole === "OWNER") return True; // OWNER is always allowed
-    if (menuKey === "basic_permissions" && userRole !== "ADMIN_STAFF") return False;
+
+    // Partner Admin category is STRICTLY EXCLUSIVE to HEADQUARTERS role only!
+    if (menuKey === "partner_admin") {
+      return userRole === "HEADQUARTERS";
+    }
+
+    if (userRole === "HEADQUARTERS" || userRole === "OWNER") return True; // HEADQUARTERS & OWNER have full access to general features
+
+    if (menuKey === "basic_permissions") {
+      return ["OWNER", "ADMIN_STAFF", "HEADQUARTERS"].includes(userRole);
+    }
 
     // Check DB permissions for ADMIN_STAFF, SALES, CE
     const match = permissions.find((p) => p.role === userRole && p.menu_key === menuKey);
@@ -205,6 +225,11 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
     ? []
     : masterMenuTree
         .map((category) => {
+          // Check if the parent category itself is disallowed (e.g. partner_admin for non-HEADQUARTERS)
+          if (category.key && !isMenuKeyAllowed(category.key)) {
+            return null;
+          }
+
           if (!category.children) {
             // Single menu (e.g. Home, Profile)
             return isMenuKeyAllowed(category.key) ? category : null;

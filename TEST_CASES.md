@@ -85,6 +85,14 @@
 | **TC-075** | CRM/구성원UI동기화 | 구성원관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Members Page UI Exactly to Contracts Page Standard | ✅ PASS |
 | **TC-076** | 기초정보/메뉴권한UI동기화 | 메뉴 권한 관리 페이지를 `기초정보관리 > 계약 관리` 표준 UI 규격과 100% 완벽 동기화 | Align Permissions Page UI Exactly to Contracts Page Standard | ✅ PASS |
 | **TC-077** | CRM/팝업내실시간수정 | CRM 고객/영업관리 행 클릭 팝업 모달 내 데이터 실시간 수정/저장/삭제 기능 구축 | Enable Real-time Data Edit & Delete Inside CRM Detail Modals | ✅ PASS |
+| **TC-078** | 문서/OpenAPI개편 | `docs/screen-specifications.html`을 Swagger/Redoc 스타일 개발자 명세서로 전면 개편 | Re-architect Screen Specification Document into OpenAPI Developer Spec | ✅ PASS |
+| **TC-079** | 네비게이션/다이어그램동기화 | 상단 메가 네비게이션 6대 영역 28개 소분류 라벨을 대표님 다이어그램 명세와 100% 완벽 동기화 | Align All 28 Navigation Sub-menu Labels Exactly to Diagram Spec | ✅ PASS |
+| **TC-080** | 계정/본사총괄마스터생성 | 본사 계정 `hyunryul.cho8.ji@fujifilm.com` 생성 및 `HEADQUARTERS` 전 메뉴 100% 통합 권한 구축 | Create HQ Master Account hyunryul.cho8.ji@fujifilm.com & HEADQUARTERS Role | ✅ PASS |
+| **TC-081** | 네비게이션/본사관리자메뉴신설 | 상단 메가 네비게이션에 `본사 관리자 (HQ)` 전용 5대 마스터 대분류 메뉴 독립 수록 | Add Dedicated HQ Admin Category with 5 Master Controls to Navigation | ✅ PASS |
+| **TC-082** | 권한통제/파트너관리자전용 | `파트너 관리자 (Admin)` 메뉴를 파트너사 대표/사무직원 관리자 직급에만 한정 노출 통제 | Restrict Partner Admin Menu strictly to Admin Roles (OWNER/ADMIN_STAFF/HQ) | ✅ PASS |
+| **TC-083** | 권한통제/HQ전용노출 | `파트너 관리자 (Admin)` 메뉴를 오직 `HEADQUARTERS` (본사 총괄 관리자) 계정에서만 노출 통제 | Restrict Partner Admin Menu Exclusively to HEADQUARTERS Role | ✅ PASS |
+| **TC-084** | 메뉴버그수정/상위카테고리검증 | `AppHeader.tsx` 상위 카테고리 `category.key` 검증 구문 추가로 `admin@partneron.co.kr` 메뉴 숨김 완벽 조치 | Fix Category.key Filter to 100% Hide Partner Admin for Non-HQ Roles | ✅ PASS |
+| **TC-085** | CRM구성원/CleanGlassModal팝업 | `/crm/members` 테이블 Row Click 및 `[수정]` 클릭 시 Clean Glass Overlay Modal 팝업 상세화면 완전 연동 | Implement Clean Glass Overlay Popup Modal for CRM Members Row Click & Edit | ✅ PASS |
 
 ---
 

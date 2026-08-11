@@ -49,6 +49,7 @@ class Workplace(models.Model):
 
 class User(AbstractUser):
     class Role(models.TextChoices):
+        HEADQUARTERS = "HEADQUARTERS", "본사 총괄 관리자"
         OWNER = "OWNER", "관리자(대표)"
         ADMIN_STAFF = "ADMIN_STAFF", "관리자(사무직원)"
         SALES = "SALES", "영업"
@@ -78,9 +79,13 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
+    def is_headquarters(self) -> bool:
+        """Check if user is Headquarter Master System Admin"""
+        return self.role == self.Role.HEADQUARTERS or self.is_superuser
+
     def is_admin(self) -> bool:
-        """Check if user has full admin access (관리자 대표 or 관리자 사무직원)"""
-        return self.role in [self.Role.OWNER, self.Role.ADMIN_STAFF] or self.is_superuser
+        """Check if user has full admin access (본사, 대표, 사무직원)"""
+        return self.role in [self.Role.HEADQUARTERS, self.Role.OWNER, self.Role.ADMIN_STAFF] or self.is_superuser
 
     def requires_2fa(self) -> bool:
         """Check if 2FA is required either by user setting or workplace role enforcement"""

@@ -4,6 +4,16 @@
 
 ---
 
+## 🚨 [최고 필수 준수 원칙] 사전 조사·계획 보고 & 사용자 명시적 승인 후 코드 수정 (Mandatory Approval Rule)
+
+* ⚠️ **[절대 금지]**: 사용자의 질문, 조사, 기능 요구사항에 대해 **사전 승인 없이 절대로 코드를 먼저 수정하거나 임의로 적용하지 않습니다.**
+* ✅ **[필수 절차 3단계 (Audit ➔ Propose/Report ➔ Wait Approval)]**:
+  1. **1단계 (현 상태 정밀 조사)**: 요청사항 관련 현재 소스코드 상태 및 단일 UI 표준과의 차이점을 정밀 감사합니다.
+  2. **2단계 (계획 보고 및 문서화)**: 조사 결과 및 구체적인 수술/개선 플랜을 자연어 및 `.md` 아티팩트 문서로 작성하여 보고합니다.
+  3. **3단계 (사용자 명시적 승인 대기)**: 대표님(사용자)의 **"승인 (진행해, 승인함 등)"** 지시를 확인한 후에만 비로소 코드를 수정하고 실전 검증을 진행합니다.
+
+---
+
 ## 📌 1. 프로젝트 개요 (Project Overview)
 * **프로젝트명**: PartnerOn (파트너온) v1.0
 * **시스템 성격**: B2B 사무기기 / 복합기 렌탈 자산 관리 및 통합 CRM/ERP 시스템
@@ -166,7 +176,7 @@
   * `id`: Primary Key
   * `email`: `EmailField(unique=True)` - 로그인 ID (USERNAME_FIELD)
   * `name`: `CharField(max_length=80)` - 유저 실명
-  * `role`: 4단계 Enum (`OWNER`: 관리자(대표), `ADMIN_STAFF`: 관리자(사무직원), `SALES`: 영업, `CE`: CE)
+  * `role`: 5단계 Enum (`HEADQUARTERS`: 본사 총괄 관리자, `OWNER`: 파트너사 대표, `ADMIN_STAFF`: 파트너사 사무직원, `SALES`: 영업, `CE`: CE)
   * `workplace_id`: ForeignKey (`Workplace` 참조)
   * `is_2fa_enabled`: Boolean - 개인 2FA 활성화 여부
   * `totp_secret`: `CharField(max_length=64)` - pyotp TOTP 비밀키

@@ -31,8 +31,10 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
 
   // Member state
   const [members, setMembers] = useState<MemberDto[]>([]);
-  const [viewMode, setViewMode] = useState<"LIST" | "CREATE" | "EDIT">("LIST");
   const [selectedMember, setSelectedMember] = useState<MemberDto | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Backup codes modal state
   const [backupModalOpen, setBackupModalOpen] = useState(false);
@@ -220,7 +222,7 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
       setMessage(`'${name}' 구성원에게 초대 코드 [${res.invite_code}]가 생성 및 발송되었습니다.`);
       setIsError(false);
       await loadMembers();
-      setViewMode("LIST");
+      setIsInviteModalOpen(false);
       setTimeout(() => setMessage(""), 5000);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "구성원 초대 발송에 실패했습니다.");
@@ -252,9 +254,10 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
       setMessage(`'${selectedMember.name}' 정보가 업데이트되었습니다.`);
       setIsError(false);
       await loadMembers();
+      setIsEditMode(false);
+      setIsDetailModalOpen(false);
+      setSelectedMember(null);
       setTimeout(() => {
-        setViewMode("LIST");
-        setSelectedMember(null);
         setMessage("");
       }, 1500);
     } catch (err) {
@@ -402,280 +405,385 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
 
       {/* TAB 1: 구성원 관리 */}
       {activeTab === "MEMBERS" && (
-        <>
-          {viewMode === "LIST" && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-[#333333]">소속 구성원 목록</h3>
-                <button
-                  onClick={() => {
-                    setViewMode("CREATE");
-                    setMessage("");
-                  }}
-                  className="px-4 py-2 text-xs font-bold text-white bg-[#01916D] hover:bg-[#006449] rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  + 새 구성원 초대 (초대코드 발송)
-                </button>
-              </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-[#333333]">소속 구성원 목록</h3>
+            <button
+              onClick={() => {
+                setIsInviteModalOpen(true);
+                setMessage("");
+              }}
+              className="px-4 py-2 text-xs font-bold text-white bg-[#01916D] hover:bg-[#006449] rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              + 새 구성원 초대 (초대코드 발송)
+            </button>
+          </div>
 
-              {fetching ? (
-                <div className="py-12 text-center text-slate-400 text-sm">
-                  구성원 정보를 불러오는 중...
-                </div>
-              ) : members.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                  등록된 구성원이 없습니다.
-                </div>
-              ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200">
-                  <table className="w-full text-left text-sm text-slate-700">
-                    <thead className="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
-                      <tr>
-                        <th className="py-3.5 px-4">이름</th>
-                        <th className="py-3.5 px-4">이메일</th>
-                        <th className="py-3.5 px-4">직급 (Role)</th>
-                        <th className="py-3.5 px-4">초대 코드</th>
-                        <th className="py-3.5 px-4">가입 상태</th>
-                        <th className="py-3.5 px-4 text-right">관리</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {members.map((m) => (
-                        <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-[#333333]">{m.name}</td>
-                          <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">{m.email}</td>
-                          <td className="py-3.5 px-4">{getRoleBadge(m.role)}</td>
-                          <td className="py-3.5 px-4">
-                            {m.invite_code ? (
-                              <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-800">
-                                <span>{m.invite_code}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyInviteCode(m.invite_code!)}
-                                  className="px-1.5 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded cursor-pointer"
-                                >
-                                  복사
-                                </button>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 text-xs">-</span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                m.is_invite_accepted
-                                  ? "bg-emerald-100 text-[#01916D]"
-                                  : "bg-amber-100 text-amber-800"
-                              }`}
-                            >
-                              {m.is_invite_accepted ? "가입 완료" : "초대 대기"}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 text-right space-x-2">
-                            {!m.is_invite_accepted && (
-                              <button
-                                onClick={() => handleReinvite(m)}
-                                disabled={loading}
-                                className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                              >
-                                초대 재발송
-                              </button>
-                            )}
+          {fetching ? (
+            <div className="py-12 text-center text-slate-400 text-sm">
+              구성원 정보를 불러오는 중...
+            </div>
+          ) : members.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              등록된 구성원이 없습니다.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+              <table className="w-full text-left text-sm text-slate-700">
+                <thead className="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3.5 px-4">이름</th>
+                    <th className="py-3.5 px-4">이메일</th>
+                    <th className="py-3.5 px-4">직급 (Role)</th>
+                    <th className="py-3.5 px-4">초대 코드</th>
+                    <th className="py-3.5 px-4">가입 상태</th>
+                    <th className="py-3.5 px-4 text-right">관리</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {members.map((m) => (
+                    <tr
+                      key={m.id}
+                      onClick={() => {
+                        setSelectedMember(m);
+                        setIsEditMode(false);
+                        setIsDetailModalOpen(true);
+                        setMessage("");
+                      }}
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    >
+                      <td className="py-3.5 px-4 font-bold text-[#333333]">{m.name}</td>
+                      <td className="py-3.5 px-4 text-slate-600 font-mono text-xs">{m.email}</td>
+                      <td className="py-3.5 px-4">{getRoleBadge(m.role)}</td>
+                      <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                        {m.invite_code ? (
+                          <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-800">
+                            <span>{m.invite_code}</span>
                             <button
-                              onClick={() => handleOpenBackupCodesModal(m)}
-                              disabled={backupModalLoading}
-                              className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#01916D] text-xs font-bold rounded-lg transition-colors cursor-pointer"
-                              title="관리자 비상 복구 백업코드 10개 조회"
+                              type="button"
+                              onClick={() => handleCopyInviteCode(m.invite_code!)}
+                              className="px-1.5 py-0.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded cursor-pointer"
                             >
-                              🔑 백업코드
+                              복사
                             </button>
-                            <button
-                              onClick={() => {
-                                setSelectedMember(m);
-                                setViewMode("EDIT");
-                                setMessage("");
-                              }}
-                              className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                            >
-                              수정
-                            </button>
-                            {m.role !== "OWNER" && (
-                              <button
-                                onClick={() => handleDelete(m)}
-                                disabled={loading}
-                                className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-[#E01E35] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-                              >
-                                삭제
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            m.is_invite_accepted
+                              ? "bg-emerald-100 text-[#01916D]"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {m.is_invite_accepted ? "가입 완료" : "초대 대기"}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                        {!m.is_invite_accepted && (
+                          <button
+                            onClick={() => handleReinvite(m)}
+                            disabled={loading}
+                            className="px-3 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          >
+                            초대 재발송
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenBackupCodesModal(m)}
+                          disabled={backupModalLoading}
+                          className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-[#01916D] text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                          title="관리자 비상 복구 백업코드 10개 조회"
+                        >
+                          🔑 백업코드
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedMember(m);
+                            setIsEditMode(true);
+                            setIsDetailModalOpen(true);
+                            setMessage("");
+                          }}
+                          className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                        >
+                          수정
+                        </button>
+                        {m.role !== "OWNER" && (
+                          <button
+                            onClick={() => handleDelete(m)}
+                            disabled={loading}
+                            className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-[#E01E35] text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* CREATE MEMBER / INVITE FORM */}
-          {viewMode === "CREATE" && (
-            <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div>
-                  <h3 className="text-base font-bold text-[#333333]">새 구성원 초대 (초대코드 발송)</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    성명, 이메일, 직급을 선택하시면 8자리 가입 초대코드가 생성 및 발송됩니다.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setViewMode("LIST")}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
-                >
-                  취소
-                </button>
-              </div>
-
-              <form onSubmit={handleInviteMemberSubmit} className="space-y-4 text-xs sm:text-sm">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">성명</label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    placeholder="홍길동"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">이메일 주소</label>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    placeholder="user@partneron.co.kr"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
-                  <select
-                    name="role"
-                    defaultValue="CE"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-semibold"
-                  >
-                    <option value="ADMIN_STAFF">관리자(사무직원)</option>
-                    <option value="SALES">영업</option>
-                    <option value="CE">CE (엔지니어)</option>
-                  </select>
-                </div>
-
-                <div className="pt-2 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("LIST")}
-                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer"
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer shadow-xs"
-                  >
-                    {loading ? "발송 중..." : "초대코드 발송"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* EDIT MEMBER FORM */}
-          {viewMode === "EDIT" && selectedMember && (
-            <div className="max-w-xl bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <h3 className="text-base font-bold text-[#333333]">구성원 정보 수정</h3>
-                <button
-                  onClick={() => {
-                    setViewMode("LIST");
-                    setSelectedMember(null);
-                  }}
-                  className="text-xs text-slate-500 hover:text-slate-800 font-semibold cursor-pointer"
-                >
-                  취소
-                </button>
-              </div>
-
-              <form onSubmit={handleEditMemberSubmit} className="space-y-4 text-xs sm:text-sm">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">성명</label>
-                  <input
-                    type="text"
-                    name="name"
-                    defaultValue={selectedMember.name}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">이메일</label>
-                  <input
-                    type="email"
-                    name="email"
-                    defaultValue={selectedMember.email}
-                    required
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
-                  <select
-                    name="role"
-                    defaultValue={selectedMember.role}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-semibold"
-                  >
-                    <option value="OWNER">관리자(대표)</option>
-                    <option value="ADMIN_STAFF">관리자(사무직원)</option>
-                    <option value="SALES">영업</option>
-                    <option value="CE">CE (엔지니어)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    새 비밀번호 (변경시에만 입력)
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="비밀번호 변경 시 8자 이상 입력"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end gap-2">
+          {/* OVERLAY POPUP MODAL: MEMBER DETAIL & EDIT */}
+          {isDetailModalOpen && selectedMember && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 border border-slate-200 animate-in fade-in zoom-in duration-150">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#01916D]/10 text-[#01916D]">
+                      구성원 상세 & 보안 관리
+                    </span>
+                    <h3 className="text-xl font-black text-[#333333]">
+                      {selectedMember.name} <span className="text-xs font-normal text-slate-500">({selectedMember.email})</span>
+                    </h3>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      setViewMode("LIST");
+                      setIsDetailModalOpen(false);
+                      setIsEditMode(false);
                       setSelectedMember(null);
                     }}
-                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all cursor-pointer"
                   >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer"
-                  >
-                    {loading ? "저장 중..." : "저장하기"}
+                    ✕
                   </button>
                 </div>
-              </form>
+
+                {/* Modal Body: Dual Mode (View Mode vs. Edit Mode) */}
+                {!isEditMode ? (
+                  /* VIEW MODE */
+                  <div className="space-y-5 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      <div>
+                        <span className="text-xs font-bold text-slate-400 block mb-1">성명</span>
+                        <strong className="text-slate-900 font-bold">{selectedMember.name}</strong>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-400 block mb-1">이메일 주소</span>
+                        <span className="font-mono text-slate-800 text-xs font-semibold">{selectedMember.email}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-400 block mb-1">직급 (Role)</span>
+                        <div>{getRoleBadge(selectedMember.role)}</div>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-slate-400 block mb-1">가입 상태</span>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            selectedMember.is_invite_accepted
+                              ? "bg-emerald-100 text-[#01916D]"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {selectedMember.is_invite_accepted ? "가입 완료" : "초대 대기 (24h)"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {selectedMember.invite_code && (
+                      <div className="flex items-center justify-between bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200">
+                        <div>
+                          <span className="text-xs font-bold text-[#01916D] block">8자리 회원가입 초대 코드</span>
+                          <span className="font-mono text-sm font-black text-slate-900">{selectedMember.invite_code}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyInviteCode(selectedMember.invite_code!)}
+                          className="px-3 py-1 text-xs font-bold bg-[#01916D] hover:bg-[#006449] text-white rounded-lg transition-all cursor-pointer shadow-xs"
+                        >
+                          초대코드 복사
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Modal Actions */}
+                    <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        {selectedMember.role !== "OWNER" && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(selectedMember)}
+                            disabled={loading}
+                            className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-[#E01E35] text-xs font-bold rounded-xl transition-all cursor-pointer"
+                          >
+                            구성원 삭제
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBackupCodesModal(selectedMember)}
+                          disabled={backupModalLoading}
+                          className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#01916D] text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        >
+                          🔑 비상 복구 백업코드 10개
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditMode(true)}
+                          className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+                        >
+                          수정하기 (수정 모드)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* EDIT MODE FORM */
+                  <form onSubmit={handleEditMemberSubmit} className="space-y-4 text-xs sm:text-sm">
+                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800 font-semibold mb-2">
+                      [수정 모드] 성명, 이메일, 직급 및 새 비밀번호를 변경한 후 하단의 저장 버튼을 누르세요.
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">성명</label>
+                      <input
+                        type="text"
+                        name="name"
+                        defaultValue={selectedMember.name}
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">이메일 주소</label>
+                      <input
+                        type="email"
+                        name="email"
+                        defaultValue={selectedMember.email}
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
+                      <select
+                        name="role"
+                        defaultValue={selectedMember.role}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-bold"
+                      >
+                        <option value="OWNER">관리자(대표)</option>
+                        <option value="ADMIN_STAFF">관리자(사무직원)</option>
+                        <option value="SALES">영업</option>
+                        <option value="CE">CE (엔지니어)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        새 비밀번호 <span className="text-slate-400 font-normal">(변경시에만 입력)</span>
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        placeholder="비밀번호 변경 시 8자 이상 입력"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditMode(false)}
+                        className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                      >
+                        수정 취소
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer shadow-xs text-xs"
+                      >
+                        {loading ? "저장 중..." : "수정 내용 저장하기"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
           )}
-        </>
+
+          {/* OVERLAY POPUP MODAL: CREATE / INVITE MEMBER */}
+          {isInviteModalOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-200 animate-in fade-in zoom-in duration-150">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="text-lg font-black text-[#333333]">새 구성원 초대 (초대코드 발송)</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      성명, 이메일, 직급을 지정하시면 8자리 가입 초대코드가 생성 및 발송됩니다.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteModalOpen(false)}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleInviteMemberSubmit} className="space-y-4 text-xs sm:text-sm">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">성명</label>
+                    <input
+                      type="text"
+                      name="name"
+                      required
+                      placeholder="홍길동"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">이메일 주소</label>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="user@partneron.co.kr"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">직급 (Role)</label>
+                    <select
+                      name="role"
+                      defaultValue="CE"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#01916D] font-semibold"
+                    >
+                      <option value="ADMIN_STAFF">관리자(사무직원)</option>
+                      <option value="SALES">영업</option>
+                      <option value="CE">CE (엔지니어)</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-4 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-bold rounded-xl transition-all cursor-pointer shadow-xs text-xs"
+                    >
+                      {loading ? "발송 중..." : "초대코드 발송"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* TAB 2: 기기 승인 관리 */}

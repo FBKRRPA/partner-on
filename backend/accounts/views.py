@@ -346,6 +346,23 @@ class RoleMenuPermissionView(APIView):
 
     def get(self, request) -> Response:
         workplace = request.user.workplace
+        if request.user.role == User.Role.HEADQUARTERS or request.user.is_superuser:
+            # Headquarter Master user always gets 100% full access to all menus across all roles
+            ALL_MENU_KEYS = [
+                "profile", "crm_customers", "crm_sales", "crm_members",
+                "basic_dashboard", "basic_workplaces", "basic_warehouses", "basic_models",
+                "basic_consumable_codes", "basic_contracts", "basic_permissions", "basic_oid_lists",
+                "assets_devices", "assets_in_out", "assets_inventory", "assets_collectors",
+                "assets_email_collectors", "assets_unregistered", "monitoring_usage", "monitoring_supplies",
+                "monitoring_customers", "monitoring_as_today", "monitoring_as_tickets", "monitoring_consumables_usage",
+                "contracts_uncontracted", "contracts_list", "contracts_invoices", "contracts_sales"
+            ]
+            full_perms = []
+            for r in [User.Role.HEADQUARTERS, User.Role.OWNER, User.Role.ADMIN_STAFF, User.Role.SALES, User.Role.CE]:
+                for k in ALL_MENU_KEYS:
+                    full_perms.append({"role": r, "menu_key": k, "is_allowed": True})
+            return Response({"permissions": full_perms}, status=status.HTTP_200_OK)
+
         if not workplace:
             return Response({"permissions": []}, status=status.HTTP_200_OK)
 
