@@ -166,6 +166,23 @@ function LoginPageContent() {
     }
   }
 
+  function handleStartUIDemo() {
+    const demoUser = {
+      id: 999,
+      email: "demo@partneron.co.kr",
+      name: "타팀 시연용 데모 관리자",
+      role: "HEADQUARTERS",
+      workplace: { id: 1, name: "PartnerOn UI 데모 본사" },
+      is_2fa_enabled: false,
+    };
+    sessionStorage.setItem("accessToken", "demo-access-token-12345");
+    sessionStorage.setItem("refreshToken", "demo-refresh-token-12345");
+    sessionStorage.setItem("user", JSON.stringify(demoUser));
+    sessionStorage.setItem("partneron.accessToken", "demo-access-token-12345");
+    sessionStorage.setItem("partneron.user", JSON.stringify(demoUser));
+    window.location.href = "/dashboard";
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F7FA] flex flex-col justify-between font-sans">
       {/* Top Header Gradation Bar */}
@@ -241,7 +258,7 @@ function LoginPageContent() {
             )}
 
             {/* Action Buttons Section */}
-            <div className="space-y-4 pt-2">
+            <div className="space-y-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
@@ -249,6 +266,16 @@ function LoginPageContent() {
               >
                 {loading ? "로그인 중..." : "로그인"}
               </button>
+
+              {/* UI Demo Mode Bypass Button */}
+              <button
+                type="button"
+                onClick={handleStartUIDemo}
+                className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#01916D] font-bold text-xs rounded-2xl border border-slate-200 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                🎨 타 팀 UI 시연 모드 둘러보기 (백엔드 미연동)
+              </button>
+            </div>
 
               <div className="flex items-center justify-center gap-4 text-xs font-semibold text-slate-500 pt-1">
                 <button
@@ -276,7 +303,6 @@ function LoginPageContent() {
                 >
                   비밀번호 찾기
                 </button>
-              </div>
             </div>
           </form>
         </div>
