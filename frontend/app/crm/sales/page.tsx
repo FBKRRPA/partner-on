@@ -72,7 +72,55 @@ export default function CrmSalesPage() {
     support_comment: "",
   });
 
+  const DEMO_SALES: SalesOpportunityDto[] = [
+    {
+      id: 1,
+      customer_name: "(주) 글로벌 솔루션 강남점",
+      opportunity_name: "강남 본사 복합기 3대 교체 렌탈 건",
+      workspace_name: "FBKR 파트너스",
+      sales_employee: "김영업 과장",
+      sales_stage: "견적서 제출",
+      device_model: "Fujifilm ApeosPort-VII C3373",
+      deal_type: "복합기 신규",
+      deal_category: "신규",
+      start_date: "2026-08-01",
+      contract_type: "렌탈",
+      expected_sales: 9000000,
+      expected_contract_month: "2026-08",
+      expected_sales_month: "2026-09",
+      note: "타사 단가 대비 5% 할인 제안, 최종 임원 결재 대기",
+      team_support: "예",
+      support_method: "방문",
+      support_comment: "SE 팀과 함께 기술 데모 시연 완료",
+    },
+    {
+      id: 2,
+      customer_name: "삼정 IT 물류 센터",
+      opportunity_name: "물류 센타 출력 솔루션 도입 건",
+      workspace_name: "FBKR 파트너스",
+      sales_employee: "이영업 차장",
+      sales_stage: "Closed",
+      device_model: "Canon imageRUNNER C5535i",
+      deal_type: "솔루션 신규",
+      deal_category: "추가/변경",
+      start_date: "2026-07-15",
+      contract_type: "유지보수",
+      expected_sales: 15000000,
+      expected_contract_month: "2026-07",
+      expected_sales_month: "2026-08",
+      note: "수집기 에이전트 연동 성공",
+      team_support: "아니요",
+      support_method: "전화",
+      support_comment: "단독 진행 완료",
+    },
+  ];
+
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      setOpportunities(DEMO_SALES);
+    }
+
     const token =
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||

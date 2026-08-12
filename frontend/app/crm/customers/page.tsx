@@ -34,6 +34,67 @@ export interface CustomerFullDto {
   contact3: ContactPersonDto;
 }
 
+const DEMO_CUSTOMERS: CustomerFullDto[] = [
+  {
+    id: 1,
+    partner_company: "FBKR 파트너스",
+    partner_employee: "김영업 과장",
+    name: "(주) 글로벌 솔루션 강남점",
+    office_type: "일반 사무실",
+    location_base: "서울 강남구",
+    contract_status: "미계약 고객",
+    biz_no: "105-87-33120",
+    grade: "A",
+    company_scale: "31-50",
+    contact1: {
+      name: "정수진",
+      department: "IT/전산",
+      email: "sj.jung@globalsol.co.kr",
+      phone: "010-5555-8888",
+      position: "과장",
+      note: "주 담당자, 복합기 도입 최종검토",
+    },
+    contact2: {
+      name: "박민철",
+      department: "총무",
+      email: "mc.park@globalsol.co.kr",
+      phone: "010-1111-2222",
+      position: "팀장",
+      note: "결재권자",
+    },
+    contact3: {
+      name: "이수민",
+      department: "구매",
+      email: "sm.lee@globalsol.co.kr",
+      phone: "010-3333-4444",
+      position: "대리",
+      note: "계약서 실무",
+    },
+  },
+  {
+    id: 2,
+    partner_company: "FBKR 파트너스",
+    partner_employee: "이영업 차장",
+    name: "삼정 IT 물류 센터",
+    office_type: "창고",
+    location_base: "경기 이천시",
+    contract_status: "계약 고객",
+    biz_no: "211-86-99102",
+    grade: "B",
+    company_scale: "51-100",
+    contact1: {
+      name: "박민수",
+      department: "물류",
+      email: "ms.park@samjung.com",
+      phone: "010-9876-5432",
+      position: "대리",
+      note: "현장 관리자",
+    },
+    contact2: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
+    contact3: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
+  },
+];
+
 export default function CrmCustomersPage() {
   const [accessToken, setAccessToken] = useState("");
   const [search, setSearch] = useState("");
@@ -66,34 +127,30 @@ export default function CrmCustomersPage() {
   });
 
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      setCustomers(DEMO_CUSTOMERS);
+    }
+
     const token =
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||
       "";
     setAccessToken(token);
 
-    let realName = sessionStorage.getItem("userName") || "";
-    let realWorkplace = sessionStorage.getItem("workplaceName") || "";
+    let realName = "김영업 과장";
+    let realWorkplace = "FBKR 파트너스";
 
-    const rawUser =
-      sessionStorage.getItem("user") ||
-      sessionStorage.getItem("partneron.user") ||
-      localStorage.getItem("user") ||
-      localStorage.getItem("partneron.user");
-
-    if (rawUser) {
-      try {
-        const u = JSON.parse(rawUser);
+    try {
+      const userStr = sessionStorage.getItem("user") || sessionStorage.getItem("partneron.user");
+      if (userStr) {
+        const u = JSON.parse(userStr);
         if (u.name) realName = u.name;
-        const wpName = u.workplace_name || (u.workplace && u.workplace.name) || "";
-        if (wpName) realWorkplace = wpName;
-      } catch (e) {
-        console.error(e);
+        if (u.workplace && u.workplace.name) realWorkplace = u.workplace.name;
       }
+    } catch (e) {
+      console.error(e);
     }
-
-    if (!realName) realName = "관리자";
-    if (!realWorkplace) realWorkplace = "FBKR 파트너스";
 
     setFormData((prev) => ({
       ...prev,

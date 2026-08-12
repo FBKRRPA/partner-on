@@ -50,6 +50,22 @@ export default function ProfilePage() {
   async function loadProfile(authToken: string) {
     try {
       setFetching(true);
+      if (sessionStorage.getItem("partneron_demo_mode") === "true") {
+        setUser({
+          id: 1,
+          email: "demo@partneron.com",
+          name: "김대표 (데모 관리자)",
+          role: "OWNER",
+          workplace: { id: 1, name: "FBKR 파트너스" },
+        });
+        setIs2FAEnabled(true);
+        setRequires2FA(true);
+        setDevices([
+          { id: 1, device_name: "MacBook Pro 16 (둘러보기 용)", ip_address: "192.168.1.10", status: "APPROVED" },
+        ] as any);
+        setFetching(false);
+        return;
+      }
       const data = await getMyProfile(authToken);
       setUser(data.user);
       setIs2FAEnabled(data.is_2fa_enabled);

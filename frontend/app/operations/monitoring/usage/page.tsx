@@ -26,6 +26,21 @@ export default function MonitoringUsagePage() {
   const [endDate, setEndDate] = useState<string>("");
 
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      setUsageList([
+        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", count_total: 96570, count_color: 12450, count_mono: 84120, count_scan: 18450, count_fax: 1200, last_scanned_at: "2026-08-11 14:30:00" },
+        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", count_total: 187900, count_color: 45100, count_mono: 142800, count_scan: 45000, count_fax: 3100, last_scanned_at: "2026-08-11 14:28:15" },
+      ] as any);
+      setHistoryList([
+        { id: 101, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", yyyymmdd: "20260811", date_formatted: "2026-08-11", daily_color: 80, daily_mono: 370, daily_scan: 120 },
+        { id: 102, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", yyyymmdd: "20260811", date_formatted: "2026-08-11", daily_color: 350, daily_mono: 850, daily_scan: 400 },
+      ] as any);
+      setTotalRecordsCount(2);
+      setLoading(false);
+      return;
+    }
+
     const token =
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||

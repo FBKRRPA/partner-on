@@ -26,6 +26,20 @@ export default function MonitoringSuppliesPage() {
   const [endDate, setEndDate] = useState<string>("");
 
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      setSuppliesList([
+        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", toner_k: 80, toner_c: 65, toner_m: 70, toner_y: 90, last_scanned_at: "2026-08-11 14:30:00" },
+        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", toner_k: 8, toner_c: 40, toner_m: 50, toner_y: 35, last_scanned_at: "2026-08-11 14:28:15" },
+      ] as any);
+      setHistoryList([
+        { id: 201, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", yyyymmdd: "20260811", date_formatted: "2026-08-11", before_level: 15, after_level: 100, action_type: "ALERT_LOW" },
+      ] as any);
+      setTotalRecordsCount(1);
+      setLoading(false);
+      return;
+    }
+
     const token =
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||

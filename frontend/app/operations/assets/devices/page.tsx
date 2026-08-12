@@ -63,14 +63,24 @@ export default function AssetDevicesPage() {
     }
   }, []);
 
-  async function loadPrinters(token: string, isSilent = false) {
+  async function loadPrinters(token: string, silent = false) {
+    if (!silent) setLoading(true);
+    if (!silent) setErrorMsg("");
+    if (sessionStorage.getItem("partneron_demo_mode") === "true") {
+      setPrinters([
+        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", ip_address: "192.168.1.105", is_online: true },
+        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", ip_address: "192.168.10.40", is_online: false },
+      ] as any);
+      setLoading(false);
+      return;
+    }
     try {
-      if (!isSilent) setLoading(true);
+      if (!silent) setLoading(true);
       else setIsRefreshing(true);
       const data = await getPrinterAssets(token);
       setPrinters(data);
     } catch (err) {
-      if (!isSilent) {
+      if (!silent) {
         setErrorMsg(err instanceof Error ? err.message : "복합기 장비 조회를 실패했습니다.");
       }
     } finally {

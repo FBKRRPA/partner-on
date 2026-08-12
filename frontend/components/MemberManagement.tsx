@@ -73,6 +73,15 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
   async function loadMembers() {
     try {
       setFetching(true);
+      if (sessionStorage.getItem("partneron_demo_mode") === "true") {
+        setMembers([
+          { id: 1, email: "owner@partneron.com", name: "김대표 (대표관리자)", role: "OWNER", is_2fa_enabled: true, is_invite_accepted: true, invite_code: "INV-DEMO1" },
+          { id: 2, email: "admin@partneron.com", name: "이차장 (사무직원)", role: "ADMIN_STAFF", is_2fa_enabled: true, is_invite_accepted: true, invite_code: "INV-DEMO2" },
+          { id: 3, email: "sales@partneron.com", name: "박과장 (영업)", role: "SALES", is_2fa_enabled: false, is_invite_accepted: true, invite_code: "INV-DEMO3" },
+          { id: 4, email: "ce@partneron.com", name: "최엔지니어 (CE)", role: "CE", is_2fa_enabled: false, is_invite_accepted: false, invite_code: "INV-DEMO4" },
+        ] as any);
+        return;
+      }
       const data = await getMembers(accessToken);
       setMembers(data);
     } catch (err) {
@@ -85,6 +94,13 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
   async function loadDevices() {
     try {
       setDeviceFetching(true);
+      if (sessionStorage.getItem("partneron_demo_mode") === "true") {
+        setDevices([
+          { id: 1, device_uuid: "DEV-MACBOOK-PRO-01", device_name: "macOS Sonoma (MacBook Pro 16)", ip_address: "192.168.1.10", status: "APPROVED", created_at: "2026-08-01 10:00:00" },
+          { id: 2, device_uuid: "DEV-WINDOWS-11-02", device_name: "Windows 11 Enterprise (Gram 17)", ip_address: "192.168.1.45", status: "PENDING", created_at: "2026-08-11 15:30:00" },
+        ] as any);
+        return;
+      }
       const data = await getDevices(accessToken);
       setDevices(data);
     } catch (err) {
@@ -97,6 +113,15 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
   async function loadPolicy() {
     try {
       setPolicyFetching(true);
+      if (sessionStorage.getItem("partneron_demo_mode") === "true") {
+        setPolicy({
+          enforce_2fa_owner: true,
+          enforce_2fa_admin_staff: true,
+          enforce_2fa_sales: false,
+          enforce_2fa_ce: false,
+        });
+        return;
+      }
       const data = await get2FAPolicy(accessToken);
       setPolicy(data);
     } catch (err) {

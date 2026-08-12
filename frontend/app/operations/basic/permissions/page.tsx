@@ -75,6 +75,13 @@ export default function RoleMenuPermissionsPage() {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      setWorkplaceName("FBKR 파트너스 (데모)");
+      setLoading(false);
+      return;
+    }
+
     const rawUser = sessionStorage.getItem("user");
     const token = sessionStorage.getItem("accessToken") || "";
     if (!storedUserValid(rawUser)) {

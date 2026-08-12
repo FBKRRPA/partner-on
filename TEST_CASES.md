@@ -104,6 +104,7 @@
 | **TC-094** | 전사모듈/샘플데이터전면삭제 | 6개 모듈(`contracts`, `customers`, `sales`, `collectors`, `members`, `dashboard`) 더미 샘플 데이터 100% 삭제 및 Empty State TR 구축 | Remove All Hardcoded Sample Mock Data & Connect B2B Empty State TR | ✅ PASS |
 | **TC-095** | Vercel프로덕션/라이브웹배포 | 최신 소스코드 Vercel Live Production 웹 배포 성공 (`readyState: READY`) | Deploy Latest Codebase to Vercel Live Production Environment | ✅ PASS |
 | **TC-096** | 로그인화면/둘러보기버튼명칭수술 | 로그인 화면 하단 버튼 명칭을 `둘러보기`로 깔끔하게 변경 완료 | Change Login Page Tour Button Text to '둘러보기' | ✅ PASS |
+| **TC-097** | 둘러보기모드/7대영역데모데이터격리 | 둘러보기 모드 시 7대 영역 샘플 데이터 100% 무영향 안전 격리 및 시각적 데모 데이터셋 전면 탑재 | Build Isolated Demo Mode Mock Datasets across 7 Core Areas | ✅ PASS |
 
 ---
 
