@@ -57,6 +57,8 @@ function LoginPageContent() {
 
       // Store tokens and navigate to returnUrl or /dashboard
       if (result.access && result.user) {
+        sessionStorage.removeItem("partneron_demo_mode");
+        localStorage.removeItem("partneron_demo_mode");
         sessionStorage.setItem("accessToken", result.access);
         sessionStorage.setItem("refreshToken", result.refresh || "");
         sessionStorage.setItem("user", JSON.stringify(result.user));
@@ -180,6 +182,8 @@ function LoginPageContent() {
     sessionStorage.setItem("user", JSON.stringify(demoUser));
     sessionStorage.setItem("partneron.accessToken", "demo-access-token-12345");
     sessionStorage.setItem("partneron.user", JSON.stringify(demoUser));
+    sessionStorage.setItem("partneron_demo_mode", "true");
+    localStorage.setItem("partneron_demo_mode", "true");
     window.location.href = "/dashboard";
   }
 
