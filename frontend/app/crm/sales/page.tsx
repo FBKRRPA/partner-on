@@ -10,6 +10,7 @@ export interface SalesOpportunityDto {
   customer_name: string;
   opportunity_name: string;
   workspace_name: string;
+  sales_employee?: string;
   sales_stage: "고객 Contact" | "고객 Issue 확인" | "고객 추가 Meeting" | "견적서 제출" | "Closed";
   device_model: string;
   deal_type: "복합기 신규" | "복합기 추가" | "솔루션 신규" | "솔루션 추가" | "그 외 Deal";
@@ -55,6 +56,7 @@ export default function CrmSalesPage() {
       customer_name: "(주) 글로벌 솔루션 강남점",
       opportunity_name: "강남 본사 복합기 3대 교체 렌탈 건",
       workspace_name: "FBKR 파트너스",
+      sales_employee: "김영업 과장",
       sales_stage: "견적서 제출",
       device_model: "Fujifilm ApeosPort-VII C3373",
       deal_type: "복합기 신규",
@@ -74,6 +76,7 @@ export default function CrmSalesPage() {
       customer_name: "삼정 IT 물류 센터",
       opportunity_name: "물류 센타 출력 솔루션 도입 건",
       workspace_name: "FBKR 파트너스",
+      sales_employee: "이영업 차장",
       sales_stage: "Closed",
       device_model: "Canon imageRUNNER C5535i",
       deal_type: "솔루션 신규",
@@ -95,6 +98,7 @@ export default function CrmSalesPage() {
     customer_name: registeredCustomers[0],
     opportunity_name: "",
     workspace_name: "FBKR 파트너스",
+    sales_employee: "관리자",
     sales_stage: "고객 Contact",
     device_model: "Fujifilm ApeosPort-VII C3373",
     deal_type: "복합기 신규",
@@ -117,10 +121,33 @@ export default function CrmSalesPage() {
       "";
     setAccessToken(token);
 
-    const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
+    let realName = sessionStorage.getItem("userName") || "";
+    let realWorkplace = sessionStorage.getItem("workplaceName") || "";
+
+    const rawUser =
+      sessionStorage.getItem("user") ||
+      sessionStorage.getItem("partneron.user") ||
+      localStorage.getItem("user") ||
+      localStorage.getItem("partneron.user");
+
+    if (rawUser) {
+      try {
+        const u = JSON.parse(rawUser);
+        if (u.name) realName = u.name;
+        const wpName = u.workplace_name || (u.workplace && u.workplace.name) || "";
+        if (wpName) realWorkplace = wpName;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (!realName) realName = "관리자";
+    if (!realWorkplace) realWorkplace = "FBKR 파트너스";
+
     setFormData((prev) => ({
       ...prev,
-      workspace_name: savedWorkplace,
+      workspace_name: realWorkplace,
+      sales_employee: realName,
     }));
   }, []);
 
@@ -365,6 +392,15 @@ export default function CrmSalesPage() {
                       type="text"
                       disabled
                       value={formData.workspace_name}
+                      className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">영업 담당사원 (로그인 유저 실명)</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={formData.sales_employee || "관리자"}
                       className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800"
                     />
                   </div>
