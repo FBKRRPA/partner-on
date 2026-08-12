@@ -289,7 +289,6 @@ export default function CrmCustomersPage() {
                   <th className="p-4 text-center">계약상태</th>
                   <th className="p-4 text-center">관리등급 / 규모</th>
                   <th className="p-4">주 담당자 (담당자 1)</th>
-                  <th className="p-4 text-center">수정 / 상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -302,7 +301,7 @@ export default function CrmCustomersPage() {
                     <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
                     <td className="p-4">
                       <div className="font-bold text-slate-900">{c.partner_company}</div>
-                      <div className="text-[11px] text-slate-500">{c.partner_employee}</div>
+                      <div className="text-[11px] text-[#01916D] font-bold">{c.partner_employee}</div>
                     </td>
                     <td className="p-4 font-bold text-[#01916D]">{c.name}</td>
                     <td className="p-4">
@@ -332,14 +331,6 @@ export default function CrmCustomersPage() {
                       <div className="font-mono text-slate-500 text-[11px]">
                         {c.contact1.phone} | {c.contact1.email}
                       </div>
-                    </td>
-                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleRowClick(c)}
-                        className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
-                      >
-                        수정 / 조회
-                      </button>
                     </td>
                   </tr>
                 ))}

@@ -257,7 +257,6 @@ export default function ContractsPage() {
                   <th className="p-4 text-center">설치대수</th>
                   <th className="p-4 text-center">Agent 수집기 상태</th>
                   <th className="p-4 text-center">Agent 인증 코드</th>
-                  <th className="p-4 text-center">수정 / 상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -285,14 +284,6 @@ export default function ContractsPage() {
                         className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm"
                       >
                         {c.agent_code ? `Agent 코드: ${c.agent_code}` : "Agent 코드 발급"}
-                      </button>
-                    </td>
-                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleRowClick(c)}
-                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
-                      >
-                        수정 / 조회
                       </button>
                     </td>
                   </tr>

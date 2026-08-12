@@ -284,12 +284,12 @@ export default function CrmSalesPage() {
                 <tr>
                   <th className="p-4 w-10 text-center">NO</th>
                   <th className="p-4">영업명 / 거래처 (소속 사업장)</th>
+                  <th className="p-4">영업 담당사원</th>
                   <th className="p-4">고객명</th>
                   <th className="p-4 text-center">영업단계</th>
                   <th className="p-4">장비모델명 / 영업타입 / 유형</th>
                   <th className="p-4 text-center">계약형태 / 시작일</th>
                   <th className="p-4 text-right">예상매출금액 / 월도</th>
-                  <th className="p-4 text-center">수정 / 상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -304,7 +304,8 @@ export default function CrmSalesPage() {
                       <div className="font-bold text-slate-900">{o.opportunity_name}</div>
                       <div className="text-[11px] text-slate-500">{o.workspace_name}</div>
                     </td>
-                    <td className="p-4 font-bold text-[#01916D]">{o.customer_name}</td>
+                    <td className="p-4 font-bold text-[#01916D]">{o.sales_employee || "관리자"}</td>
+                    <td className="p-4 font-bold text-slate-900">{o.customer_name}</td>
                     <td className="p-4 text-center">{renderStageBadge(o.sales_stage)}</td>
                     <td className="p-4">
                       <div className="font-semibold text-slate-800">{o.device_model}</div>
@@ -321,14 +322,6 @@ export default function CrmSalesPage() {
                       <div className="text-[11px] text-slate-500">
                         계약: {o.expected_contract_month} | 매출: {o.expected_sales_month}
                       </div>
-                    </td>
-                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleRowClick(o)}
-                        className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
-                      >
-                        수정 / 조회
-                      </button>
                     </td>
                   </tr>
                 ))}
