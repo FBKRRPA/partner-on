@@ -5,7 +5,7 @@ import { AppHeader } from "../../../../components/layout/AppHeader";
 import { AppFooter } from "../../../../components/layout/AppFooter";
 import { getAgentCodeByCustomer } from "../../../../lib/auth-api";
 
-interface ContractItem {
+export interface ContractItem {
   id: number;
   contract_no: string;
   customer_name: string;
@@ -16,6 +16,7 @@ interface ContractItem {
   device_count: number;
   agent_status: "COLLECTING" | "UNINSTALLED" | "PENDING";
   agent_code?: string;
+  note?: string;
 }
 
 export default function ContractsPage() {
@@ -30,7 +31,27 @@ export default function ContractsPage() {
   const [loadingCode, setLoadingCode] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [contracts] = useState<ContractItem[]>([
+  // Edit / Detail Modal State
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<ContractItem | null>(null);
+  const [editFormData, setEditFormData] = useState<ContractItem | null>(null);
+
+  // Create Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createFormData, setCreateFormData] = useState<Omit<ContractItem, "id">>({
+    contract_no: `CNT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}-04`,
+    customer_name: "",
+    period_months: 36,
+    start_date: new Date().toISOString().split("T")[0],
+    end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 3)).toISOString().split("T")[0],
+    monthly_fee: 300000,
+    device_count: 2,
+    agent_status: "PENDING",
+    note: "정식 신규 렌탈 계약",
+  });
+
+  const [contracts, setContracts] = useState<ContractItem[]>([
     {
       id: 1,
       contract_no: "CNT-202608-01",
@@ -42,6 +63,7 @@ export default function ContractsPage() {
       device_count: 2,
       agent_status: "COLLECTING",
       agent_code: "AST-99A1K2",
+      note: "물류 센터 2층 복합기 2대 렌탈 건",
     },
     {
       id: 2,
@@ -53,6 +75,7 @@ export default function ContractsPage() {
       monthly_fee: 450000,
       device_count: 4,
       agent_status: "UNINSTALLED",
+      note: "본사 신규 복합기 4대 제안 성공 건",
     },
     {
       id: 3,
@@ -64,6 +87,7 @@ export default function ContractsPage() {
       monthly_fee: 380000,
       device_count: 3,
       agent_status: "PENDING",
+      note: "강남 지사 출력 솔루션 포함 3대",
     },
   ]);
 
@@ -74,7 +98,6 @@ export default function ContractsPage() {
       "";
     setAccessToken(token);
 
-    // Query param check for auto customer selection
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const cName = urlParams.get("customer_name");
@@ -90,20 +113,23 @@ export default function ContractsPage() {
       c.contract_no.toLowerCase().includes(search.toLowerCase())
   );
 
-  async function handleOpenAgentModal(contract: ContractItem) {
+  function handleOpenAgentModal(e: React.MouseEvent, contract: ContractItem) {
+    e.stopPropagation();
     setActiveContract(contract);
     setAgentModalOpen(true);
     setLoadingCode(true);
     setCopied(false);
-    try {
-      const res = await getAgentCodeByCustomer(accessToken, contract.customer_name);
-      setAgentCode(res.auth_code);
-      setAgentStatusText(res.status || "PENDING");
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Agent 인증 코드를 불러오지 못했습니다.");
-    } finally {
-      setLoadingCode(false);
-    }
+    getAgentCodeByCustomer(accessToken, contract.customer_name)
+      .then((res) => {
+        setAgentCode(res.auth_code);
+        setAgentStatusText(res.status || "PENDING");
+      })
+      .catch((err) => {
+        alert(err instanceof Error ? err.message : "Agent 인증 코드를 불러오지 못했습니다.");
+      })
+      .finally(() => {
+        setLoadingCode(false);
+      });
   }
 
   function handleCopyCode() {
@@ -111,6 +137,61 @@ export default function ContractsPage() {
     navigator.clipboard.writeText(agentCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleRowClick(contract: ContractItem) {
+    setSelectedContract(contract);
+    setEditFormData(JSON.parse(JSON.stringify(contract)));
+    setIsEditMode(false);
+    setIsDetailModalOpen(true);
+  }
+
+  function handleSaveNewContract() {
+    if (!createFormData.customer_name.trim()) {
+      alert("계약 고객사명을 입력해 주세요.");
+      return;
+    }
+    const newId = contracts.length > 0 ? Math.max(...contracts.map((c) => c.id)) + 1 : 1;
+    const newEntry: ContractItem = {
+      id: newId,
+      ...createFormData,
+    };
+    setContracts([newEntry, ...contracts]);
+    setIsCreateModalOpen(false);
+    alert(`'${createFormData.customer_name}' 계약이 성공적으로 신규 수립되었습니다.`);
+
+    setCreateFormData({
+      contract_no: `CNT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}-0${newId + 1}`,
+      customer_name: "",
+      period_months: 36,
+      start_date: new Date().toISOString().split("T")[0],
+      end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 3)).toISOString().split("T")[0],
+      monthly_fee: 300000,
+      device_count: 2,
+      agent_status: "PENDING",
+      note: "정식 신규 렌탈 계약",
+    });
+  }
+
+  function handleUpdateContract() {
+    if (!editFormData || !editFormData.customer_name.trim()) {
+      alert("계약 고객사명을 입력해 주세요.");
+      return;
+    }
+    setContracts((prev) =>
+      prev.map((c) => (c.id === editFormData.id ? editFormData : c))
+    );
+    setSelectedContract(editFormData);
+    setIsEditMode(false);
+    alert(`계약번호 '${editFormData.contract_no}' 정보가 성공적으로 수정 및 저장되었습니다.`);
+  }
+
+  function handleDeleteContract(id: number, contractNo: string, customerName: string) {
+    if (confirm(`정말로 '${customerName}' (${contractNo}) 계약 건을 삭제하시겠습니까?`)) {
+      setContracts((prev) => prev.filter((c) => c.id !== id));
+      setIsDetailModalOpen(false);
+      alert(`'${customerName}' 계약 건이 삭제되었습니다.`);
+    }
   }
 
   function renderAgentStatusBadge(status: ContractItem["agent_status"]) {
@@ -129,7 +210,6 @@ export default function ContractsPage() {
       <AppHeader />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Breadcrumb */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#5C5C5C] mb-2">
             <span>기준정보 관리</span>
@@ -142,24 +222,28 @@ export default function ContractsPage() {
                 정식 계약 수립 및 Agent 수집기 코드 관리
               </h1>
               <p className="text-sm text-[#5C5C5C] mt-1">
-                체결된 계약 건의 렌탈 조건 관리 및 현장 설치용 8자리 Agent 인증 코드를 1-Click으로 생성/조회합니다.
+                체결된 계약 건의 렌탈 조건 관리 및 현장 설치용 8자리 Agent 인증 코드를 1-Click으로 생성/조회합니다. (행 클릭 시 수정/삭제 가능)
               </p>
             </div>
 
-            {/* Search Input */}
-            <div className="w-full sm:w-72">
+            <div className="flex items-center gap-3">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="계약번호 또는 고객사명 검색"
-                className="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D]"
+                className="w-full sm:w-64 px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D]"
               />
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="px-4 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap"
+              >
+                + 신규 계약 등록
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Pure B2B Data Table */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-medium text-slate-700">
@@ -194,7 +278,7 @@ export default function ContractsPage() {
                     <td className="p-4 text-center">{renderAgentStatusBadge(c.agent_status)}</td>
                     <td className="p-4 text-center">
                       <button
-                        onClick={() => handleOpenAgentModal(c)}
+                        onClick={(e) => handleOpenAgentModal(e, c)}
                         className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm"
                       >
                         {c.agent_code ? `Agent 코드: ${c.agent_code}` : "Agent 코드 발급"}

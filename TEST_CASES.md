@@ -99,6 +99,7 @@
 | **TC-089** | UI동기화/홈대시보드표준화 | `/dashboard` 홈 대시보드 테이블 및 통계 카드를 단일 B2B UI 표준으로 100% 동기화 | Refactor Dashboard Page Table & Stat Cards to Single Authoritative B2B UI Standard | ✅ PASS |
 | **TC-090** | 고객사등록/실제계정실명바인딩 | 고객사 등록 폼 담당사원 항목에 로그인한 사용자의 실제 계정 실명(`user.name`) 100% 자동 바인딩 연동 | Bind Actual Logged-in User Real Name to Customer Register Form Manager Field | ✅ PASS |
 | **TC-091** | 영업기회등록/실제계정실명바인딩 | 영업기회 등록 폼에 `sales_employee` 신설 및 로그인한 사용자의 실제 계정 실명(`user.name`) 100% 자동 바인딩 연동 | Add sales_employee Column and Bind Logged-in User Real Name to Sales Opportunity Form | ✅ PASS |
+| **TC-092** | 계약관리/실시간수정및삭제구축 | `/operations/basic/contracts` 계약 관리 테이블 Row Click Clean Glass Modal 수정/삭제 및 `+ 신규 계약 등록` 기능 구축 | Build Contract Real-time Edit, Delete & New Creation Modals in Contracts Page | ✅ PASS |
 
 ---
 
