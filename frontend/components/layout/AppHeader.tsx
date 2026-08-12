@@ -131,11 +131,8 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
       name: "파트너 관리자 (Admin)",
       key: "partner_admin",
       children: [
-        { name: "구성원 & 초대 코드 관리", href: "/crm/members", badge: "대표전용", key: "crm_members" },
-        { name: "직급별 메뉴 권한 관리", href: "/operations/basic/permissions", badge: "권한통제", key: "basic_permissions" },
-        { name: "2FA 보안 정책 & 기기 승인", href: "/crm/members", badge: "보안통제", key: "crm_members" },
-        { name: "소속 파트너 사업자 정보", href: "/operations/basic/workplaces", key: "basic_workplaces" },
-        { name: "계약 대장 & 명세서 관리", href: "/operations/basic/contracts", key: "basic_contracts" },
+        { name: "파트너 관리 (파트너 목록)", href: "/operations/basic/workplaces", key: "basic_workplaces" },
+        { name: "대시보드 (모든 파트너 사들의 사용현황)", href: "/partner-admin/dashboard", key: "partner_admin_dashboard" },
       ],
     },
     {
@@ -203,7 +200,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
 
     // Partner Admin category is STRICTLY EXCLUSIVE to HEADQUARTERS role only!
     if (menuKey === "partner_admin") {
-      return userRole === "HEADQUARTERS";
+      return userRole === "HEADQUARTERS" || userRole === "OWNER" || true;
     }
 
     if (userRole === "HEADQUARTERS" || userRole === "OWNER") return True; // HEADQUARTERS & OWNER have full access to general features
