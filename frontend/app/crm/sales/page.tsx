@@ -49,49 +49,7 @@ export default function CrmSalesPage() {
     "ABC 상사 (본사)",
   ];
 
-  // Sample Sales Opportunities Data (Consistent with Contracts Page Standard)
-  const [opportunities, setOpportunities] = useState<SalesOpportunityDto[]>([
-    {
-      id: 1,
-      customer_name: "(주) 글로벌 솔루션 강남점",
-      opportunity_name: "강남 본사 복합기 3대 교체 렌탈 건",
-      workspace_name: "FBKR 파트너스",
-      sales_employee: "김영업 과장",
-      sales_stage: "견적서 제출",
-      device_model: "Fujifilm ApeosPort-VII C3373",
-      deal_type: "복합기 신규",
-      deal_category: "신규",
-      start_date: "2026-08-01",
-      contract_type: "렌탈",
-      expected_sales: 9000000,
-      expected_contract_month: "2026-08",
-      expected_sales_month: "2026-09",
-      note: "타사 단가 대비 5% 할인 제안, 최종 임원 결재 대기",
-      team_support: "예",
-      support_method: "방문",
-      support_comment: "SE 팀과 함께 기술 데모 시연 완료",
-    },
-    {
-      id: 2,
-      customer_name: "삼정 IT 물류 센터",
-      opportunity_name: "물류 센타 출력 솔루션 도입 건",
-      workspace_name: "FBKR 파트너스",
-      sales_employee: "이영업 차장",
-      sales_stage: "Closed",
-      device_model: "Canon imageRUNNER C5535i",
-      deal_type: "솔루션 신규",
-      deal_category: "추가/변경",
-      start_date: "2026-07-15",
-      contract_type: "유지보수",
-      expected_sales: 15000000,
-      expected_contract_month: "2026-07",
-      expected_sales_month: "2026-08",
-      note: "수집기 에이전트 연동 성공",
-      team_support: "아니요",
-      support_method: "전화",
-      support_comment: "단독 진행 완료",
-    },
-  ]);
+  const [opportunities, setOpportunities] = useState<SalesOpportunityDto[]>([]);
 
   // Modal Form State (Session Auto-Bound)
   const [formData, setFormData] = useState<Omit<SalesOpportunityDto, "id">>({
@@ -293,38 +251,46 @@ export default function CrmSalesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredOpportunities.map((o) => (
-                  <tr
-                    key={o.id}
-                    onClick={() => handleRowClick(o)}
-                    className="hover:bg-slate-50/80 transition-all cursor-pointer"
-                  >
-                    <td className="p-4 text-center font-mono text-slate-500">{o.id}</td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900">{o.opportunity_name}</div>
-                      <div className="text-[11px] text-slate-500">{o.workspace_name}</div>
-                    </td>
-                    <td className="p-4 font-bold text-[#01916D]">{o.sales_employee || "관리자"}</td>
-                    <td className="p-4 font-bold text-slate-900">{o.customer_name}</td>
-                    <td className="p-4 text-center">{renderStageBadge(o.sales_stage)}</td>
-                    <td className="p-4">
-                      <div className="font-semibold text-slate-800">{o.device_model}</div>
-                      <div className="text-[11px] text-slate-500">
-                        {o.deal_type} | {o.deal_category}
-                      </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="font-bold text-slate-900">{o.contract_type}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{o.start_date}</div>
-                    </td>
-                    <td className="p-4 text-right font-mono">
-                      <div className="font-bold text-slate-900">₩{o.expected_sales.toLocaleString()}</div>
-                      <div className="text-[11px] text-slate-500">
-                        계약: {o.expected_contract_month} | 매출: {o.expected_sales_month}
-                      </div>
+                {filteredOpportunities.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-500 font-semibold text-xs">
+                      등록된 영업기회 데이터가 없습니다. 상단 <strong className="text-[#01916D] font-bold">[+ 신규 영업기회 등록]</strong> 버튼을 눌러 등록해 주세요.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredOpportunities.map((o) => (
+                    <tr
+                      key={o.id}
+                      onClick={() => handleRowClick(o)}
+                      className="hover:bg-slate-50/80 transition-all cursor-pointer"
+                    >
+                      <td className="p-4 text-center font-mono text-slate-500">{o.id}</td>
+                      <td className="p-4">
+                        <div className="font-bold text-slate-900">{o.opportunity_name}</div>
+                        <div className="text-[11px] text-slate-500">{o.workspace_name}</div>
+                      </td>
+                      <td className="p-4 font-bold text-[#01916D]">{o.sales_employee || "관리자"}</td>
+                      <td className="p-4 font-bold text-slate-900">{o.customer_name}</td>
+                      <td className="p-4 text-center">{renderStageBadge(o.sales_stage)}</td>
+                      <td className="p-4">
+                        <div className="font-semibold text-slate-800">{o.device_model}</div>
+                        <div className="text-[11px] text-slate-500">
+                          {o.deal_type} | {o.deal_category}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="font-bold text-slate-900">{o.contract_type}</div>
+                        <div className="text-[11px] text-slate-500 font-mono">{o.start_date}</div>
+                      </td>
+                      <td className="p-4 text-right font-mono">
+                        <div className="font-bold text-slate-900">₩{o.expected_sales.toLocaleString()}</div>
+                        <div className="text-[11px] text-slate-500">
+                          계약: {o.expected_contract_month} | 매출: {o.expected_sales_month}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

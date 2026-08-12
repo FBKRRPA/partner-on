@@ -51,45 +51,7 @@ export default function ContractsPage() {
     note: "정식 신규 렌탈 계약",
   });
 
-  const [contracts, setContracts] = useState<ContractItem[]>([
-    {
-      id: 1,
-      contract_no: "CNT-202608-01",
-      customer_name: "삼정 IT 물류 센터",
-      period_months: 24,
-      start_date: "2026-08-01",
-      end_date: "2028-07-31",
-      monthly_fee: 250000,
-      device_count: 2,
-      agent_status: "COLLECTING",
-      agent_code: "AST-99A1K2",
-      note: "물류 센터 2층 복합기 2대 렌탈 건",
-    },
-    {
-      id: 2,
-      contract_no: "CNT-202608-02",
-      customer_name: "ABC 상사 (본사)",
-      period_months: 36,
-      start_date: "2026-08-10",
-      end_date: "2029-08-09",
-      monthly_fee: 450000,
-      device_count: 4,
-      agent_status: "UNINSTALLED",
-      note: "본사 신규 복합기 4대 제안 성공 건",
-    },
-    {
-      id: 3,
-      contract_no: "CNT-202608-03",
-      customer_name: "(주) 글로벌 솔루션 강남점",
-      period_months: 36,
-      start_date: "2026-08-15",
-      end_date: "2029-08-14",
-      monthly_fee: 380000,
-      device_count: 3,
-      agent_status: "PENDING",
-      note: "강남 지사 출력 솔루션 포함 3대",
-    },
-  ]);
+  const [contracts, setContracts] = useState<ContractItem[]>([]);
 
   useEffect(() => {
     const token =
@@ -260,34 +222,42 @@ export default function ContractsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredContracts.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => handleRowClick(c)}
-                    className="hover:bg-slate-50/80 transition-all cursor-pointer"
-                  >
-                    <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
-                    <td className="p-4 font-mono font-bold text-slate-900">{c.contract_no}</td>
-                    <td className="p-4 font-bold text-[#01916D]">{c.customer_name}</td>
-                    <td className="p-4">
-                      <div className="font-semibold text-slate-800">{c.start_date} ~ {c.end_date}</div>
-                      <div className="text-[11px] text-slate-500">({c.period_months}개월 렌탈)</div>
-                    </td>
-                    <td className="p-4 text-right font-mono font-bold text-slate-900">
-                      ₩{c.monthly_fee.toLocaleString()}
-                    </td>
-                    <td className="p-4 text-center font-bold text-slate-800">{c.device_count}대</td>
-                    <td className="p-4 text-center">{renderAgentStatusBadge(c.agent_status)}</td>
-                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => handleOpenAgentModal(e, c)}
-                        className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm"
-                      >
-                        {c.agent_code ? `Agent 코드: ${c.agent_code}` : "Agent 코드 발급"}
-                      </button>
+                {filteredContracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-500 font-semibold text-xs">
+                      등록된 계약 데이터가 없습니다. 상단 <strong className="text-[#01916D] font-bold">[+ 신규 계약 등록]</strong> 버튼을 눌러 수립해 주세요.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredContracts.map((c) => (
+                    <tr
+                      key={c.id}
+                      onClick={() => handleRowClick(c)}
+                      className="hover:bg-slate-50/80 transition-all cursor-pointer"
+                    >
+                      <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
+                      <td className="p-4 font-mono font-bold text-slate-900">{c.contract_no}</td>
+                      <td className="p-4 font-bold text-[#01916D]">{c.customer_name}</td>
+                      <td className="p-4">
+                        <div className="font-semibold text-slate-800">{c.start_date} ~ {c.end_date}</div>
+                        <div className="text-[11px] text-slate-500">({c.period_months}개월 렌탈)</div>
+                      </td>
+                      <td className="p-4 text-right font-mono font-bold text-slate-900">
+                        ₩{c.monthly_fee.toLocaleString()}
+                      </td>
+                      <td className="p-4 text-center font-bold text-slate-800">{c.device_count}대</td>
+                      <td className="p-4 text-center">{renderAgentStatusBadge(c.agent_status)}</td>
+                      <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => handleOpenAgentModal(e, c)}
+                          className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm"
+                        >
+                          {c.agent_code ? `Agent 코드: ${c.agent_code}` : "Agent 코드 발급"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

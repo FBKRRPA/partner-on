@@ -47,67 +47,7 @@ export default function CrmCustomersPage() {
   // Editable Form inside Detail Modal
   const [editFormData, setEditFormData] = useState<CustomerFullDto | null>(null);
 
-  // Sample Customers Data (Consistent with Contracts Page Standard)
-  const [customers, setCustomers] = useState<CustomerFullDto[]>([
-    {
-      id: 1,
-      partner_company: "FBKR 파트너스",
-      partner_employee: "김영업 과장",
-      name: "(주) 글로벌 솔루션 강남점",
-      office_type: "일반 사무실",
-      location_base: "서울 강남구",
-      contract_status: "미계약 고객",
-      biz_no: "105-87-33120",
-      grade: "A",
-      company_scale: "31-50",
-      contact1: {
-        name: "정수진",
-        department: "IT/전산",
-        email: "sj.jung@globalsol.co.kr",
-        phone: "010-5555-8888",
-        position: "과장",
-        note: "주 담당자, 복합기 도입 최종검토",
-      },
-      contact2: {
-        name: "박민철",
-        department: "총무",
-        email: "mc.park@globalsol.co.kr",
-        phone: "010-1111-2222",
-        position: "팀장",
-        note: "결재권자",
-      },
-      contact3: {
-        name: "이수민",
-        department: "구매",
-        email: "sm.lee@globalsol.co.kr",
-        phone: "010-3333-4444",
-        position: "대리",
-        note: "계약서 실무",
-      },
-    },
-    {
-      id: 2,
-      partner_company: "FBKR 파트너스",
-      partner_employee: "이영업 차장",
-      name: "삼정 IT 물류 센터",
-      office_type: "창고",
-      location_base: "경기 이천시",
-      contract_status: "계약 고객",
-      biz_no: "211-86-99102",
-      grade: "B",
-      company_scale: "51-100",
-      contact1: {
-        name: "박민수",
-        department: "물류",
-        email: "ms.park@samjung.com",
-        phone: "010-9876-5432",
-        position: "대리",
-        note: "현장 관리자",
-      },
-      contact2: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
-      contact3: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
-    },
-  ]);
+  const [customers, setCustomers] = useState<CustomerFullDto[]>([]);
 
   // New Creation Modal Form State
   const [formData, setFormData] = useState<Omit<CustomerFullDto, "id">>({
@@ -292,48 +232,56 @@ export default function CrmCustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredCustomers.map((c) => (
-                  <tr
-                    key={c.id}
-                    onClick={() => handleRowClick(c)}
-                    className="hover:bg-slate-50/80 transition-all cursor-pointer"
-                  >
-                    <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900">{c.partner_company}</div>
-                      <div className="text-[11px] text-[#01916D] font-bold">{c.partner_employee}</div>
-                    </td>
-                    <td className="p-4 font-bold text-[#01916D]">{c.name}</td>
-                    <td className="p-4">
-                      <div className="font-semibold text-slate-800">{c.office_type}</div>
-                      <div className="text-[11px] text-slate-500">{c.location_base}</div>
-                    </td>
-                    <td className="p-4 font-mono text-slate-700">{c.biz_no || "-"}</td>
-                    <td className="p-4 text-center">
-                      {c.contract_status === "계약 고객" ? (
-                        <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-100 text-[#01916D]">
-                          계약 고객
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded text-xs font-bold bg-slate-100 text-slate-700">
-                          미계약 고객
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="font-bold text-slate-900">{c.grade}등급</div>
-                      <div className="text-[11px] text-slate-500">{c.company_scale}명</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900">
-                        {c.contact1.name} {c.contact1.position} ({c.contact1.department})
-                      </div>
-                      <div className="font-mono text-slate-500 text-[11px]">
-                        {c.contact1.phone} | {c.contact1.email}
-                      </div>
+                {filteredCustomers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-500 font-semibold text-xs">
+                      등록된 고객사 데이터가 없습니다. 상단 <strong className="text-[#01916D] font-bold">[+ 신규 고객사 등록]</strong> 버튼을 눌러 등록해 주세요.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredCustomers.map((c) => (
+                    <tr
+                      key={c.id}
+                      onClick={() => handleRowClick(c)}
+                      className="hover:bg-slate-50/80 transition-all cursor-pointer"
+                    >
+                      <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
+                      <td className="p-4">
+                        <div className="font-bold text-slate-900">{c.partner_company}</div>
+                        <div className="text-[11px] text-[#01916D] font-bold">{c.partner_employee}</div>
+                      </td>
+                      <td className="p-4 font-bold text-[#01916D]">{c.name}</td>
+                      <td className="p-4">
+                        <div className="font-semibold text-slate-800">{c.office_type}</div>
+                        <div className="text-[11px] text-slate-500">{c.location_base}</div>
+                      </td>
+                      <td className="p-4 font-mono text-slate-700">{c.biz_no || "-"}</td>
+                      <td className="p-4 text-center">
+                        {c.contract_status === "계약 고객" ? (
+                          <span className="px-2.5 py-1 rounded text-xs font-bold bg-emerald-100 text-[#01916D]">
+                            계약 고객
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded text-xs font-bold bg-slate-100 text-slate-700">
+                            미계약 고객
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="font-bold text-slate-900">{c.grade}등급</div>
+                        <div className="text-[11px] text-slate-500">{c.company_scale}명</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-bold text-slate-900">
+                          {c.contact1.name} {c.contact1.position} ({c.contact1.department})
+                        </div>
+                        <div className="font-mono text-slate-500 text-[11px]">
+                          {c.contact1.phone} | {c.contact1.email}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

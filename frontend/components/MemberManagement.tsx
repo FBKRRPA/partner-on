@@ -441,7 +441,14 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {members.map((m) => (
+                  {members.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500 font-semibold text-xs">
+                        등록된 구성원이 없습니다. 상단 <strong className="text-[#01916D] font-bold">[+ 신규 구성원 초대]</strong> 버튼을 통해 초대를 발송해 주세요.
+                      </td>
+                    </tr>
+                  ) : (
+                    members.map((m) => (
                     <tr
                       key={m.id}
                       onClick={() => {
@@ -522,7 +529,8 @@ export function MemberManagement({ accessToken }: Props): React.ReactNode {
                         )}
                       </td>
                     </tr>
-                  ))}
+                  ))
+                )}
                 </tbody>
               </table>
             </div>

@@ -17,28 +17,7 @@ export interface CollectorDto {
 
 export default function CollectorsPage() {
   const [accessToken, setAccessToken] = useState("");
-  const [collectors, setCollectors] = useState<CollectorDto[]>([
-    {
-      id: 1,
-      auth_code: "AST-88A9F2",
-      name: "서울 본사 1층 수집기",
-      customer_name: "(주) 글로벌 솔루션 강남점",
-      ip_range: "192.168.1.1/24",
-      status: "ONLINE",
-      detected_count: 5,
-      last_scanned_at: "2026-08-10 14:30:00",
-    },
-    {
-      id: 2,
-      auth_code: "AST-[#01916D]",
-      name: "이천 물류 센타 수집기",
-      customer_name: "삼정 IT 물류 센터",
-      ip_range: "192.168.10.1/24",
-      status: "ONLINE",
-      detected_count: 12,
-      last_scanned_at: "2026-08-10 14:28:15",
-    },
-  ]);
+  const [collectors, setCollectors] = useState<CollectorDto[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newCodeModal, setNewCodeModal] = useState<{ code: string; customer: string } | null>(null);
@@ -119,21 +98,29 @@ export default function CollectorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {collectors.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#01916D]">{c.auth_code}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-800">{c.name}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-700">{c.customer_name || "-"}</td>
-                    <td className="py-3.5 px-4 font-mono text-slate-600 text-xs">{c.ip_range}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-[#01916D]">
-                        {c.status}
-                      </span>
+                {collectors.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-500 font-semibold text-xs">
+                      등록된 Agent 수집기가 없습니다. 상단 <strong className="text-[#01916D] font-bold">[+ 신규 수집기 발급]</strong> 버튼을 통해 생성해 주세요.
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">{c.detected_count} 대</td>
-                    <td className="py-3.5 px-4 font-mono text-center text-xs text-slate-500">{c.last_scanned_at || "-"}</td>
                   </tr>
-                ))}
+                ) : (
+                  collectors.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-bold text-[#01916D]">{c.auth_code}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-800">{c.name}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-700">{c.customer_name || "-"}</td>
+                      <td className="py-3.5 px-4 font-mono text-slate-600 text-xs">{c.ip_range}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-[#01916D]">
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">{c.detected_count} 대</td>
+                      <td className="py-3.5 px-4 font-mono text-center text-xs text-slate-500">{c.last_scanned_at || "-"}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

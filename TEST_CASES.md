@@ -101,6 +101,7 @@
 | **TC-091** | 영업기회등록/실제계정실명바인딩 | 영업기회 등록 폼에 `sales_employee` 신설 및 로그인한 사용자의 실제 계정 실명(`user.name`) 100% 자동 바인딩 연동 | Add sales_employee Column and Bind Logged-in User Real Name to Sales Opportunity Form | ✅ PASS |
 | **TC-092** | 계약관리/실시간수정및삭제구축 | `/operations/basic/contracts` 계약 관리 테이블 Row Click Clean Glass Modal 수정/삭제 및 `+ 신규 계약 등록` 기능 구축 | Build Contract Real-time Edit, Delete & New Creation Modals in Contracts Page | ✅ PASS |
 | **TC-093** | 전사CRM/중복버튼컬럼제거 | 3개 모듈(`contracts`, `customers`, `sales`) 테이블 중복 버튼 컬럼 제거 및 Row Click 전용 UX 구축 | Remove Duplicate Edit Button Columns across 3 Main B2B Table Pages | ✅ PASS |
+| **TC-094** | 전사모듈/샘플데이터전면삭제 | 6개 모듈(`contracts`, `customers`, `sales`, `collectors`, `members`, `dashboard`) 더미 샘플 데이터 100% 삭제 및 Empty State TR 구축 | Remove All Hardcoded Sample Mock Data & Connect B2B Empty State TR | ✅ PASS |
 
 ---
 

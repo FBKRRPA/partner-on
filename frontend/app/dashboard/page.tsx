@@ -127,36 +127,9 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-[#01916D]">FX-9988102</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-800">(주) 글로벌 솔루션 강남점</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-700">Fujifilm ApeosPort-VII C3373</td>
-                  <td className="py-3.5 px-4 font-mono text-slate-600 text-xs">192.168.1.105</td>
-                  <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">12,450 매</td>
-                  <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">84,120 매</td>
-                  <td className="py-3.5 px-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">K: 80%</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">C: 65%</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">M: 70%</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">Y: 90%</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-[#01916D]">CN-7738210</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-800">삼정 IT 물류 센터</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-700">Canon imageRUNNER C5535i</td>
-                  <td className="py-3.5 px-4 font-mono text-slate-600 text-xs">192.168.10.40</td>
-                  <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">45,100 매</td>
-                  <td className="py-3.5 px-4 font-mono text-right font-bold text-slate-800">142,800 매</td>
-                  <td className="py-3.5 px-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      <span className="px-2 py-0.5 bg-rose-100 text-[#E01E35] font-bold rounded-lg text-xs">K: 8% (경고)</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">C: 40%</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">M: 50%</span>
-                      <span className="px-2 py-0.5 bg-emerald-100 text-[#01916D] font-bold rounded-lg text-xs">Y: 35%</span>
-                    </div>
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-500 font-semibold text-xs">
+                    현재 실시간 장비 관제 데이터 수집 대기 중입니다. 현장에 설치된 Agent 수집기 실행 시 실시간 관제 현황이 자동 업데이트됩니다.
                   </td>
                 </tr>
               </tbody>
