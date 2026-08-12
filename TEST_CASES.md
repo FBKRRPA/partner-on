@@ -106,6 +106,7 @@
 | **TC-096** | 로그인화면/둘러보기버튼명칭수술 | 로그인 화면 하단 버튼 명칭을 `둘러보기`로 깔끔하게 변경 완료 | Change Login Page Tour Button Text to '둘러보기' | ✅ PASS |
 | **TC-097** | 둘러보기모드/7대영역데모데이터격리 | 둘러보기 모드 시 7대 영역 샘플 데이터 100% 무영향 안전 격리 및 시각적 데모 데이터셋 전면 탑재 | Build Isolated Demo Mode Mock Datasets across 7 Core Areas | ✅ PASS |
 | **TC-098** | 둘러보기모드/세션플래그누락보완수술 | `handleStartUIDemo()`에 `partneron_demo_mode` 세션 세팅 추가하여 7대 영역 샘플 데이터 100% 렌더링 검증 완료 | Fix Missing Demo Mode Session Flag in Login Page | ✅ PASS |
+| **TC-099** | Vercel고정메인URL/main브랜치최신소스타겟동기화완수 | `feature/snmp-deep-search-agent` 최신 소스를 `main` 브랜치로 병합하여 고정 대표 URL(`https://frontend-1tjkduray-fbkrrpa-1533s-projects.vercel.app`)에 100% 동기화 자동 배포 완수 | Merge Feature Branch to Main & Sync Vercel Production Target URL | ✅ PASS |
 
 ---
 
