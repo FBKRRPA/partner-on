@@ -47,6 +47,12 @@ export default function AssetDevicesPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
+    if (isDemo) {
+      loadPrinters("demo-token", false);
+      return;
+    }
+
     const token =
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||
@@ -68,8 +74,32 @@ export default function AssetDevicesPage() {
     if (!silent) setErrorMsg("");
     if (sessionStorage.getItem("partneron_demo_mode") === "true") {
       setPrinters([
-        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", ip_address: "192.168.1.105", is_online: true },
-        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", ip_address: "192.168.10.40", is_online: false },
+        {
+          id: 1,
+          serial_no: "FX-9988102",
+          model_name: "Fujifilm ApeosPort-VII C3373",
+          customer_name: "(주) 글로벌 솔루션 강남점",
+          location: "2층 임원실",
+          ip_address: "192.168.1.105",
+          count_color: 12450,
+          count_mono: 84120,
+          count_total: 96570,
+          last_scanned_at: "2026-08-11T14:30:00Z",
+          is_online: true,
+        },
+        {
+          id: 2,
+          serial_no: "CN-7738210",
+          model_name: "Canon imageRUNNER C5535i",
+          customer_name: "삼정 IT 물류 센터",
+          location: "1층 창고 데스크",
+          ip_address: "192.168.10.40",
+          count_color: 45100,
+          count_mono: 142800,
+          count_total: 187900,
+          last_scanned_at: "2026-08-11T14:28:15Z",
+          is_online: false,
+        },
       ] as any);
       setLoading(false);
       return;
