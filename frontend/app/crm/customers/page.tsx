@@ -132,13 +132,33 @@ export default function CrmCustomersPage() {
       "";
     setAccessToken(token);
 
-    const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
-    const savedUserName = sessionStorage.getItem("userName") || "김영업 과장";
+    let realName = sessionStorage.getItem("userName") || "";
+    let realWorkplace = sessionStorage.getItem("workplaceName") || "";
+
+    const rawUser =
+      sessionStorage.getItem("user") ||
+      sessionStorage.getItem("partneron.user") ||
+      localStorage.getItem("user") ||
+      localStorage.getItem("partneron.user");
+
+    if (rawUser) {
+      try {
+        const u = JSON.parse(rawUser);
+        if (u.name) realName = u.name;
+        const wpName = u.workplace_name || (u.workplace && u.workplace.name) || "";
+        if (wpName) realWorkplace = wpName;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    if (!realName) realName = "관리자";
+    if (!realWorkplace) realWorkplace = "FBKR 파트너스";
 
     setFormData((prev) => ({
       ...prev,
-      partner_company: savedWorkplace,
-      partner_employee: savedUserName,
+      partner_company: realWorkplace,
+      partner_employee: realName,
     }));
   }, []);
 

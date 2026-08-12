@@ -97,6 +97,7 @@
 | **TC-087** | UI동기화/수집기현황페이지표준화 | `/operations/assets/collectors` 수집기 현황 페이지를 단일 B2B UI 표준 카드로 100% 동기화 | Refactor Collectors Ledger Page to Single Authoritative B2B Table UI Standard | ✅ PASS |
 | **TC-088** | Next.js설정/allowedDevOrigins경고제거 | `next.config.mjs`에 `allowedDevOrigins` 추가로 로컬 네트워크 IP 접속 경고 원천 차단 | Add allowedDevOrigins in next.config.mjs to Suppress Cross-Origin Dev Warnings | ✅ PASS |
 | **TC-089** | UI동기화/홈대시보드표준화 | `/dashboard` 홈 대시보드 테이블 및 통계 카드를 단일 B2B UI 표준으로 100% 동기화 | Refactor Dashboard Page Table & Stat Cards to Single Authoritative B2B UI Standard | ✅ PASS |
+| **TC-090** | 고객사등록/실제계정실명바인딩 | 고객사 등록 폼 담당사원 항목에 로그인한 사용자의 실제 계정 실명(`user.name`) 100% 자동 바인딩 연동 | Bind Actual Logged-in User Real Name to Customer Register Form Manager Field | ✅ PASS |
 
 ---
 
