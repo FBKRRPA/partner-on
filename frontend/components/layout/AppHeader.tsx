@@ -200,7 +200,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
 
     // Partner Admin category is STRICTLY EXCLUSIVE to HEADQUARTERS role only!
     if (menuKey === "partner_admin") {
-      return userRole === "HEADQUARTERS" || userRole === "OWNER" || true;
+      return userRole === "HEADQUARTERS" ? true : false;
     }
 
     if (userRole === "HEADQUARTERS" || userRole === "OWNER") return True; // HEADQUARTERS & OWNER have full access to general features

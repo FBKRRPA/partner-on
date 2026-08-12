@@ -44,6 +44,10 @@ export default function AssetDevicesPage() {
   const [deletingTarget, setDeletingTarget] = useState<PrinterAssetDto | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
+  // Modal State for Detail View
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedDeviceDetail, setSelectedDeviceDetail] = useState<PrinterAssetDto | null>(null);
+
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -188,6 +192,11 @@ export default function AssetDevicesPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleOpenDetailModal(p: PrinterAssetDto) {
+    setSelectedDeviceDetail(p);
+    setIsDetailModalOpen(true);
   }
 
   function handleOpenEditModal(p: PrinterAssetDto) {
@@ -364,12 +373,15 @@ export default function AssetDevicesPage() {
                     <th className="py-3.5 px-6 text-right">누적 흑백 카운트</th>
                     <th className="py-3.5 px-6 text-right">최근 Agent 수집 시각</th>
                     <th className="py-3.5 px-6 text-right">상태 (3분 기준)</th>
-                    <th className="py-3.5 px-6 text-center">관리 액션</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {printers.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                    <tr
+                      key={p.id}
+                      onClick={() => handleOpenDetailModal(p)}
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    >
                       <td className="py-4 px-6 font-mono font-bold text-[#01916D]">
                         {p.serial_no}
                       </td>
@@ -401,22 +413,6 @@ export default function AssetDevicesPage() {
                         >
                           {p.is_online ? "매칭 및 관제중 (3분 주기)" : "연동 중단 (3분 이상 무응답)"}
                         </span>
-                      </td>
-                      <td className="py-4 px-6 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleOpenEditModal(p)}
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-[#01916D]/10 hover:text-[#01916D] text-slate-700 font-bold text-xs rounded-lg transition-all cursor-pointer border border-slate-200"
-                          >
-                            수정
-                          </button>
-                          <button
-                            onClick={() => handleOpenDeleteModal(p)}
-                            className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-lg transition-all cursor-pointer border border-rose-200"
-                          >
-                            삭제
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -692,6 +688,119 @@ export default function AssetDevicesPage() {
               >
                 {deleteSubmitting ? "삭제 중..." : "확인하여 장비 삭제"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Device Master Detail View Modal */}
+      {isDetailModalOpen && selectedDeviceDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
+              <h3 className="text-xl font-extrabold text-[#333333]">
+                복합기 장비 마스터 상세 정보
+              </h3>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-100 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-500 uppercase">장비 시리얼 번호</span>
+                  <span className="font-mono font-black text-lg text-[#01916D]">
+                    {selectedDeviceDetail.serial_no}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-500 uppercase">복합기 모델명</span>
+                  <span className="font-extrabold text-slate-800">
+                    {selectedDeviceDetail.model_name}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <span className="text-slate-500 font-semibold block mb-0.5">설치 고객사</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedDeviceDetail.customer_name}</span>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <span className="text-slate-500 font-semibold block mb-0.5">설치 상세 위치</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedDeviceDetail.location}</span>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <span className="text-slate-500 font-semibold block mb-0.5">기기 IP 주소</span>
+                  <span className="font-mono font-bold text-slate-700 text-sm">{selectedDeviceDetail.ip_address || "-"}</span>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <span className="text-slate-500 font-semibold block mb-0.5">수집 연동 상태</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                    selectedDeviceDetail.is_online ? "bg-emerald-100 text-[#01916D]" : "bg-rose-100 text-[#E01E35]"
+                  }`}>
+                    {selectedDeviceDetail.is_online ? "정상 관제중" : "연동 중단"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-500 font-semibold">누적 컬러 카운트</span>
+                  <span className="font-mono font-extrabold text-rose-600 text-base">
+                    {selectedDeviceDetail.count_color.toLocaleString()} 매
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-500 font-semibold">누적 흑백 카운트</span>
+                  <span className="font-mono font-extrabold text-slate-800 text-base">
+                    {selectedDeviceDetail.count_mono.toLocaleString()} 매
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 text-xs">
+                  <span className="text-slate-500 font-semibold">최근 Agent 수집 시각</span>
+                  <span className="font-medium text-slate-600">
+                    {formatKoreanDateTime(selectedDeviceDetail.last_scanned_at)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  handleOpenDeleteModal(selectedDeviceDetail);
+                }}
+                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-xl border border-rose-200 transition-colors cursor-pointer"
+              >
+                장비 삭제
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsDetailModalOpen(false);
+                    handleOpenEditModal(selectedDeviceDetail);
+                  }}
+                  className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  정보 수정하기
+                </button>
+              </div>
             </div>
           </div>
         </div>

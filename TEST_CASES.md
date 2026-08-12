@@ -110,6 +110,7 @@
 | **TC-100** | 둘러보기모드/장비현황및사용량페이지런타임에러완벽수술 | 둘러보기 모드 2개 페이지(`devices`, `usage`) 카운터 및 시계열 이력 필수 필드 전수 보완하여 런타임 에러 100% 해결 완료 | Fix Demo Mode Runtime Errors in Devices and Usage Pages | ✅ PASS |
 | **TC-101** | 둘러보기모드/3개핵심페이지풍부한더미데이터탑재 | 둘러보기 모드 3개 관제 페이지(`devices`, `usage`, `supplies`) 복합기 5대 마스터 + 시계열 10건 + 소모품 이력 5건 더미 데이터셋 탑재 완수 | Integrate 5 Rich Mock Printer Devices across 3 Core Monitoring Pages | ✅ PASS |
 | **TC-102** | 파트너관리자/하위메뉴전면제거및2대핵심메뉴재편탑재 | 파트너 관리자 메뉴 기존 5개 하위 항목 제거 후 '파트너 관리(파트너 목록)' 및 '대시보드(모든 파트너 사들의 사용현황)' 2대 메뉴로 재편 신설 | Restructure Partner Admin Submenus to 2 Dedicated Core Views | ✅ PASS |
+| **TC-103** | 장비현황/행클릭상세모달도입및목록수정삭제버튼삭제 | `devices` 목록 테이블 액션 버튼 삭제 및 행(Row) 클릭 시 상세 정보 모달 팝업 및 내부 수정/삭제 전환 UX 적용 완수 | Enable Row Click Detail Modal and Remove Action Buttons in Devices Page | ✅ PASS |
 
 ---
 

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppHeader } from "@/components/layout/AppHeader";
-import { getApiBaseUrl } from "@/lib/auth-api";
+import { AppHeader } from "../../../components/layout/AppHeader";
+import { getApiBaseUrl } from "../../../lib/auth-api";
 
 interface PartnerUsageSummary {
   id: number;
