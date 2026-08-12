@@ -102,6 +102,8 @@
 | **TC-092** | 계약관리/실시간수정및삭제구축 | `/operations/basic/contracts` 계약 관리 테이블 Row Click Clean Glass Modal 수정/삭제 및 `+ 신규 계약 등록` 기능 구축 | Build Contract Real-time Edit, Delete & New Creation Modals in Contracts Page | ✅ PASS |
 | **TC-093** | 전사CRM/중복버튼컬럼제거 | 3개 모듈(`contracts`, `customers`, `sales`) 테이블 중복 버튼 컬럼 제거 및 Row Click 전용 UX 구축 | Remove Duplicate Edit Button Columns across 3 Main B2B Table Pages | ✅ PASS |
 | **TC-094** | 전사모듈/샘플데이터전면삭제 | 6개 모듈(`contracts`, `customers`, `sales`, `collectors`, `members`, `dashboard`) 더미 샘플 데이터 100% 삭제 및 Empty State TR 구축 | Remove All Hardcoded Sample Mock Data & Connect B2B Empty State TR | ✅ PASS |
+| **TC-095** | Vercel프로덕션/라이브웹배포 | 최신 소스코드 Vercel Live Production 웹 배포 성공 (`readyState: READY`) | Deploy Latest Codebase to Vercel Live Production Environment | ✅ PASS |
+| **TC-096** | 로그인화면/둘러보기버튼명칭수술 | 로그인 화면 하단 버튼 명칭을 `둘러보기`로 깔끔하게 변경 완료 | Change Login Page Tour Button Text to '둘러보기' | ✅ PASS |
 
 ---
 

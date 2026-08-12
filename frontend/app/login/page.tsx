@@ -273,7 +273,7 @@ function LoginPageContent() {
                 onClick={handleStartUIDemo}
                 className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#01916D] font-bold text-xs rounded-2xl border border-slate-200 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                🎨 타 팀 UI 시연 모드 둘러보기 (백엔드 미연동)
+                둘러보기
               </button>
             </div>
 
