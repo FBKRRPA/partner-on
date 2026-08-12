@@ -29,13 +29,20 @@ export default function MonitoringSuppliesPage() {
     const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
     if (isDemo) {
       setSuppliesList([
-        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", toner_k: 80, toner_c: 65, toner_m: 70, toner_y: 90, last_scanned_at: "2026-08-11 14:30:00" },
-        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", toner_k: 8, toner_c: 40, toner_m: 50, toner_y: 35, last_scanned_at: "2026-08-11 14:28:15" },
+        { id: 1, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", toner_k: 80, toner_c: 65, toner_m: 70, toner_y: 90, drum_k: 85, drum_c: 90, drum_m: 88, drum_y: 92, waste_toner: "NORMAL", fuser: "NORMAL", last_scanned_at: "2026-08-11T14:30:00Z" },
+        { id: 2, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", toner_k: 8, toner_c: 40, toner_m: 50, toner_y: 35, drum_k: 45, drum_c: 70, drum_m: 65, drum_y: 80, waste_toner: "WARNING", fuser: "NORMAL", last_scanned_at: "2026-08-11T14:28:15Z" },
+        { id: 3, serial_no: "FX-5529188", model_name: "Fujifilm Apeos C3070", customer_name: "(주) 글로벌 솔루션 강남점", location: "3층 디자인팀", toner_k: 95, toner_c: 88, toner_m: 92, toner_y: 85, drum_k: 90, drum_c: 95, drum_m: 92, drum_y: 90, waste_toner: "NORMAL", fuser: "NORMAL", last_scanned_at: "2026-08-11T14:31:10Z" },
+        { id: 4, serial_no: "CN-9920134", model_name: "Canon imageRUNNER C3226i", customer_name: "(주) 한빛 미디어 본사", location: "4층 연구소", toner_k: 18, toner_c: 70, toner_m: 75, toner_y: 60, drum_k: 60, drum_c: 80, drum_m: 85, drum_y: 75, waste_toner: "NORMAL", fuser: "NORMAL", last_scanned_at: "2026-08-11T14:29:50Z" },
+        { id: 5, serial_no: "FX-1102948", model_name: "Fujifilm ApeosPort C2570", customer_name: "(주) 한빛 미디어 본사", location: "지하 1층 인쇄실", toner_k: 60, toner_c: 15, toner_m: 45, toner_y: 50, drum_k: 75, drum_c: 40, drum_m: 55, drum_y: 60, waste_toner: "NORMAL", fuser: "NORMAL", last_scanned_at: "2026-08-11T14:30:45Z" },
       ] as any);
       setHistoryList([
-        { id: 201, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", yyyymmdd: "20260811", date_formatted: "2026-08-11", before_level: 15, after_level: 100, action_type: "ALERT_LOW" },
+        { id: 201, serial_no: "CN-7738210", model_name: "Canon imageRUNNER C5535i", customer_name: "삼정 IT 물류 센터", location: "1층 창고 데스크", yyyymmdd: "20260811", date_formatted: "2026-08-11", supply_type: "Black Toner (K)", before_level: 8, after_level: 8, action_type: "ALERT_LOW" },
+        { id: 202, serial_no: "FX-1102948", model_name: "Fujifilm ApeosPort C2570", customer_name: "(주) 한빛 미디어 본사", location: "지하 1층 인쇄실", yyyymmdd: "20260811", date_formatted: "2026-08-11", supply_type: "Cyan Toner (C)", before_level: 15, after_level: 15, action_type: "ALERT_WARNING" },
+        { id: 203, serial_no: "CN-9920134", model_name: "Canon imageRUNNER C3226i", customer_name: "(주) 한빛 미디어 본사", location: "4층 연구소", yyyymmdd: "20260810", date_formatted: "2026-08-10", supply_type: "Black Toner (K)", before_level: 18, after_level: 100, action_type: "REPLACED" },
+        { id: 204, serial_no: "FX-9988102", model_name: "Fujifilm ApeosPort-VII C3373", customer_name: "(주) 글로벌 솔루션 강남점", location: "2층 임원실", yyyymmdd: "20260809", date_formatted: "2026-08-09", supply_type: "Yellow Toner (Y)", before_level: 5, after_level: 100, action_type: "REPLACED" },
+        { id: 205, serial_no: "FX-5529188", model_name: "Fujifilm Apeos C3070", customer_name: "(주) 글로벌 솔루션 강남점", location: "3층 디자인팀", yyyymmdd: "20260808", date_formatted: "2026-08-08", supply_type: "Black Drum", before_level: 10, after_level: 100, action_type: "REPLACED" },
       ] as any);
-      setTotalRecordsCount(1);
+      setTotalRecordsCount(5);
       setLoading(false);
       return;
     }

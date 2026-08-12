@@ -108,6 +108,7 @@
 | **TC-098** | 둘러보기모드/세션플래그누락보완수술 | `handleStartUIDemo()`에 `partneron_demo_mode` 세션 세팅 추가하여 7대 영역 샘플 데이터 100% 렌더링 검증 완료 | Fix Missing Demo Mode Session Flag in Login Page | ✅ PASS |
 | **TC-099** | Vercel고정메인URL/main브랜치최신소스타겟동기화완수 | `feature/snmp-deep-search-agent` 최신 소스를 `main` 브랜치로 병합하여 고정 대표 URL(`https://frontend-1tjkduray-fbkrrpa-1533s-projects.vercel.app`)에 100% 동기화 자동 배포 완수 | Merge Feature Branch to Main & Sync Vercel Production Target URL | ✅ PASS |
 | **TC-100** | 둘러보기모드/장비현황및사용량페이지런타임에러완벽수술 | 둘러보기 모드 2개 페이지(`devices`, `usage`) 카운터 및 시계열 이력 필수 필드 전수 보완하여 런타임 에러 100% 해결 완료 | Fix Demo Mode Runtime Errors in Devices and Usage Pages | ✅ PASS |
+| **TC-101** | 둘러보기모드/3개핵심페이지풍부한더미데이터탑재 | 둘러보기 모드 3개 관제 페이지(`devices`, `usage`, `supplies`) 복합기 5대 마스터 + 시계열 10건 + 소모품 이력 5건 더미 데이터셋 탑재 완수 | Integrate 5 Rich Mock Printer Devices across 3 Core Monitoring Pages | ✅ PASS |
 
 ---
 
