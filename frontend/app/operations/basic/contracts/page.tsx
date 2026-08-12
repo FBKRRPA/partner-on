@@ -249,24 +249,27 @@ export default function ContractsPage() {
             <table className="w-full text-left text-xs font-medium text-slate-700">
               <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <tr>
-                  <th className="p-4 w-10 text-center">선택</th>
+                  <th className="p-4 w-10 text-center">NO</th>
                   <th className="p-4">계약번호</th>
                   <th className="p-4">계약 고객사명</th>
                   <th className="p-4">렌탈 계약기간</th>
                   <th className="p-4 text-right">월 렌탈료</th>
                   <th className="p-4 text-center">설치대수</th>
                   <th className="p-4 text-center">Agent 수집기 상태</th>
-                  <th className="p-4 text-center">Agent 인증 코드 발급/조회</th>
+                  <th className="p-4 text-center">Agent 인증 코드</th>
+                  <th className="p-4 text-center">수정 / 상세보기</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredContracts.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50/80 transition-all">
-                    <td className="p-4 text-center">
-                      <input type="checkbox" className="rounded border-slate-300 text-[#01916D]" />
-                    </td>
+                  <tr
+                    key={c.id}
+                    onClick={() => handleRowClick(c)}
+                    className="hover:bg-slate-50/80 transition-all cursor-pointer"
+                  >
+                    <td className="p-4 text-center font-mono text-slate-500">{c.id}</td>
                     <td className="p-4 font-mono font-bold text-slate-900">{c.contract_no}</td>
-                    <td className="p-4 font-bold text-slate-900">{c.customer_name}</td>
+                    <td className="p-4 font-bold text-[#01916D]">{c.customer_name}</td>
                     <td className="p-4">
                       <div className="font-semibold text-slate-800">{c.start_date} ~ {c.end_date}</div>
                       <div className="text-[11px] text-slate-500">({c.period_months}개월 렌탈)</div>
@@ -276,12 +279,20 @@ export default function ContractsPage() {
                     </td>
                     <td className="p-4 text-center font-bold text-slate-800">{c.device_count}대</td>
                     <td className="p-4 text-center">{renderAgentStatusBadge(c.agent_status)}</td>
-                    <td className="p-4 text-center">
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={(e) => handleOpenAgentModal(e, c)}
                         className="px-3.5 py-1.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm"
                       >
                         {c.agent_code ? `Agent 코드: ${c.agent_code}` : "Agent 코드 발급"}
+                      </button>
+                    </td>
+                    <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleRowClick(c)}
+                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg transition-all shadow-sm cursor-pointer"
+                      >
+                        수정 / 조회
                       </button>
                     </td>
                   </tr>
@@ -292,7 +303,291 @@ export default function ContractsPage() {
         </div>
       </main>
 
-      {/* Agent Code Modal */}
+      {/* 1) Clean Glass Overlay Edit / Detail Modal */}
+      {isDetailModalOpen && selectedContract && editFormData && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">
+                  CONTRACT MASTER DETAIL
+                </span>
+                <h2 className="text-xl font-black text-slate-900">
+                  {isEditMode ? "계약 마스터 실시간 수정" : `${selectedContract.customer_name} 계약 명세`}
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-4 flex-1 text-xs pr-1">
+              {!isEditMode ? (
+                // View Mode
+                <div className="space-y-4">
+                  <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div><span className="text-slate-500">계약번호:</span> <strong className="font-mono text-slate-900 font-bold">{selectedContract.contract_no}</strong></div>
+                      <div><span className="text-slate-500">계약 고객사명:</span> <strong className="text-[#01916D] font-bold">{selectedContract.customer_name}</strong></div>
+                      <div><span className="text-slate-500">렌탈 계약기간:</span> <strong className="text-slate-900 font-bold">{selectedContract.start_date} ~ {selectedContract.end_date} ({selectedContract.period_months}개월)</strong></div>
+                      <div><span className="text-slate-500">월 렌탈료:</span> <strong className="font-mono text-slate-900 font-bold">₩{selectedContract.monthly_fee.toLocaleString()}</strong></div>
+                      <div><span className="text-slate-500">설치대수:</span> <strong className="text-slate-900 font-bold">{selectedContract.device_count}대</strong></div>
+                      <div><span className="text-slate-500">Agent 수집기 상태:</span> <span className="ml-1">{renderAgentStatusBadge(selectedContract.agent_status)}</span></div>
+                    </div>
+                    {selectedContract.note && (
+                      <div className="pt-2 border-t border-slate-200/60">
+                        <span className="text-slate-500 block mb-1">계약 비고 / 메모:</span>
+                        <p className="bg-white p-3 rounded-xl border border-slate-200 text-slate-800 font-medium">{selectedContract.note}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                // Edit Mode
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">계약번호</label>
+                      <input
+                        type="text"
+                        value={editFormData.contract_no}
+                        onChange={(e) => setEditFormData({ ...editFormData, contract_no: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">계약 고객사명</label>
+                      <input
+                        type="text"
+                        value={editFormData.customer_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, customer_name: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">렌탈 시작일</label>
+                      <input
+                        type="date"
+                        value={editFormData.start_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">렌탈 만료일</label>
+                      <input
+                        type="date"
+                        value={editFormData.end_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">월 렌탈료 (원)</label>
+                      <input
+                        type="number"
+                        value={editFormData.monthly_fee}
+                        onChange={(e) => setEditFormData({ ...editFormData, monthly_fee: Number(e.target.value) })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">설치대수</label>
+                      <input
+                        type="number"
+                        value={editFormData.device_count}
+                        onChange={(e) => setEditFormData({ ...editFormData, device_count: Number(e.target.value) })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Agent 수집기 상태</label>
+                      <select
+                        value={editFormData.agent_status}
+                        onChange={(e) => setEditFormData({ ...editFormData, agent_status: e.target.value as any })}
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                      >
+                        <option value="COLLECTING">온라인 수집중</option>
+                        <option value="UNINSTALLED">현장 미설치</option>
+                        <option value="PENDING">인증 대기중</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">비고 / 메모</label>
+                    <textarea
+                      rows={2}
+                      value={editFormData.note || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, note: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+              <button
+                onClick={() => handleDeleteContract(selectedContract.id, selectedContract.contract_no, selectedContract.customer_name)}
+                className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer"
+              >
+                🗑️ 계약 건 삭제
+              </button>
+
+              <div className="flex items-center gap-2">
+                {!isEditMode ? (
+                  <button
+                    onClick={() => setIsEditMode(true)}
+                    className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+                  >
+                    수정 모드 전환
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleUpdateContract}
+                      className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+                    >
+                      저장 완료
+                    </button>
+                    <button
+                      onClick={() => setIsEditMode(false)}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                    >
+                      취소
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2) Create Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[11px] font-bold text-[#01916D] uppercase tracking-wider block">
+                  NEW CONTRACT FORM
+                </span>
+                <h2 className="text-xl font-black text-slate-900">신규 정식 계약 수립 등록</h2>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-4 flex-1 text-xs pr-1">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">계약번호</label>
+                    <input
+                      type="text"
+                      value={createFormData.contract_no}
+                      onChange={(e) => setCreateFormData({ ...createFormData, contract_no: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">계약 고객사명 (필수)</label>
+                    <input
+                      type="text"
+                      placeholder="고객사 법인명"
+                      value={createFormData.customer_name}
+                      onChange={(e) => setCreateFormData({ ...createFormData, customer_name: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">렌탈 시작일</label>
+                    <input
+                      type="date"
+                      value={createFormData.start_date}
+                      onChange={(e) => setCreateFormData({ ...createFormData, start_date: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">렌탈 만료일</label>
+                    <input
+                      type="date"
+                      value={createFormData.end_date}
+                      onChange={(e) => setCreateFormData({ ...createFormData, end_date: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">월 렌탈료 (원)</label>
+                    <input
+                      type="number"
+                      value={createFormData.monthly_fee}
+                      onChange={(e) => setCreateFormData({ ...createFormData, monthly_fee: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">설치대수</label>
+                    <input
+                      type="number"
+                      value={createFormData.device_count}
+                      onChange={(e) => setCreateFormData({ ...createFormData, device_count: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">Agent 수집기 상태</label>
+                    <select
+                      value={createFormData.agent_status}
+                      onChange={(e) => setCreateFormData({ ...createFormData, agent_status: e.target.value as any })}
+                      className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#01916D]"
+                    >
+                      <option value="PENDING">인증 대기중</option>
+                      <option value="COLLECTING">온라인 수집중</option>
+                      <option value="UNINSTALLED">현장 미설치</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">비고 / 메모</label>
+                  <textarea
+                    rows={2}
+                    value={createFormData.note || ""}
+                    onChange={(e) => setCreateFormData({ ...createFormData, note: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#01916D]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                onClick={handleSaveNewContract}
+                className="px-5 py-2.5 bg-[#01916D] hover:bg-[#006449] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+              >
+                신규 계약 등록 완료
+              </button>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3) Agent Code Modal */}
       {agentModalOpen && activeContract && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-200">
