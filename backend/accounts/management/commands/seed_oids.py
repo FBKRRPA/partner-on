@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from accounts.models import PrinterOidMapping, OidListMaster, PrinterModelMaster
+from accounts.models import PrinterOidMapping, OidListMaster
 
 
 class Command(BaseCommand):
@@ -305,24 +305,9 @@ class Command(BaseCommand):
             if created:
                 oid_lists_count += 1
 
-            # Link to `printers` Master Table
-            pm_obj, p_created = PrinterModelMaster.objects.update_or_create(
-                manufacturer=mfg,
-                printer_model=model_name,
-                defaults={
-                    "printer_type": 1,
-                    "product_code": f"PRT-{mfg[:3].upper()}-001",
-                    "device_type": 1,
-                    "note": f"{mfg} 복합기 공식 MIB OID 풀 스펙 마스터",
-                    "oid_list": oid_obj,
-                },
-            )
-            if p_created:
-                printers_count += 1
-
         self.stdout.write(
             self.style.SUCCESS(
                 f"총 7대 주요 제조사(Standard, Fujifilm, Canon, Ricoh, HP, Kyocera, KonicaMinolta)의 "
-                f"oid_lists 28개 전체 컬럼 및 printers 마스터 데이터 시드 완공! (oid_lists: {oid_lists_count}개, printers: {printers_count}개)"
+                f"oid_lists 28개 전체 컬럼 마스터 데이터 시드 완공! (oid_lists: {oid_lists_count}개)"
             )
         )

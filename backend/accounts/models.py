@@ -324,27 +324,7 @@ class TempOidListMaster(models.Model):
         return f"TempOID([{self.scanned_ip}] {self.manufacturer} {self.printer_model} - {self.status})"
 
 
-class PrinterModelMaster(models.Model):
-    """
-    printers: 프린터 및 복합기 모델 마스터
-    """
-    manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
-    printer_model = models.CharField(max_length=256, unique=True, help_text="프린터 모델명")
-    printer_type = models.IntegerField(null=True, blank=True, help_text="프린터 타입")
-    product_code = models.CharField(max_length=256, blank=True, null=True, help_text="제품 코드")
-    device_type = models.IntegerField(null=True, blank=True, help_text="장치 유형")
-    note = models.TextField(blank=True, null=True, help_text="비고")
-    oid_list = models.ForeignKey(OidListMaster, on_delete=models.SET_NULL, null=True, blank=True, related_name="printers")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = "printers"
-
-    def __str__(self) -> str:
-        return f"[{self.manufacturer}] {self.printer_model}"
 
 
 class MonitoringCustomer(models.Model):
@@ -560,28 +540,7 @@ class SuppliesAlert(models.Model):
         return f"SuppliesAlert([{self.serial_no}])"
 
 
-class SupplyUsage(models.Model):
-    """
-    supply_usages: 소모품 사용 및 교체 이력
-    """
-    workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="supply_usages")
-    customer_id = models.BigIntegerField(null=True, blank=True, help_text="고객사 FK")
-    monitoring_printer = models.ForeignKey(MonitoringPrinter, on_delete=models.SET_NULL, null=True, blank=True, related_name="supply_usages")
-    serial_no = models.CharField(max_length=256, help_text="시리얼번호")
-    item = models.CharField(max_length=256, help_text="소모품 항목")
-    quantity = models.IntegerField(default=1, help_text="수량")
-    type = models.CharField(max_length=256, default="manual", help_text="유형 (manual/system)")
-    type_value = models.CharField(max_length=256, blank=True, null=True, help_text="유형 값")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = "supply_usages"
-
-    def __str__(self) -> str:
-        return f"SupplyUsage([{self.serial_no}] {self.item} x {self.quantity})"
 
 
 class UnregisteredPrinter(models.Model):

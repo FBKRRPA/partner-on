@@ -19,8 +19,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
     User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping,
-    MonitoringPrinter, MonitoringData, MonitoringDataRecord, SuppliesAlert, SupplyUsage, UnregisteredPrinter,
-    PrinterModelMaster, OidListMaster, MonitoringCustomer, TempOidListMaster
+    MonitoringPrinter, MonitoringData, MonitoringDataRecord, SuppliesAlert, UnregisteredPrinter,
+    OidListMaster, MonitoringCustomer, TempOidListMaster
 )
 from .permissions import IsOwnerPermission
 from .serializers import (

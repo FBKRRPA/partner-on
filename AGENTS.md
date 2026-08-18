@@ -226,13 +226,12 @@
   * `oid_value`: `CharField(max_length=150)` - SNMP OID 주소 문자열
   * `is_active`: Boolean - OID 수집 활성화 여부
 * **`oid_lists` (OidListMaster 모델)**: 제조사/모델별 OID 상세 맵
-* **`printers` (PrinterModelMaster 모델)**: 프린터 및 복합기 모델 마스터
+* **`temp_oid_lists` (TempOidListMaster 모델)**: Deep Search 1차 임시 스캔 OID 레코드
 * **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사
 * **`monitoring_printers` (MonitoringPrinter 모델)**: 실시간 관제 대상 복합기/프린터 장비
 * **`monitoring_data` (MonitoringData 모델)**: 최신 실시간 관제 데이터 (카운터 5종 + 소모품 6종 + 드럼 4종 + Spec Max 10종, `unique_together = ("workplace", "serial_no")`, `MonitoringPrinter` 1:1 OneToOne 매핑)
 * **`monitoring_data_records` (MonitoringDataRecord 모델)**: 관제 데이터 일별/월별 누적 이력 (`unique_together = ("monitoring_printer", "yyyymmdd")`로 당일 갱신 및 일자 변경 시 레코드 자동 누적적재)
 * **`supplies` (SuppliesAlert 모델)**: 소모품 잔량 경고 및 상태
-* **`supply_usages` (SupplyUsage 모델)**: 소모품 수동/시스템 교체 사용 이력
 * **`unregistered_printers` (UnregisteredPrinter 모델)**: 현장 에이전트에 탐지된 미등록 복합기 상세 저장소 (`unique_together = ("workplace", "ip")`로 동일 IP 장비 재스캔 시 `serial_no`, `scanned_model`, `vendor_name`, `mac_address`, `count_total/color/mono`, `toner_k/c/m/y`, `last_scanned_at` 등 23개 최신 컬럼 실시간 자동 갱신 지원)
 
 ### 2) M2M (다대다) 권한 관계 테이블
