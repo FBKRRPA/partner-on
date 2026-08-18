@@ -18,7 +18,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
-    User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector, PrinterOidMapping,
+    User, Device, Workplace, RoleMenuPermission, PrinterAsset, AgentCollector,
     MonitoringPrinter, MonitoringData, MonitoringDataRecord, SuppliesAlert, UnregisteredPrinter,
     OidListMaster, MonitoringCustomer, TempOidListMaster
 )
@@ -1099,33 +1099,37 @@ class AgentStatusUpdateView(APIView):
 
 class AgentFetchOidsView(APIView):
     """
-    Dynamic OID Downloader for Agent reading directly from PrinterOidMapping DB model
+    Dynamic OID Downloader for Agent reading directly from `oid_lists` (OidListMaster) unified DB table
     """
     authentication_classes: list = []
     permission_classes: list = []
 
     def get(self, request) -> Response:
         vendor = request.query_params.get("vendor", "Fujifilm")
-        db_oids = PrinterOidMapping.objects.filter(vendor_name=vendor, is_active=True)
+        oid_rec = OidListMaster.objects.filter(manufacturer__icontains=vendor).first()
+        if not oid_rec:
+            oid_rec = OidListMaster.objects.first()
 
-        if not db_oids.exists():
-            default_seeds = [
-                ("sysDescr", "1.3.6.1.2.1.1.1.0", "장비 설명"),
-                ("serial_no", "1.3.6.1.4.1.2988.1.1.12.1.1.101", "장비 시리얼 번호"),
-                ("product_code", "1.3.6.1.4.1.2988.1.1.12.1.1.102", "제품 프로덕트 코드"),
-                ("count_total", "1.3.6.1.4.1.2988.1.1.12.1.1.201", "총 누적 카운트"),
-                ("count_color", "1.3.6.1.4.1.2988.1.1.12.1.1.202", "컬러 누적 카운트"),
-                ("count_mono", "1.3.6.1.4.1.2988.1.1.12.1.1.203", "흑백 누적 카운트"),
-            ]
-            for key, val, desc in default_seeds:
-                PrinterOidMapping.objects.get_or_create(
-                    vendor_name=vendor,
-                    oid_key=key,
-                    defaults={"oid_value": val, "description": desc},
-                )
-            db_oids = PrinterOidMapping.objects.filter(vendor_name=vendor, is_active=True)
+        if oid_rec:
+            oids = {
+                "serial_no": oid_rec.serial_no or "1.3.6.1.4.1.2988.1.1.12.1.1.101",
+                "count_color": oid_rec.count1 or "1.3.6.1.4.1.2988.1.1.12.1.1.202",
+                "count_mono": oid_rec.count2 or "1.3.6.1.4.1.2988.1.1.12.1.1.203",
+                "count_total": oid_rec.count4 or "1.3.6.1.4.1.2988.1.1.12.1.1.201",
+                "toner_c": oid_rec.toner_c or "1.3.6.1.2.1.43.11.1.1.9.1.1",
+                "toner_m": oid_rec.toner_m or "1.3.6.1.2.1.43.11.1.1.9.1.2",
+                "toner_y": oid_rec.toner_y or "1.3.6.1.2.1.43.11.1.1.9.1.3",
+                "toner_k": oid_rec.toner_k or "1.3.6.1.2.1.43.11.1.1.9.1.4",
+                "drum_k": oid_rec.drum_k or "1.3.6.1.4.1.2988.1.1.12.1.1.504",
+            }
+        else:
+            oids = {
+                "serial_no": "1.3.6.1.4.1.2988.1.1.12.1.1.101",
+                "count_color": "1.3.6.1.4.1.2988.1.1.12.1.1.202",
+                "count_mono": "1.3.6.1.4.1.2988.1.1.12.1.1.203",
+                "count_total": "1.3.6.1.4.1.2988.1.1.12.1.1.201",
+            }
 
-        oids = {item.oid_key: item.oid_value for item in db_oids}
         return Response(oids, status=status.HTTP_200_OK)
 
 
@@ -2250,7 +2254,7 @@ class TempOidListActionView(APIView):
             rec.status = TempOidListMaster.Status.CONFIRMED
             rec.save()
 
-            # 1. Promote to OidListMaster (oid_lists table)
+            # Promote to OidListMaster (oid_lists table)
             OidListMaster.objects.update_or_create(
                 manufacturer=rec.manufacturer,
                 printer_model=rec.printer_model,
@@ -2267,27 +2271,7 @@ class TempOidListActionView(APIView):
                 },
             )
 
-            # 2. Promote to PrinterOidMapping (accounts_printeroidmapping table)
-            mappings = [
-                ("serial_no", rec.serial_no),
-                ("count_color", rec.count1),
-                ("count_mono", rec.count2),
-                ("count_total", rec.count4),
-                ("toner_c", rec.toner_c),
-                ("toner_m", rec.toner_m),
-                ("toner_y", rec.toner_y),
-                ("toner_k", rec.toner_k),
-                ("drum_k", rec.drum_k),
-            ]
-            for key, val in mappings:
-                if val and str(val).strip():
-                    PrinterOidMapping.objects.update_or_create(
-                        vendor_name=rec.manufacturer or "Standard",
-                        oid_key=key,
-                        defaults={"oid_value": str(val).strip(), "is_active": True},
-                    )
-
-            return Response({"status": "CONFIRMED", "message": f"[{rec.printer_model}] OID가 정식 마스터 DB로 승인 이관되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"status": "CONFIRMED", "message": f"[{rec.printer_model}] OID가 정식 마스터 DB (oid_lists)로 승인 이관되었습니다."}, status=status.HTTP_200_OK)
 
         return Response({"detail": "잘못된 요청 동작입니다."}, status=status.HTTP_400_BAD_REQUEST)
 

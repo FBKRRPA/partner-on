@@ -192,7 +192,7 @@ erDiagram
           "toner_c / m / y / k / drum_k OID",
           "raw_walk_dump: JSONField / status: PENDING / CONFIRMED / REJECTED"
         ],
-        rel: "Stage 2 이관 승인 시 -> oid_lists 및 PrinterOidMapping 승인 इ관"
+        rel: "Stage 2 이관 승인 시 -> oid_lists 정식 마스터 DB 승인 이관"
       },
       {
         name: "oid_lists (OidListMaster 모델)",
@@ -217,17 +217,6 @@ erDiagram
           "count_total / color / mono / toner_k / c / m / y"
         ],
         rel: "N:1 -> Workplace / 승인 시 -> PrinterAsset 생성"
-      },
-      {
-        name: "accounts_printeroidmapping (PrinterOidMapping)",
-        desc: "제조사별 OID 1:1 주소 맵",
-        pk: "id (BigInt PK)",
-        fields: [
-          "vendor_name: CharField(60)",
-          "oid_key: CharField(60) (serial_no, count_color 등)",
-          "oid_value: CharField(150) - MIB OID 주소"
-        ],
-        rel: "SNMP 스캐너 OID 주소 참조"
       },
       {
         name: "monitoring_customers (MonitoringCustomer 모델)",

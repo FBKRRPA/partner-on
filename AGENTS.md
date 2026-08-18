@@ -219,13 +219,7 @@
   * `status`: Enum (`ONLINE`, `OFFLINE`, `PENDING`) - 수집기 연결 상태
   * `detected_count`: IntegerField - 탐지/스캔된 복합기 수
   * `last_scanned_at`: DateTimeField - 최근 Agent 통신 시각
-* **`accounts_printeroidmapping` (PrinterOidMapping 모델)**:
-  * `id`: Primary Key
-  * `vendor_name`: `CharField(max_length=60)` - 제조사명 (Fujifilm, Canon, Ricoh, Standard)
-  * `oid_key`: `CharField(max_length=60)` - OID 키 (serial_no, count_color, count_mono, toner_c 등)
-  * `oid_value`: `CharField(max_length=150)` - SNMP OID 주소 문자열
-  * `is_active`: Boolean - OID 수집 활성화 여부
-* **`oid_lists` (OidListMaster 모델)**: 제조사/모델별 OID 상세 맵
+* **`oid_lists` (OidListMaster 모델)**: 제조사/모델별 26개 세부 OID 단일 마스터 맵 테이블
 * **`temp_oid_lists` (TempOidListMaster 모델)**: Deep Search 1차 임시 스캔 OID 레코드
 * **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사
 * **`monitoring_printers` (MonitoringPrinter 모델)**: 실시간 관제 대상 복합기/프린터 장비
@@ -273,8 +267,8 @@
   * [장비관리] 정식 등록 복합기(`PrinterAsset`) ➔ `PrinterAsset`, `MonitoringPrinter`, `MonitoringData`, `MonitoringDataRecord`, `SuppliesAlert` 관제 DB 실시간 갱신. (신규 등록 기기 최초 수집 시 `MonitoringPrinter.objects.get_or_create`로 PK 사전 확보하여 `NOT NULL` 제약조건 위반 500 에러 원천 예방)
   * 미등록 탐지 기기 ➔ 관제 DB 오염 없이 `unregistered_printers` DB 테이블 (`UnregisteredPrinter`, `unique_together = ("workplace", "ip")`)에 실시간 분리 저장.
 * **에이전트 3가지 스캔 분기 조건 메커니즘**:
-  * **조건 1 (최초 등록 0대 상태)**: `target_serials` 0대 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
-  * **조건 2 (미등록 장비 스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 API 쿼리 수신 ➔ `get_local_ip_subnet()` 로컬 네트워크 자동 감지 서브넷 대역(.1~.254) 풀 스캔(Full Scan).
+  * **조건 1 (Agent 자체 서브넷 지정 풀스캔 수집)**: Agent 자체에서 서브넷 대역(예: `192.168.0.0/24`)을 지정하여 직접 탐지 스캔을 수행하고, 탐지된 복합기 장비 리스트 전체를 백엔드 Bulk Ingest API(`POST /api/v1/agent/ingest/`)로 전송하여 미등록 탐지 DB(`unregistered_printers`) 및 자산 DB로 수용 및 분리 적재.
+  * **조건 2 (미등록 장비 재스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 웹 요청 API 쿼리(`?scan_unregistered=true`) 수신 ➔ 현장 로컬 서브넷 대역(.1~.254) 풀 스캔(Full Scan) 강제 수행.
   * **조건 3 (기존 등록 장비가 있는 정기 수집)**: 정식 등록 기기 존재 ➔ 0.5초 초고속 등록 장비 전용 핀포인트 스캔(Pinpoint Scan).
 * **수집 API IP 키 호환성 및 덮어쓰기 방지 지침 (`Ingest API IP Resolution Directive`)**:
   * 백엔드 수집 API(`AgentIngestBatchView`)는 에이전트 패킷의 IP 키 이름(`ip_address` 또는 `ip`)을 호환 수용(`item.get("ip_address") or item.get("ip") or "127.0.0.1"`)하여, 고유 IP 상실로 인한 미등록 장비 1대 축소 덮어쓰기(Deduplication Overwrite) 버그를 원천 예방해야 합니다.

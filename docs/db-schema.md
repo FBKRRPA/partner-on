@@ -1,6 +1,6 @@
 # 🗄️ PartnerOn v1.0 Database Schema Specification
 
-PartnerOn 시스템에는 **총 14개 데이터베이스 모델 테이블**(비즈니스 6개 + M2M 2개 + 내장 시스템 7개 + 관제/미등록 마스터 6개)이 탑재되어 운용되고 있습니다.
+PartnerOn 시스템에는 **총 13개 데이터베이스 모델 테이블**(비즈니스 5개 + M2M 2개 + 내장 시스템 7개 + 관제/미등록 마스터 6개)이 탑재되어 운용되고 있습니다.
 
 ---
 
@@ -38,7 +38,7 @@ PartnerOn 시스템에는 **총 14개 데이터베이스 모델 테이블**(비�
 
 ---
 
-## 📋 2. 전체 14개 모델 테이블 메타데이터 상세
+## 📋 2. 전체 13개 모델 테이블 메타데이터 상세
 
 ### 1) 비즈니스 핵심 모델 (Accounts App)
 
@@ -60,14 +60,11 @@ PartnerOn 시스템에는 **총 14개 데이터베이스 모델 테이블**(비�
    * `count_color`, `count_mono`, `count_total`, `toner_c`, `toner_m`, `toner_y`, `toner_k`, `drum_k`
 6. **`accounts_agentcollector` (AgentCollector 모델)**
    * `id`: PK, `workplace_id`: FK, `auth_code`: CharField (`AST-XXXXXX` unique), `name`, `status` (`ONLINE`, `OFFLINE`, `PENDING`)
-7. **`accounts_printeroidmapping` (PrinterOidMapping 모델)**
-   * `id`: PK, `vendor_name`, `oid_key`, `oid_value`, `is_active`
-   * `unique_together = ("vendor_name", "oid_key")`
 
 ### 2) 관제 및 마스터 모델 테이블
 
 7. **`temp_oid_lists` (`TempOidListMaster` 모델 - 임시 스테이징)**: 검색 에이전트 스캔 직후 1차 임시 스테이징 저장소 (`status: PENDING`/`CONFIRMED`/`REJECTED`)
-8. **`oid_lists` (`OidListMaster` 모델 - 정식 마스터)**: 제조사/모델별 OID 1:1 풀 맵 마스터 저장소
+8. **`oid_lists` (`OidListMaster` 모델 - 정식 마스터)**: 제조사/모델별 26개 OID 1:1 풀 맵 단일 마스터 저장소
 9. **`monitoring_customers` (MonitoringCustomer 모델)**: 사업장별 관제 대상 고객사 (`unique_together = ("workplace", "customer_id")`)
 10. **`monitoring_printers` (MonitoringPrinter 모델)**: 모니터링 복합기 장비 마스터 (`unique_together = ("workplace", "serial_no")`)
 11. **`monitoring_data` (MonitoringData 모델 - Hot DB)**: 실시간 관제 최신 패널 (`unique_together = ("workplace", "serial_no")`, `MonitoringPrinter` 1:1 매핑)

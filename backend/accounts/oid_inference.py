@@ -127,27 +127,27 @@ class OidInferenceEngine:
     @classmethod
     def learn_and_cache_oid_mapping(cls, device_payload: Dict[str, Any]) -> int:
         """
-        Auto-Learns and caches discovered vendor/model/version OID mappings into PrinterOidMapping DB model
+        Auto-Learns and caches discovered vendor/model OID mappings into OidListMaster unified DB table
         """
-        from accounts.models import PrinterOidMapping
+        from accounts.models import OidListMaster
 
         vendor = device_payload.get("vendor_name", "Standard")
         model = device_payload.get("model_name", "Standard MFP")
-        sys_descr = device_payload.get("sysDescr", "")
         vendor_oids = cls.VENDOR_OIDS.get(vendor, cls.VENDOR_OIDS["Standard"])
 
-        learned_count = 0
-        for oid_key, oid_val in vendor_oids.items():
-            _, created = PrinterOidMapping.objects.get_or_create(
-                vendor_name=vendor,
-                oid_key=oid_key,
-                defaults={
-                    "oid_value": oid_val,
-                    "description": f"Auto-Learned OID for {vendor} ({model}) - {oid_key}",
-                    "is_active": True,
-                },
-            )
-            if created:
-                learned_count += 1
-
-        return learned_count
+        _, created = OidListMaster.objects.get_or_create(
+            manufacturer=vendor,
+            printer_model=model,
+            defaults={
+                "serial_no": vendor_oids.get("serial_no"),
+                "count1": vendor_oids.get("count_color"),
+                "count2": vendor_oids.get("count_mono"),
+                "count4": vendor_oids.get("count_total"),
+                "toner_c": vendor_oids.get("toner_c"),
+                "toner_m": vendor_oids.get("toner_m"),
+                "toner_y": vendor_oids.get("toner_y"),
+                "toner_k": vendor_oids.get("toner_k"),
+                "drum_k": vendor_oids.get("drum_k"),
+            },
+        )
+        return 1 if created else 0
