@@ -41,8 +41,9 @@
 | :--- | :--- | :--- |
 | **Backend** | Python, Django, DRF | Python 3.12+, Django 5.1.x, DRF 3.15.x |
 | **Frontend** | Next.js, React, TypeScript | Next.js 15.x (App Router), React 19, TS 5.x |
+| **Environment**| **Windows (Dev) / Linux (Prod)** | **개발: Windows PowerShell (0.0.0.0 바인딩)**<br>**운영: Linux (Nginx + Gunicorn + PM2 + Systemd)** |
 | **Styling** | Vanilla TailwindCSS | inline ad-hoc 스타일 지양, 프리미엄 UI 디자인 토큰 사용 |
-| **Database** | PostgreSQL | Django ORM (`models.py`) 표준 지침 준수 |
+| **Database** | PostgreSQL | Django ORM (`models.py`) 표준 지침 준수 (13개 모델) |
 | **Authentication**| SimpleJWT, pyotp | JWT Bearer 토큰 및 pyotp TOTP 검증 |
 | **PWA** | `@ducanh2912/next-pwa` | 서비스워커(`sw.js`) 및 Manifest 연동 유지 |
 

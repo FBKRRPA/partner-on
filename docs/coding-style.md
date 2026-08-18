@@ -48,3 +48,7 @@ OWASP Top 10 및 KISA 가이드 지침에 따라 아래 시큐어 코딩 수칙�
 ### ③ **UI 이모지 및 아이콘 사용 제한 (Text-First Design)**
 * ❌ **금지**: 버튼, 헤더, 카테고리 빵부스러기, 카드 타이틀 등에 유니코드 이모지(📌, 👥, 📱, 📈 등) 및 조잡한 아이콘 삽입 금지.
 * ✅ **원칙**: 텍스트 중심의 차분하고 정돈된 B2B 프리미엄 UI 레이아웃을 유지하며, 시각적 강조가 필요한 경우 브랜드 컬러 뱃지(`bg-[#01916D]/10 text-[#01916D]`)와 상태 컬러 태그만 활용합니다.
+
+### ④ **개발(Windows) 및 운영(Linux) 실행 수칙**
+* **개발(Dev - Windows)**: PowerShell에서 `npx next dev -H 0.0.0.0 -p 3000` 및 `python manage.py runserver 0.0.0.0:8000`으로 0.0.0.0 바인딩 구동
+* **운영(Prod - Linux)**: Linux 서버 환경에서 `Nginx Reverse Proxy` + `Gunicorn` WSGI + Node.js `PM2` 무중단 데몬 관리 구동

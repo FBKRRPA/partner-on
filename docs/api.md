@@ -56,22 +56,39 @@ PartnerOn 백엔드 시스템의 REST API 엔드포인트 명세서입니다. �
 
 ## 🤖 3. 에이전트 수집 API (/api/v1/agent)
 
-### ① **수집 타겟 조회 (`GET /api/v1/agent/target-assets/`)**
-* **Header**: `X-Agent-Auth-Code: AST-XXXXXX`
+### ① **에이전트 인증 (`POST /api/v1/agent/authenticate/`)**
+* **Request**: `{"auth_code": "AST-8A9F2K", "ip_range": "192.168.0.0/24"}`
 * **Response (200 OK)**:
   ```json
   {
-    "target_serials": ["FX-721495-192168055", "FX-721495-192168100"],
-    "target_ips": ["192.168.1.55", "192.168.1.100"]
+    "detail": "에이전트 인증 성공",
+    "token": "token_agent_AST-8A9F2K",
+    "workplace_name": "자사 본사",
+    "ip_range": "192.168.0.0/24"
   }
   ```
 
-### ② **배치 수집 적재 (`POST /api/v1/agent/ingest/`)**
+### ② **수집 타겟 및 서브넷 조회 (`GET /api/v1/agent/target-assets/`)**
+* **Header**: `Authorization: Bearer <agent_token>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "target_serials": ["FX-9988102"],
+    "target_ips": ["192.168.0.101"],
+    "assigned_subnet": "192.168.0.0/24",
+    "count": 1,
+    "scan_unregistered": false
+  }
+  ```
+
+### ③ **제조사 OID 리스트 다운로드 (`GET /api/v1/agent/oids/?vendor=Fujifilm`)**
+* **Response (200 OK)**: `oid_lists` (`OidListMaster`) 단일 마스터 DB에서 파싱한 OID 맵 리턴 (`serial_no`, `count_color`, `count_mono`, `toner_c`, `toner_m`, `toner_y`, `toner_k`, `drum_k` 등).
+
+### ④ **배치 수집 Ingestion (`POST /api/v1/agent/ingest/`)**
 * **Ingest API IP Resolution Directive**: `ip_address` 및 `ip` 키 명칭을 완벽 호환 수용 (`item.get("ip_address") or item.get("ip") or "127.0.0.1"`)하여 고유 IP 상실에 따른 미등록 장비 덮어쓰기 버그 원천 방지.
 * **Request Payload**:
   ```json
   {
-    "auth_code": "AST-XXXXXX",
     "devices": [
       {
         "serial_no": "FX-721495-192168055",
@@ -89,6 +106,9 @@ PartnerOn 백엔드 시스템의 REST API 엔드포인트 명세서입니다. �
     ]
   }
   ```
+* **이중 수집 분리 저장**:
+  * DB 등록 정식 기기 ➔ `PrinterAsset` & `MonitoringData` (Hot DB) & `MonitoringDataRecord` (Cold 시계열 DB) 갱신
+  * DB 미등록 신규 기기 ➔ `unregistered_printers` DB 테이블 (`UnregisteredPrinter`)에 분리 적재 및 최신화
 
 ---
 

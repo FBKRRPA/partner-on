@@ -7,14 +7,14 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
 ## 📐 1. 전체 아키텍처 개요 (System Overview)
 
 ```
-[ Frontend: Next.js 15 App Router / React 19 / TypeScript 5 / TailwindCSS ]
+[ Frontend: Next.js 15 App Router / React 19 / TypeScript 5 / TailwindCSS / PM2 ]
                                     │
                                     ▼ (HTTPS / REST API + JWT Bearer Auth)
-[ Backend API: Django REST Framework 5.1 / Python 3.12 / SimpleJWT / PyOTP ]
-               │                                       │
-               ▼ (Django ORM / Parameterized)          ▼ (SNMP Ingest Batch API)
- [ Database: PostgreSQL ]               [ Field Collector Agent: Python 3.12 ]
- (16 Master & Time-Series Tables)       (SNMP v2c / Pinpoint & Full Subnet Scan)
+[ Backend API: Django REST Framework 5.1 / Python 3.12 / Gunicorn / Nginx ]
+                │                                       │
+                ▼ (Django ORM / Parameterized)          ▼ (SNMP Ingest Batch API)
+  [ Database: PostgreSQL ]               [ Field Collector Agent ]
+  (13 Master & Time-Series Tables)       (SNMP v2c / Pinpoint & Subnet Scan)
 ```
 
 ---
@@ -23,6 +23,9 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
 
 ### ① **프론트엔드 (Frontend Layer)**
 * **기술 스택**: Next.js 15.x (App Router), React 19, TypeScript 5.x, Vanilla TailwindCSS, `@ducanh2912/next-pwa`
+* **개발 & 운영 실행 환경**:
+  * **개발(Dev)**: Windows PowerShell (`npx next dev -H 0.0.0.0 -p 3000`)
+  * **운영(Prod)**: Linux Server (`Node.js 20+` PM2 무중단 데몬 + Nginx Proxy)
 * **Dynamic IP Base URL Resolution**:
   * 접속 위치(로컬, 내부망 IP, 도메인)에 맞추어 API Base URL을 동적 탐지 (`frontend/lib/auth-api.ts` `getApiBaseUrl()`)
   * `http://localhost:8000` 하드코딩을 100% 제거하여 IP 직접 접속 시 `Failed to fetch` 에러 차단
@@ -35,6 +38,9 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
 
 ### ② **백엔드 (Backend API Layer)**
 * **기술 스택**: Python 3.12+, Django 5.1.x, Django REST Framework 3.15.x, PyOTP
+* **개발 & 운영 실행 환경**:
+  * **개발(Dev)**: Windows (`python manage.py runserver 0.0.0.0:8000`)
+  * **운영(Prod)**: Linux Server (`Systemd` + `Gunicorn` WSGI + Nginx 80/443 Reverse Proxy)
 * **인증 및 시큐어 보안 아키텍처**:
   * SimpleJWT Bearer 토큰 및 pyotp TOTP / 6자리 이메일 OTP 2차 인증 (2FA)
   * 대표 승인 기기 통제 모듈 (`Device` 승인 테이블)
@@ -42,16 +48,17 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
 * **이중 수집 분리 및 시계열 적재 (Dual Ingestion & Upsert)**:
   * **등록 장비**: `PrinterAsset` ➔ `MonitoringPrinter` ➔ `MonitoringData` (Hot DB 1:1) & `MonitoringDataRecord` (Cold Time-Series `yyyymmdd` 1:N)
   * **미등록 장비**: 관제 오염 방지를 위해 `UnregisteredPrinter` 테이블 (`unique_together = ("workplace", "ip")`)에 자동 분리 적재
+* **OID 단일 마스터 아키텍처**:
+  * `oid_lists` (`OidListMaster`) 1개 테이블로 전사 OID 통합 관리
 
-### ③ **현장 에이전트 수집기 (Field Collector Agent Layer)**
-* **기술 스택**: Python 3.12+, `agent/snmp_scanner.py`, `agent/oid_inference.py`, `agent/main.py`
-* **SNMP v2c 스캐닝 엔진**:
-  * Standard Printer MIB (1.3.6.1.2.1.1.1.0) 및 Xerox/Fujifilm OID Tree 추론 탐지
-  * IP 오프셋 + 시각(Timestamp) 분 단위 가중치(`min_offset`) 기반 다이나믹 시계열 스냅샷 생성
+### ③ **현장 수집 에이전트 (Field Collector Agent Layer)**
+* **기능**: SNMP v2c MIB OID 스캔 및 백엔드 Ingestion 패킷 전송 Engine
+* **스캔 사전 준비**:
+  * 스캔 직전 백엔드 API (`GET /api/v1/agent/target-assets/`)를 호출하여 백엔드 DB에 등록되어 있는 장비목록(`target_ips`, `target_serials`) 및 OID 맵 사전 조회
 * **3가지 스캔 분기 메커니즘**:
-  1. **조건 1 (등록 장비 0대 상태)**: 서브넷(.1~.254) 풀 스캔 (Full Scan)
-  2. **조건 2 (CLI `-u`/`--scan-unregistered` 수신)**: 서브넷 풀 스캔 (Full Scan)
-  3. **조건 3 (정기 수집 구동)**: 0.5초 초고속 등록 장비 전용 핀포인트 스캔 (Pinpoint Scan)
+  1. **조건 1 (Agent 자체 서브넷 지정 풀스캔 수집)**: Agent 자체 지정 서브넷 대역(.1~.254) 탐지 스캔 수행 ➔ 탐지 장비 전체 패킷 전송 ➔ 서버 미등록 탐지 DB(`unregistered_printers`) 및 자산 DB 분리 적재
+  2. **조건 2 (미등록 장비 재스캔 파라미터 전달)**: `--scan-unregistered` / `-u` CLI 파라미터 또는 웹 요청 API 쿼리(`?scan_unregistered=true`) 수신 ➔ 로컬 서브넷 대역 풀 스캔 강제 수행
+  3. **조건 3 (기존 등록 장비 정기 관제 수집)**: 정식 등록 기기 존재 ➔ 3분 주기 0.5초 초고속 등록 장비 전용 핀포인트 스캔 (Pinpoint Scan)
 
 ---
 
