@@ -301,20 +301,27 @@
 
 ---
 
-## 🌿 8. Git 브랜치 전략 & PR 규칙 (Branch & PR Strategy)
+## 🌿 8. AI 바이브코딩 전용 Git 브랜치 전략 & PR 규칙 (AI-Generated Branch Strategy)
 
-1. **`main` 브랜치는 보호(Branch Protection)되어 있으므로 직접 Push가 금지됩니다.**
-2. **기능 추가 및 수정 시 반드시 작업 브랜치를 생성해야 합니다**:
-   - `feature/기능명` (예: `feature/crm-customer-ui`)
-   - `fix/버그명` (예: `fix/2fa-otp-timeout`)
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feature/new-crm-module
-   ```
-3. **코드 검증 통과 후 GitHub에 브랜치를 Push하고 PR(Pull Request)을 작성합니다**:
-   - 테스트(`python manage.py test`) 및 빌드(`npm run build`) 통과 필수.
-   - PR 생성 후 최소 1명 이상의 승인(Approval)을 받아야만 `main`으로 안전하게 병합(Merge)할 수 있습니다.
+AI 페어 프로그래밍 시 발생할 수 있는 코드 오염을 방지하고 추적성을 확보하기 위해 아래 **4단계 샌드박스 브랜치 레이어 및 4대 실전 수칙**을 적용합니다.
+
+### 1) 4단계 샌드박스 브랜치 레이어
+* **`main`**: 100% 검증 완료된 정식 프로덕션 배포 전용 브랜치 (직접 Commit 금지, PR 승인 병합)
+* **`develop`**: 팀 통합 테스트 및 QA 스테이징 브랜치 (모든 테스트/리뷰 통과 필수)
+* **`feature/ai-generated/<feature-name>`**: LLM AI 에이전트가 1차 제안/생성한 Raw 코드 반영용 브랜치 (추적성 보존)
+* **`feature/refined/<feature-name>`**: AI 생성 코드를 개발자(사람)가 정밀 검토, 리뷰, 포맷팅, 테스트 검증하여 정제한 제출 브랜치
+* **`hotfix/<bug-name>`**: 실서버 긴급 장애 대응용 패치 브랜치 (`main`에서 직접 분기 ➔ `main` & `develop` 동시 병합)
+
+### 2) 4대 실전 바이브코딩 수칙
+1. **AI 커밋 메시지 자동 태깅 수칙 (`[AI-Gen]` vs `[Refined]`)**:
+   * AI 1차 반영 커밋: `feat: [AI-Gen] draft initial AI Chat Log API`
+   * 개발자 검증 완료 커밋: `refactor: [Refined] add error boundary & type safety`
+2. **CI/CD 자동 테스트 게이트키퍼**:
+   * `develop` 또는 `main` 병합 PR 생성 시 백엔드 테스트(`python manage.py test`) 및 빌드(`npm run build`) 100% 통과 필수.
+3. **AI 컨텍스트 주석 태깅 (`// AI-Context: ...`)**:
+   * AI가 작성한 다소 복잡한 알고리즘 상단에 프롬프트 의도 주석 명시.
+4. **ADR 문서화 및 결정 주체 기록**:
+   * 주요 의사결정 발생 시 `docs/adr/000X-*.md` 생성 및 "작성자(HR)", "AI 제안", "최종 승인자" 명시.
 
 ---
 
