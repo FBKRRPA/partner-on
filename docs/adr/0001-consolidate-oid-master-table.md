@@ -1,9 +1,9 @@
 # 📄 ADR 0001: OID DB 테이블 단일 마스터(`oid_lists`) 통합
 
 * **작성 일자**: 2026-08-18
-* **작성 개발자**: 개발자 (PartnerOn Dev Team)
+* **작성 개발자**: HR (현률)
 * **AI 에이전트**: Antigravity AI Pair Programmer
-* **최종 의사결정자**: 대표님 (Final Approval)
+* **최종 의사결정자**: HR (현률)
 * **상태**: 승인됨 (Approved)
 
 ---
