@@ -88,15 +88,14 @@ erDiagram
     oid_lists ||--|{ accounts_printeroidmapping : "OID 1:1 맵"
     
     monitoring_printers ||--|{ supplies : "1:N 소모품 경고"
-    monitoring_printers ||--|{ supply_usages : "1:N 소모품 교체 이력"
       </div>
     </div>
 
-    <!-- 16 Tables Detailed Specifications Grid -->
+    <!-- 14 Tables Detailed Specifications Grid -->
     <div class="space-y-6">
       <h2 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3 flex items-center gap-2">
         <span class="w-3.5 h-3.5 rounded-full bg-[#01916D]"></span>
-        16개 테이블 상세 엔티티 & PK/FK 필드 명세
+        14개 테이블 상세 엔티티 & PK/FK 필드 명세
       </h2>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="tablesGrid">
@@ -284,18 +283,6 @@ erDiagram
           "supply_type: CharField(40) (toner_k, drum_k 등)",
           "remained_percent: IntegerField",
           "status: Enum (NORMAL, WARNING, CRITICAL)"
-        ],
-        rel: "N:1 -> MonitoringPrinter"
-      },
-      {
-        name: "supply_usages (SupplyUsage 모델)",
-        desc: "소모품 수동/자동 교체 이력 레코드",
-        pk: "id (BigInt PK)",
-        fields: [
-          "monitoring_printer: FK(MonitoringPrinter)",
-          "supply_type: CharField(40)",
-          "replaced_at: DateTimeField",
-          "replaced_by: CharField(80)"
         ],
         rel: "N:1 -> MonitoringPrinter"
       }
