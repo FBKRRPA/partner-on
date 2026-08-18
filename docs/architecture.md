@@ -17,6 +17,9 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
   (13 Master & Time-Series Tables)       (SNMP v2c / Pinpoint & Subnet Scan)
 ```
 
+### 🌿 AI 바이브코딩 4단계 브랜치 파이프라인 (Git Branch Architecture)
+`main` (Production) ◄─ `develop` (QA/Test) ◄─ `feature/refined/...` (개발자 검증) ◄─ `feature/ai-generated/...` (AI 1차 Raw)
+
 ---
 
 ## 🌐 2. 레이어별 세부 아키텍처 (Layer Architecture)
