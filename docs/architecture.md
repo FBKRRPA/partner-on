@@ -1,10 +1,10 @@
-# 🏗️ PartnerOn v1.0 System Architecture
+# PartnerOn v1.0 System Architecture
 
 PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관리 및 통합 CRM/ERP 시스템으로, 고성능 클라이언트-서버 구조와 현장 에이전트 기반 실시간 장비 관제 아키텍처를 취하고 있습니다.
 
 ---
 
-## 📐 1. 전체 아키텍처 개요 (System Overview)
+## 1. 전체 아키텍처 개요 (System Overview)
 
 ```
 [ Frontend: Next.js 15 App Router / React 19 / TypeScript 5 / TailwindCSS / PM2 ]
@@ -17,8 +17,8 @@ PartnerOn(파트너온) v1.0은 B2B 사무기기 / 복합기 렌탈 자산 관�
   (13 Master & Time-Series Tables)       (SNMP v2c / Pinpoint & Subnet Scan)
 ```
 
-### 🌿 AI 바이브코딩 4단계 브랜치 파이프라인 (Git Branch Architecture)
-`main` (Production) ◄─ `develop` (QA/Test) ◄─ `feature/refined/...` (개발자 검증) ◄─ `feature/ai-generated/...` (AI 1차 Raw)
+### AI 바이브코딩 4단계 브랜치 파이프라인 (Git Branch Architecture)
+`main` (Production) <- `develop` (QA/Test) <- `feature/refined/...` (개발자 검증) <- `feature/ai-generated/...` (AI 1차 Raw)
 
 ---
 
