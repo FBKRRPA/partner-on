@@ -18,6 +18,8 @@ PartnerOn 프로젝트에서 LLM AI 페어 프로그래밍(바이브코딩) 및 
 ### HR 대표님 (`docs/adr/HR/`)
 * [0001-consolidate-oid-master-table.md](HR/0001-consolidate-oid-master-table.md) - OID DB 테이블 단일 마스터(`oid_lists`) 통합
 * [0002-agent-subnet-scan-branching.md](HR/0002-agent-subnet-scan-branching.md) - Agent 서브넷 지정 스캔 & 미등록 DB 이중 수집 분리
+* [0003-ai-chat-log-model.md](HR/0003-ai-chat-log-model.md) - AIChatLog 모델 신설 및 대화 이력 저장소 구축
 
 ### Dev B 팀원 (`docs/adr/DevB/`)
 * [0001-sample-module-design.md](DevB/0001-sample-module-design.md) - Dev B 파이프라인 모듈 설계 실전 검증
+* [0002-device-maintenance-record.md](DevB/0002-device-maintenance-record.md) - DeviceMaintenanceRecord 모델 신설 및 CE 정기점검 이력 관리

@@ -229,12 +229,13 @@
 ### 22. [TC-022] 미등록 탐지 기기 원본 스캔 데이터(시리얼/IP/모델명) 순수 보존 및 3가지 미반환 사유 정밀 분석
 * **발생 원인/배경**: 미등록 기기 252대의 시리얼 번호가 비어 보이는 현상에 대한 정밀 기술 분석 및 원본 데이터 유지 요구.
 
-### 104. [TC-104] [AI-Gen] GitHub Branch Protection & 4단계 샌드박스 브랜치 체계 검증
-* **발생 원인/배경**: AI 페어 프로그래밍 시 발생할 수 있는 브랜치 오염을 방지하고 GitHub `main`/`develop` 브랜치에 직접 Push되는 위험을 차단하는 검증 수행.
+### 105. [TC-105] [Refined] 실제 개발자 2명(HR & DevB) 동시 개발 시뮬레이션 및 충돌 0% 병합 검증
+* **발생 원인/배경**: 실제 2명의 개발자가 서로 다른 모듈(`AIChatLog`, `DeviceMaintenanceRecord`)을 동시에 개발할 때 4단계 샌드박스 브랜치, 독립 ADR 서브폴더(`docs/adr/HR/`, `docs/adr/DevB/`), Git 충돌 해결 및 통합 검증 수행.
 * **조치 내용**:
-  1. `feature/ai-generated/test-ci-protection` 샌드박스 브랜치 생성 및 1차 AI 소스 반영.
-  2. GitHub `main` 및 `develop` 브랜치 보호(Branch Protection) 설정 검증.
-* **검증 결과**: 샌드박스 AI 브랜치 푸시 100% 성공 및 protected 브랜치 직접 push 방지 통제 검증 완료.
+  1. 트랙 A: HR 개발자 `feature/ai-generated/hr-ai-chat-log` ➔ `feature/refined/hr-ai-chat-log` 브랜치에서 `AIChatLog` 모델 구현 및 ADR 0003 작성.
+  2. 트랙 B: DevB 개발자 `feature/ai-generated/devb-maint-record` ➔ `feature/refined/devb-maint-record` 브랜치에서 `DeviceMaintenanceRecord` 모델 구현 및 ADR 0002 작성.
+  3. `develop` 브랜치 병합 시 `models.py` 충돌을 깨끗이 해소하고 마이그레이션 및 단위테스트 100% 통과.
+* **검증 결과**: 개발자별 독립 ADR 관리 및 4단계 브랜치 파이프라인 무결성 100% 검증 완료.
 * **조치 내용**: 임의의 대체 식별자 생성 로직을 제거하고, 현장 에이전트 SNMP 스캔 원본 데이터 그대로 `unregistered_printers` 테이블에 무결하게 보존.
 * **검증 결과**: 현장 SNMP 원본 데이터 100% 보존 및 백엔드 테스트 9/9 PASS.
 
