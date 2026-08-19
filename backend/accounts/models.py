@@ -566,4 +566,22 @@ class UnregisteredPrinter(models.Model):
         return f"UnregisteredPrinter([{self.serial_no}] {self.scanned_model})"
 
 
+class AIChatLog(models.Model):
+    """
+    AIChatLog: 유저별 AI 페어 프로그래밍 대화 및 기술 의사결정 로그 기록 모델 (HR 담당)
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ai_chat_logs")
+    prompt_intent = models.CharField(max_length=255, help_text="프롬프트 의도 요약")
+    ai_response = models.TextField(help_text="AI 응답 요약 내용")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "ai_chat_logs"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"AIChatLog({self.user.email} - {self.prompt_intent[:20]})"
+
+
+
 
