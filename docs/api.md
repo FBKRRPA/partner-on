@@ -85,6 +85,10 @@ PartnerOn 백엔드 시스템의 REST API 엔드포인트 명세서입니다. �
 * **Response (200 OK)**: `oid_lists` (`OidListMaster`) 단일 마스터 DB에서 파싱한 OID 맵 리턴 (`serial_no`, `count_color`, `count_mono`, `toner_c`, `toner_m`, `toner_y`, `toner_k`, `drum_k` 등).
 
 ### ④ **배치 수집 Ingestion (`POST /api/v1/agent/ingest/`)**
+* **Security Headers (패킷 무결성 및 암호화 설계 규격)**:
+  * `Authorization`: `Bearer <agent_token>`
+  * `X-Agent-Signature`: `HMAC-SHA256(payload_json_bytes, secret=agent_token)` (패킷 변조 Tampering 차단)
+  * `X-Agent-Timestamp`: `<unix_timestamp>` (재전송 공격 Replay Attack 차단)
 * **Ingest API IP Resolution Directive**: `ip_address` 및 `ip` 키 명칭을 완벽 호환 수용 (`item.get("ip_address") or item.get("ip") or "127.0.0.1"`)하여 고유 IP 상실에 따른 미등록 장비 덮어쓰기 버그 원천 방지.
 * **Request Payload**:
   ```json

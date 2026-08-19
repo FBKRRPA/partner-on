@@ -18,7 +18,8 @@ PartnerOn v1.0 프로젝트의 **LLM 코딩 에이전트 & 개발자 전용 핵�
 * **[System Architecture](docs/architecture.md)**: 전체 아키텍처 & 4단계 브랜치 파이프라인
 * **[Coding Style & Security](docs/coding-style.md)**: 시큐어 코딩 (SQLi, XSS, BOLA 방지) & Windows/Linux 환경
 * **[STRIDE Threat Model](docs/threat_model.md)**: 구글식 STRIDE 6대 보안 위협 모델 & TDD Security Boundaries
-* **[REST API Specification](docs/api.md)**: REST API 규격 & Agent 수집 API 엔드포인트
+* **[REST API Specification](docs/api.md)**: 전사 REST API 규격
+* **[Agent API Specification](docs/agent_api_spec.md)**: Field Agent 수집기 전용 REST API 명세서 (PostScheduler/SmartUI 레퍼런스 스타일)
 * **[Database Schema](docs/db-schema.md)**: 13개 DB 마스터 테이블 & ERD
 * **[Business Rules](docs/business-rules.md)**: RBAC 4단계 권한, 2FA 정책, Agent 3가지 스캔 분기 규칙
 * **[UI & Design Guidelines](docs/ui-guidelines.md)**: 단일 전사 UI 표준 (`/operations/basic/contracts`)

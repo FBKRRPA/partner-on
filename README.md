@@ -21,6 +21,7 @@
 * **[System Architecture](docs/architecture.md)**: 아키텍처 및 PWA, Agent 동적 통신 구조
 * **[Coding Style & Security](docs/coding-style.md)**: 시큐어 코딩 규칙 및 개발 가이드
 * **[REST API Specification](docs/api.md)**: REST API 엔드포인트 명세 및 Ingest 규칙
+* **[Agent API Specification](docs/agent_api_spec.md)**: Field Agent 전용 REST API 명세서 (PostScheduler 스타일)
 * **[Database Schema](docs/db-schema.md)**: 13개 DB 테이블 ERD 및 Hot/Cold 시계열 구조
 * **[Business Rules](docs/business-rules.md)**: 4단계 RBAC 권한, 2FA 정책, 3가지 스캔 분기 규칙
 * **[UI & Design Guidelines](docs/ui-guidelines.md)**: Fujifilm 에메랄드 브랜드 토큰 & UI/UX 가이드

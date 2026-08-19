@@ -17,6 +17,7 @@ PartnerOn(파트너온) v1.0 시스템의 **구글식 시큐어 바이브코딩 
 * **위협 요소**: Agent 수집 Batch API (`POST /api/v1/agent/ingest/`) 전송 데이터 패킷 변조, 수집 카운터 및 소모품 수치 조작.
 * **방어 대책**:
   * HTTPS TLS 1.3 암호화 채널 통신.
+  * Agent 전송 패킷 HMAC-SHA256 해시 서명 헤더(`X-Agent-Signature`) 무결성 검증.
   * 백엔드 DRF Serializer 데이터 유형(Integer, GenericIP) 엄격 검증 및 Pydantic/DTO 필터링.
   * `MonitoringDataRecord` 일자별 이력 `unique_together` 불변 무결성 보장.
 
