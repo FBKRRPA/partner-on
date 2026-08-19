@@ -13,8 +13,11 @@ PartnerOn 프로젝트에서 LLM AI 페어 프로그래밍(바이브코딩) 및 
 
 ---
 
-## 📂 ADR 목록
+## 📂 개발자별 ADR 목차 (Developer ADR Index)
 
-* [0000-template.md](file:///d:/workspace/Partneron_v1/docs/adr/0000-template.md) - ADR 작성용 표준 템플릿
-* [0001-consolidate-oid-master-table.md](file:///d:/workspace/Partneron_v1/docs/adr/0001-consolidate-oid-master-table.md) - OID DB 테이블 단일 마스터(`oid_lists`) 통합
-* [0002-agent-subnet-scan-branching.md](file:///d:/workspace/Partneron_v1/docs/adr/0002-agent-subnet-scan-branching.md) - Agent 서브넷 지정 스캔 & 미등록 DB 이중 수집 분리
+### 👤 **HR 대표님 (`docs/adr/HR/`)**
+* [0001-consolidate-oid-master-table.md](file:///d:/workspace/Partneron_v1/docs/adr/HR/0001-consolidate-oid-master-table.md) - OID DB 테이블 단일 마스터(`oid_lists`) 통합
+* [0002-agent-subnet-scan-branching.md](file:///d:/workspace/Partneron_v1/docs/adr/HR/0002-agent-subnet-scan-branching.md) - Agent 서브넷 지정 스캔 & 미등록 DB 이중 수집 분리
+
+### 👤 **Dev B 팀원 (`docs/adr/DevB/`)**
+* [0001-sample-module-design.md](file:///d:/workspace/Partneron_v1/docs/adr/DevB/0001-sample-module-design.md) - Dev B 파이프라인 모듈 설계 실전 검증
