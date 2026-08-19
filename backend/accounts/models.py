@@ -566,4 +566,22 @@ class UnregisteredPrinter(models.Model):
         return f"UnregisteredPrinter([{self.serial_no}] {self.scanned_model})"
 
 
+class DeviceMaintenanceRecord(models.Model):
+    """
+    DeviceMaintenanceRecord: 복합기 장비 정기점검 및 CE 정비 이력 모델 (Dev B 담당)
+    """
+    printer = models.ForeignKey(PrinterAsset, on_delete=models.CASCADE, related_name="maintenance_records")
+    technician_name = models.CharField(max_length=100, help_text="정비 담당 CE 성함")
+    inspection_notes = models.TextField(help_text="점검 내용 및 교체 부품 코멘트")
+    inspected_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "device_maintenance_records"
+        ordering = ["-inspected_at"]
+
+    def __str__(self) -> str:
+        return f"Maintenance({self.printer.serial_no} - {self.technician_name})"
+
+
+
 
