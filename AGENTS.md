@@ -17,6 +17,7 @@ PartnerOn v1.0 프로젝트의 **LLM 코딩 에이전트 & 개발자 전용 핵�
 상세 기술 및 도메인 지침은 아래 전문 명세서를 최우선 참조합니다:
 * **[System Architecture](docs/architecture.md)**: 전체 아키텍처 & 4단계 브랜치 파이프라인
 * **[Coding Style & Security](docs/coding-style.md)**: 시큐어 코딩 (SQLi, XSS, BOLA 방지) & Windows/Linux 환경
+* **[STRIDE Threat Model](docs/threat_model.md)**: 구글식 STRIDE 6대 보안 위협 모델 & TDD Security Boundaries
 * **[REST API Specification](docs/api.md)**: REST API 규격 & Agent 수집 API 엔드포인트
 * **[Database Schema](docs/db-schema.md)**: 13개 DB 마스터 테이블 & ERD
 * **[Business Rules](docs/business-rules.md)**: RBAC 4단계 권한, 2FA 정책, Agent 3가지 스캔 분기 규칙
@@ -58,7 +59,7 @@ PartnerOn v1.0 프로젝트의 **LLM 코딩 에이전트 & 개발자 전용 핵�
 
 ---
 
-## 7. 4단계 요구사항 전달 & AI 역질문 수칙
+## 7. 4단계 요구사항 전달 & 구글식 보안 게이트 수칙
 
 개발자가 AI에게 기능 요청 시 아래 4가지를 구조화하여 전달합니다:
 1. **배경 (Background)**: 서비스 및 유저 타겟
@@ -66,7 +67,9 @@ PartnerOn v1.0 프로젝트의 **LLM 코딩 에이전트 & 개발자 전용 핵�
 3. **제약 (Constraints)**: 기술 스택, 인프라, 보안 제약
 4. **예시 (Examples)**: 기존 유사 코드, UI, API 스펙
 
-**[역질문 수칙]**: 위 4가지 항목이 누락된 단순 지시 수신 시, AI 에이전트는 코드 수정을 유예하고 누락 항목의 보완을 정중히 역질문 안내한 후 진행합니다.
+* **[구글 TDD Security Boundaries 수칙]**: AI 구현 계획(Plan) 작성 시 `Security Boundaries & Assertions` (입력 Pydantic/Serializer 검증, BOLA 권한 경계 조건) 섹션을 필수로 작성합니다.
+* **[에이전트 자가 교정 수칙]**: 하드코딩된 API키/비밀번호나 보안 스캔 에러 발생 시, 에이전트가 이를 인식하여 환경변수(`.env`) 코드로 스스로 리팩터링 후 재커밋합니다.
+* **[역질문 수칙]**: 위 4가지 항목이 누락된 단순 지시 수신 시, AI 에이전트는 코드 수정을 유예하고 누락 항목의 보완을 정중히 역질문 안내한 후 진행합니다.
 
 ---
 
