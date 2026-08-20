@@ -1914,6 +1914,62 @@ class CollectorCodeGenerateView(APIView):
         )
 
 
+class CRMCustomerListCreateView(APIView):
+    """
+    CRM Customer Master Ledger REST API (monitoring_customers DB Table Persistence)
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def get(self, request) -> Response:
+        workplace_id = request.headers.get("X-Workplace-Id")
+        customers = MonitoringCustomer.objects.filter(deleted_at__isnull=True)
+        if workplace_id and str(workplace_id).isdigit():
+            customers = customers.filter(workplace_id=int(workplace_id))
+
+        res_data = []
+        for c in customers:
+            res_data.append({
+                "id": c.id,
+                "partner_company": c.workplace.name if c.workplace else "FBKR 파트너스",
+                "partner_employee": "김영업 과장",
+                "name": c.name,
+                "office_type": "일반 사무실",
+                "location_base": "서울 본사",
+                "contract_status": "계약 고객" if c.monitoring_printers.exists() else "미계약 고객",
+                "biz_no": f"105-87-{c.id:05d}",
+                "grade": "A",
+                "company_scale": "31-50",
+                "contact1": {"name": "정수진", "department": "총무팀", "email": "contact@customer.com", "phone": "010-1234-5678", "position": "팀장", "note": c.other_info or ""},
+                "contact2": {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""},
+                "contact3": {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""},
+            })
+        return Response(res_data, status=status.HTTP_200_OK)
+
+    def post(self, request) -> Response:
+        workplace = Workplace.objects.first()
+        name = str(request.data.get("name", "")).strip()
+        if not name:
+            return Response({"detail": "고객사명이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cid = MonitoringCustomer.objects.count() + 101
+        customer = MonitoringCustomer.objects.create(
+            workplace=workplace,
+            customer_id=cid,
+            name=name,
+            employee_count=30,
+            other_info=str(request.data.get("other_info", "신규 등록 CRM 고객사")),
+        )
+        return Response(
+            {
+                "detail": f"[{customer.name}] 고객사가 DB에 성공적으로 저장되었습니다.",
+                "id": customer.id,
+                "name": customer.name,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class CollectorListView(APIView):
     """
     Returns list of active AgentCollectors from DB for current workplace
