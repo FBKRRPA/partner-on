@@ -21,6 +21,8 @@ PartnerOn 프로젝트에서 LLM AI 페어 프로그래밍(바이브코딩) 및 
 * [0003-ai-chat-log-model.md](HR/0003-ai-chat-log-model.md) - AIChatLog 모델 신설 및 대화 이력 저장소 구축
 * [0004-fernet-encrypted-2fa-fields.md](HR/0004-fernet-encrypted-2fa-fields.md) - 2FA TOTP 비밀키 및 백업코드 Fernet 양방향 암호화 필드 신설
 * [0005-rate-limiting-for-agent-auth-and-invites.md](HR/0005-rate-limiting-for-agent-auth-and-invites.md) - agent_auth 및 invite_code Rate Limit (ScopedRateThrottle) 429 차단 도입
+* [0006-sys-object-id-for-oid-master.md](HR/0006-sys-object-id-for-oid-master.md) - OidListMaster sys_object_id 필드 신설 및 복합 인덱스 (6순위) 기반 에이전트 0.5초 핀포인트 OID 맵 조회
+* [0007-agent-swagger-ui-setup.md](HR/0007-agent-swagger-ui-setup.md) - OpenAPI 3.0 & Swagger UI 탑재 및 Field Agent 전용 API 태깅 독립 분리
 
 ### Dev B 팀원 (`docs/adr/DevB/`)
 * [0001-sample-module-design.md](DevB/0001-sample-module-design.md) - Dev B 파이프라인 모듈 설계 실전 검증

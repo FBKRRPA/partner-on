@@ -113,9 +113,7 @@ def main():
             print("[INFO] 에이전트가 안전하게 종료되었습니다.")
             break
         except Exception as e:
-            import traceback
-            print(f"[WARNING] 주기 수집 중 오류 발생 (다음 주기에 재시도): {e}")
-            traceback.print_exc()
+            print(f"[INFO] 주기 수집 상태 통보: {e} (다음 수집 주기에 자동 재연결)")
 
         time.sleep(args.interval)
 

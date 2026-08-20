@@ -81,8 +81,9 @@ PartnerOn 백엔드 시스템의 REST API 엔드포인트 명세서입니다. �
   }
   ```
 
-### ③ **제조사 OID 리스트 다운로드 (`GET /api/v1/agent/oids/?vendor=Fujifilm`)**
-* **Response (200 OK)**: `oid_lists` (`OidListMaster`) 단일 마스터 DB에서 파싱한 OID 맵 리턴 (`serial_no`, `count_color`, `count_mono`, `toner_c`, `toner_m`, `toner_y`, `toner_k`, `drum_k` 등).
+### ③ **제조사 OID 리스트 다운로드 (`GET /api/v1/agent/oids/?sys_object_id=1.3.6.1.4.1.2988.1.1.2.1&vendor=Fujifilm`)**
+* **Query Params**: `sys_object_id` (1순위 핀포인트 exact 검색), `vendor` (2순위), `model` (2순위)
+* **Response (200 OK)**: `oid_lists` (`OidListMaster`) 단일 마스터 DB에서 sys_object_id로 1순위 파싱한 exact 26개 OID 맵 리턴 (`sys_object_id`, `serial_no`, `count_color`, `count_mono`, `toner_c`, `toner_m`, `toner_y`, `toner_k`, `drum_k` 등).
 
 ### ④ **배치 수집 Ingestion (`POST /api/v1/agent/ingest/`)**
 * **Security Headers (패킷 무결성 및 암호화 설계 규격)**:

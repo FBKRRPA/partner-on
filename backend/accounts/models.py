@@ -226,6 +226,7 @@ class OidListMaster(models.Model):
     """
     oid_lists: 제조사 및 모델별 OID 세부 목록 마스터
     """
+    sys_object_id = models.CharField(max_length=256, blank=True, null=True, db_index=True, help_text="SNMP Enterprise sysObjectID (예: 1.3.6.1.4.1.2988)")
     manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
     printer_model = models.CharField(max_length=256, blank=True, null=True, help_text="프린터 모델")
     serial_no = models.CharField(max_length=256, blank=True, null=True, help_text="시리얼번호 OID")
@@ -261,9 +262,13 @@ class OidListMaster(models.Model):
 
     class Meta:
         db_table = "oid_lists"
+        indexes = [
+            models.Index(fields=["sys_object_id"]),
+            models.Index(fields=["manufacturer", "printer_model"]),
+        ]
 
     def __str__(self) -> str:
-        return f"[{self.manufacturer}] {self.printer_model}"
+        return f"[{self.manufacturer}] {self.printer_model} ({self.sys_object_id})"
 
 
 class TempOidListMaster(models.Model):
@@ -276,6 +281,7 @@ class TempOidListMaster(models.Model):
         REJECTED = "REJECTED", "거절됨"
 
     workplace = models.ForeignKey(Workplace, on_delete=models.CASCADE, related_name="temp_oid_lists", null=True, blank=True)
+    sys_object_id = models.CharField(max_length=256, blank=True, null=True, db_index=True, help_text="SNMP Enterprise sysObjectID")
     manufacturer = models.CharField(max_length=256, blank=True, null=True, help_text="제조사")
     printer_model = models.CharField(max_length=256, blank=True, null=True, help_text="프린터 모델명")
     scanned_ip = models.CharField(max_length=256, blank=True, null=True, help_text="스캔된 IP")

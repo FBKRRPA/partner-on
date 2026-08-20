@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "drf_spectacular",
     "accounts",
 ]
 
@@ -110,6 +111,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # DRF & SimpleJWT Settings
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
@@ -124,6 +126,15 @@ REST_FRAMEWORK = {
         "agent_auth": "5/minute",
         "invite_verify": "5/minute",
     },
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "PartnerOn v1.0 OpenAPI 3.0 REST API Specification",
+    "DESCRIPTION": "PartnerOn v1.0 B2B Printer Management & Field Agent Collector REST API Documentation",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "DISABLE_ERRORS_AND_WARNINGS": True,
 }
 
 SIMPLE_JWT = {

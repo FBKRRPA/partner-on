@@ -251,6 +251,22 @@
   1. `backend/config/settings.py` 내 `DEFAULT_THROTTLE_RATES`에 `agent_auth: 5/minute`, `invite_verify: 5/minute` 스코프 등록.
   2. `backend/accounts/views.py` 내 `AgentAuthExchangeView` 및 `SignUpWithInviteView`에 `ScopedRateThrottle` 적용.
 * **검증 결과**: 1~5회 연속 요청 후 6회째 시도 시 `429 Too Many Requests` 상태 코드 즉시 반환 및 차단 100% 검증, 백엔드 테스트 `9/9 PASS` 통과.
+
+### 108. [TC-108] [Refined] 2순위 과제: OidListMaster sys_object_id 필드 신설 및 복합 인덱스 (6순위) 기반 에이전트 1순위 핀포인트 0.5초 OID 맵 조회
+* **발생 원인/배경**: 에이전트가 로컬 복합기를 스캔할 때 표준 sysObjectID(`1.3.6.1.2.1.1.2.0`) 응답 값으로 모델명 파싱 오차 없이 100% 정밀하게 26개 OID 맵을 0.5초 만에 조회하도록 DB 개정 필요.
+* **조치 내용**:
+  1. `backend/accounts/models.py` 내 `OidListMaster` (`oid_lists`) 및 `TempOidListMaster` (`temp_oid_lists`)에 `sys_object_id` 필드 추가 및 복합 인덱스(`sys_object_id`, `manufacturer + printer_model`) 부여 (`0023` 마이그레이션).
+  2. `backend/accounts/views.py` 내 `AgentFetchOidsView` (`GET /api/v1/agent/oids/`)에서 `sys_object_id` 1순위 핀포인트 검색 로직 연동.
+  3. `backend/accounts/management/commands/seed_oids.py` 시드 커맨드에 제조사별 표준 `sys_object_id` 등록.
+* **검증 결과**: `GET /api/v1/agent/oids/?sys_object_id=1.3.6.1.4.1.2988...` 호출 시 1초 내로 exact 26개 OID 맵 반환 100% 검증, 백엔드 테스트 `9/9 PASS` 통과.
+
+### 109. [TC-109] [Refined] OpenAPI 3.0 & Swagger UI 자동 생성 탑재 및 Field Agent 전용 독립 태깅 시각화
+* **발생 원인/배경**: 전사 백엔드 REST API 및 Field Agent 전용 5대 수집 API를 웹 브라우저에서 시각화하여 바로 `Try it out` 라이브 테스트를 수행하도록 Swagger UI 도입 요구.
+* **조치 내용**:
+  1. `drf-spectacular` 패키지 설치 및 `settings.py` / `urls.py`에 OpenAPI 3.0 Schema 라우팅 (`/api/schema/swagger-ui/` & `/api/schema/redoc/`) 등록.
+  2. `backend/accounts/views.py` 내 Agent 뷰 클래스들에 `@extend_schema(tags=["Field Agent Collector APIs"])` 부여하여 독립 카테고리 태깅 시각화.
+  3. `backend/static/agent_api_test.html` 다크모드 글래스모피즘 라이브 테스트 대시보드 구축.
+* **검증 결과**: Swagger UI 및 ReDoc 문서 자동 생성 100% 성공 및 백엔드 테스트 `9/9 PASS` 통과.
 * **조치 내용**: 임의의 대체 식별자 생성 로직을 제거하고, 현장 에이전트 SNMP 스캔 원본 데이터 그대로 `unregistered_printers` 테이블에 무결하게 보존.
 * **검증 결과**: 현장 SNMP 원본 데이터 100% 보존 및 백엔드 테스트 9/9 PASS.
 

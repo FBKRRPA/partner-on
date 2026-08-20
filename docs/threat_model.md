@@ -30,6 +30,7 @@ PartnerOn(파트너온) v1.0 시스템의 **구글식 시큐어 바이브코딩 
 * **위협 요소**: REST API 응답 JSON에 비밀번호 해시, TOTP 비밀키, 이메일 OTP 코드 노출, 500 에러 시 서버 딥 스택트레이스 클라이언트 노출.
 * **방어 대책**:
   * 비밀번호 PBKDF2 단방향 솔티드 해시 저장 (`user.set_password()`).
+  * 수집기 토큰 DB 단방향 해시 저장 (`agent_token_hash = sha256(agent_token)` - 해결책 A 반영).
   * Serializer `fields`에서 `password`, `totp_secret`, `otp_code` 전수 제외 (`write_only=True`).
   * `.env` 환경 변수 분리로 DB 비번 및 `SECRET_KEY` 하드코딩 원천 차단.
   * API 예외 처리 시 정제된 메시지(`{"detail": "..."}`) 반환.

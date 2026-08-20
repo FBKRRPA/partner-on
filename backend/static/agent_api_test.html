@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PartnerOn v1.0 Field Agent API Tester</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+        }
+
+        .btn-accent:hover {
+            background: #059669;
+        }
+
+        pre {
+            background: #090d16;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            max-height: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-200 { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .status-429 { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .status-400 { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+        .token-display {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px dashed var(--accent);
+            color: #34d399;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>PartnerOn v1.0 Field Agent API Interactive Tester</h1>
+        <span class="badge">Backend v1.0 Live Test</span>
+    </div>
+
+    <div class="container">
+        
+        <!-- Left Side: Controls -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <!-- 1. Auth & Token Exchange -->
+            <div class="card">
+                <h2>🔑 1단계: 수집기 8자리 코드 ➔ 토큰 교환</h2>
+                <div class="form-group">
+                    <label>8자리 인증 코드 (Auth Code)</label>
+                    <input type="text" id="authCode" value="AST-8A9F2K" placeholder="예: AST-XXXXXX">
+                </div>
+                <button class="btn" onclick="registerAgent()">인증 토큰 교환 (POST /agent/authenticate/)</button>
+                <div id="tokenContainer" style="display:none;" class="token-display">
+                    <strong>발급된 에이전트 토큰:</strong><br>
+                    <span id="activeToken"></span>
+                </div>
+            </div>
+
+            <!-- 2. OID Lookup (sys_object_id 1st Priority) -->
+            <div class="card">
+                <h2>📡 2단계: 26개 OID 맵 0.5초 다운로드 (sys_object_id 1순위)</h2>
+                <div class="form-group">
+                    <label>sysObjectID (1순위 exact 핀포인트 매칭 OID)</label>
+                    <input type="text" id="sysObjectId" value="1.3.6.1.4.1.2988.1.1.2.1" placeholder="예: 1.3.6.1.4.1.2988.1.1.2.1">
+                </div>
+                <div class="form-group">
+                    <label>제조사 (Vendor - 2순위)</label>
+                    <input type="text" id="vendorName" value="Fujifilm" placeholder="예: Fujifilm, Canon, Ricoh">
+                </div>
+                <button class="btn btn-accent" onclick="fetchOids()">OID 맵 다운로드 (GET /agent/oids/)</button>
+            </div>
+
+            <!-- 3. Target Assets Lookup -->
+            <div class="card">
+                <h2>🎯 3단계: 관제 타겟 IP & 지정 서브넷 사전 동기화</h2>
+                <button class="btn" onclick="fetchTargets()">사전 등록 장비 조회 (GET /agent/target-assets/)</button>
+            </div>
+
+            <!-- 4. Rate Limit 429 Test -->
+            <div class="card">
+                <h2>🛡️ 3순위 과제: Rate Limit (5회/분) 무차별 대입 429 차단 테스트</h2>
+                <button class="btn" style="background: var(--warning);" onclick="testRateLimit()">연속 7회 부하 전송 (429 차단 실시간 검증)</button>
+            </div>
+
+        </div>
+
+        <!-- Right Side: Response View -->
+        <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+            <h2>📊 API Real-time Response Console</h2>
+            <div id="statusPillContainer"></div>
+            <pre id="jsonOutput">// API 버튼을 클릭하면 실시간 JSON 응답이 여기에 출력됩니다.</pre>
+        </div>
+
+    </div>
+
+    <script>
+        let currentAgentToken = "";
+
+        async function registerAgent() {
+            const authCode = document.getElementById("authCode").value.trim();
+            const jsonOutput = document.getElementById("jsonOutput");
+            const statusContainer = document.getElementById("statusPillContainer");
+
+            jsonOutput.innerText = "요청 전송 중...";
+
+            try {
+                const res = await fetch("/api/v1/agent/authenticate/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ auth_code: authCode })
+                });
+
+                const data = await res.json();
+                statusContainer.innerHTML = `<span class="status-pill status-${res.status}">${res.status} ${res.statusText}</span>`;
+                jsonOutput.innerText = JSON.stringify(data, null, 2);
+
+                if (res.status === 200 && data.token) {
+                    currentAgentToken = data.token;
+                    document.getElementById("activeToken").innerText = currentAgentToken;
+                    document.getElementById("tokenContainer").style.display = "block";
+                }
+            } catch (err) {
+                jsonOutput.innerText = "에러 발생: " + err.message;
+            }
+        }
+
+        async function fetchOids() {
+            const sysObjId = document.getElementById("sysObjectId").value.trim();
+            const vendor = document.getElementById("vendorName").value.trim();
+            const jsonOutput = document.getElementById("jsonOutput");
+            const statusContainer = document.getElementById("statusPillContainer");
+
+            jsonOutput.innerText = "OID 맵 요청 전송 중...";
+
+            let url = `/api/v1/agent/oids/?sys_object_id=${encodeURIComponent(sysObjId)}&vendor=${encodeURIComponent(vendor)}`;
+
+            try {
+                const headers = {};
+                if (currentAgentToken) {
+                    headers["Authorization"] = `Bearer ${currentAgentToken}`;
+                }
+
+                const res = await fetch(url, { headers });
+                const data = await res.json();
+                statusContainer.innerHTML = `<span class="status-pill status-${res.status}">${res.status} ${res.statusText}</span>`;
+                jsonOutput.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                jsonOutput.innerText = "에러 발생: " + err.message;
+            }
+        }
+
+        async function fetchTargets() {
+            const jsonOutput = document.getElementById("jsonOutput");
+            const statusContainer = document.getElementById("statusPillContainer");
+
+            jsonOutput.innerText = "타겟 자산 요청 전송 중...";
+
+            try {
+                const headers = {};
+                if (currentAgentToken) {
+                    headers["Authorization"] = `Bearer ${currentAgentToken}`;
+                }
+
+                const res = await fetch("/api/v1/agent/target-assets/", { headers });
+                const data = await res.json();
+                statusContainer.innerHTML = `<span class="status-pill status-${res.status}">${res.status} ${res.statusText}</span>`;
+                jsonOutput.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                jsonOutput.innerText = "에러 발생: " + err.message;
+            }
+        }
+
+        async function testRateLimit() {
+            const jsonOutput = document.getElementById("jsonOutput");
+            const statusContainer = document.getElementById("statusPillContainer");
+            
+            jsonOutput.innerText = "연속 7회 무차별 대입 429 차단 테스트 진행 중...\n\n";
+
+            for (let i = 1; i <= 7; i++) {
+                try {
+                    const res = await fetch("/api/v1/agent/authenticate/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ auth_code: `AST-TEST${i}` })
+                    });
+                    jsonOutput.innerText += `[시도 ${i}] Status: ${res.status} ${res.status === 429 ? "❌ 429 Too Many Requests (차단 성공!)" : "✅ 정상 처리"}\n`;
+                    statusContainer.innerHTML = `<span class="status-pill status-${res.status}">${res.status} ${res.statusText}</span>`;
+                } catch (err) {
+                    jsonOutput.innerText += `[시도 ${i}] 에러: ${err.message}\n`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

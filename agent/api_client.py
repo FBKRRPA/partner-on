@@ -26,8 +26,13 @@ class ApiClient:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return data
+        except urllib.error.HTTPError as he:
+            err_msg = he.read().decode("utf-8", errors="ignore") if he.fp else str(he)
+            if "<html>" in err_msg.lower() or "<!doctype html>" in err_msg.lower():
+                err_msg = f"HTTP {he.code} {he.reason}"
+            raise Exception(f"인증에 실패했습니다 ({err_msg})")
         except Exception as e:
-            raise Exception(f"인증에 실패했습니다: {e}")
+            raise Exception(f"인증 네트워크 오류: {e}")
 
     def fetch_latest_oids(self, agent_token: str) -> Dict[str, Any]:
         """Downloads latest OID mapping table dynamically from Server with Safe Fallback"""
@@ -86,10 +91,12 @@ class ApiClient:
             with urllib.request.urlopen(req, timeout=10) as resp:
                 return json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as he:
-            err_msg = he.read().decode("utf-8") if he.fp else str(he)
-            return {"detail": f"서버 통신 응답 에러 (HTTP {he.code}): {err_msg}"}
+            err_msg = he.read().decode("utf-8", errors="ignore") if he.fp else str(he)
+            if "<html>" in err_msg.lower() or "<!doctype html>" in err_msg.lower():
+                err_msg = f"HTTP {he.code} {he.reason}"
+            return {"detail": f"서버 통신 상태: {err_msg}"}
         except Exception as e:
-            return {"detail": f"네트워크 통신 오류: {e}"}
+            return {"detail": f"네트워크 통신 상태: {e}"}
 
     def update_status(self, agent_token: str, status: str = "OFFLINE") -> Dict[str, Any]:
         """Notifies Server of Agent status change (e.g. OFFLINE on shutdown)"""

@@ -16,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
@@ -1018,6 +1019,11 @@ class SignUpWithInviteView(APIView):
         )
 
 
+@extend_schema(
+    summary="[1단계] 현장 수집기 8자리 코드 ➔ 토큰 자동 교환",
+    description="현장에서 관리자 웹 화면에서 발급된 8자리 코드(AST-XXXXXX)를 전송하여 64자리 보안 토큰(agent_token)을 1회 교환받는 API입니다.",
+    tags=["현장 수집기 Agent 전용 API"]
+)
 class AgentAuthView(APIView):
     """
     Exchanges 8-digit Auth Code for Agent Token and updates AgentCollector DB model
@@ -1081,6 +1087,11 @@ class AgentAuthView(APIView):
         )
 
 
+@extend_schema(
+    summary="[4단계] 수집기 상태 업데이트 및 종료 알림",
+    description="에이전트 수동 종료 시 수집기 상태를 ONLINE에서 OFFLINE으로 변경하는 알림 API입니다.",
+    tags=["현장 수집기 Agent 전용 API"]
+)
 class AgentStatusUpdateView(APIView):
     """
     Updates AgentCollector status (e.g. OFFLINE on graceful agent shutdown)
@@ -1102,6 +1113,16 @@ class AgentStatusUpdateView(APIView):
         return Response({"detail": "수집기를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
 
+@extend_schema(
+    summary="[2단계-2] 26개 OID 마스터 맵 다운로드 (sys_object_id 1순위)",
+    description="[선택 파라미터 - 미입력 시 전체 OID 맵 1회 Bulk 반환]\n에이전트 스캔 시작 전 백엔드 DB(oid_lists) 전체 맵을 1회 사전 다운로드하거나, 로컬 복합기 sysObjectID(1.3.6.1.2.1.1.2.0) 응답 값으로 특정 OID 맵 1개를 0.5초 만에 핀포인트 단건 조회할 때 사용합니다.",
+    tags=["현장 수집기 Agent 전용 API"],
+    parameters=[
+        OpenApiParameter("sys_object_id", description="(선택) 1순위 핀포인트 매칭 OID. 미입력 시 전체 OID 맵 반환 (예: 1.3.6.1.4.1.2988.1.1.2.1)", required=False, type=str),
+        OpenApiParameter("vendor", description="(선택) 제조사명 (예: Fujifilm, Canon, Ricoh)", required=False, type=str),
+        OpenApiParameter("model", description="(선택) 프린터 모델명", required=False, type=str),
+    ]
+)
 class AgentFetchOidsView(APIView):
     """
     Dynamic OID Downloader for Agent reading directly from `oid_lists` (OidListMaster) unified DB table
@@ -1110,8 +1131,23 @@ class AgentFetchOidsView(APIView):
     permission_classes: list = []
 
     def get(self, request) -> Response:
-        vendor = request.query_params.get("vendor", "Fujifilm")
-        oid_rec = OidListMaster.objects.filter(manufacturer__icontains=vendor).first()
+        sys_obj_id = str(request.query_params.get("sys_object_id", "")).strip()
+        vendor = str(request.query_params.get("vendor", "")).strip()
+        model_name = str(request.query_params.get("model", "")).strip()
+
+        oid_rec = None
+        # 1st Priority: Match sys_object_id exactly
+        if sys_obj_id:
+            oid_rec = OidListMaster.objects.filter(sys_object_id__iexact=sys_obj_id).first()
+        
+        # 2nd Priority: Match manufacturer + printer_model
+        if not oid_rec and vendor and model_name:
+            oid_rec = OidListMaster.objects.filter(manufacturer__icontains=vendor, printer_model__icontains=model_name).first()
+
+        # 3rd Priority: Fallback to vendor match
+        if not oid_rec and vendor:
+            oid_rec = OidListMaster.objects.filter(manufacturer__icontains=vendor).first()
+
         if not oid_rec:
             oid_rec = OidListMaster.objects.first()
 
@@ -1138,6 +1174,11 @@ class AgentFetchOidsView(APIView):
         return Response(oids, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    summary="[2단계-1] 사전 등록 장비 타겟 IP 및 지정 서브넷 조회",
+    description="스캔 시작 전 등록된 복합기 자산 타겟 IP 목록을 다운로드하여 0.5초 초고속 핀포인트 관제 스캔을 수행하도록 돕는 사전 동기화 API입니다.",
+    tags=["현장 수집기 Agent 전용 API"]
+)
 class AgentTargetAssetsView(APIView):
     """
     Returns strictly registered PrinterAsset target IPs & Serials for Agent pinpoint scanning
@@ -1178,6 +1219,11 @@ class AgentTargetAssetsView(APIView):
         )
 
 
+@extend_schema(
+    summary="[3단계] SNMP 관제 데이터 Bulk Ingestion 배치 수집 전송",
+    description="현장에서 수집된 카운터(컬러/흑백) 및 소모품(토너/드럼) 데이터를 백엔드로 전송하는 API입니다 (등록 장비 ➔ 정식 관제 DB 갱신, 미등록 장비 ➔ 미등록 탐지 DB 분리 적재).",
+    tags=["현장 수집기 Agent 전용 API"]
+)
 class AgentIngestBatchView(APIView):
     """
     High-Performance Bulk Ingestion Engine
@@ -1333,7 +1379,6 @@ class AgentIngestBatchView(APIView):
                         defaults={
                             "printer_model": m_name,
                             "scanned_model": m_name,
-                            "customer_name": collector_customer_name,
                             "ip": ip_addr,
                             "state": "active",
                             "updated_at": now,
@@ -1343,7 +1388,6 @@ class AgentIngestBatchView(APIView):
                 else:
                     m_printer.printer_model = m_name
                     m_printer.scanned_model = m_name
-                    m_printer.customer_name = collector_customer_name
                     m_printer.ip = ip_addr
                     m_printer.state = "active"
                     m_printer.updated_at = now
@@ -2264,6 +2308,7 @@ class TempOidListActionView(APIView):
                 manufacturer=rec.manufacturer,
                 printer_model=rec.printer_model,
                 defaults={
+                    "sys_object_id": rec.sys_object_id,
                     "serial_no": rec.serial_no,
                     "count1": rec.count1,
                     "count2": rec.count2,
@@ -2391,6 +2436,38 @@ class UnregisteredPrinterRegisterView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from drf_spectacular.generators import SchemaGenerator
+
+class AgentSchemaGenerator(SchemaGenerator):
+    """
+    Filters OpenAPI Schema to strictly include only Field Agent Collector endpoints
+    """
+    def parse(self, request=None, public=False):
+        result = super().parse(request, public)
+        if "paths" in result:
+            agent_paths = {}
+            for path, path_item in result["paths"].items():
+                if "/api/v1/agent/" in path:
+                    agent_paths[path] = path_item
+            result["paths"] = agent_paths
+        if "info" in result:
+            result["info"]["title"] = "PartnerOn v1.0 현장 수집기(Field Agent) 전용 REST API 명세서"
+            result["info"]["description"] = "현장 수집기(Field Agent) 전용 5대 REST API 인터랙티브 대시보드 (8자리 토큰 교환, 0.5초 OID 맵 사전 동기화, 관제 타겟 조회, 관제 패킷 Ingestion 전송)"
+        return result
+
+class AgentSchemaView(SpectacularAPIView):
+    generator_class = AgentSchemaGenerator
+    custom_settings = {
+        "TITLE": "PartnerOn v1.0 현장 수집기(Field Agent) 전용 REST API 명세서",
+        "DESCRIPTION": "현장 수집기(Field Agent) 전용 5대 REST API 인터랙티브 대시보드 (8자리 토큰 교환, 0.5초 OID 맵 사전 동기화, 관제 타겟 조회, 관제 패킷 Ingestion 전송)",
+        "VERSION": "1.0.0",
+    }
+
+class AgentSwaggerView(SpectacularSwaggerView):
+    url_name = "agent-schema"
 
 
 

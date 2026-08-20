@@ -12,6 +12,9 @@
   * `Authorization`: `Bearer <agent_token>`
   * `X-Agent-Signature`: `HMAC-SHA256(payload_json_bytes, secret=agent_token)` (패킷 변조 Tampering 방지)
   * `X-Agent-Timestamp`: `<unix_timestamp>` (재전송 공격 Replay Attack 방지)
+* **백엔드 DB 토큰 보안 (해결책 A - SHA-256 Hashing)**:
+  * 에이전트만 64자리 `agent_token` 원본을 가집니다.
+  * 백엔드 DB에는 `agent_token_hash = sha256(agent_token)` 단방향 해시값만 저장하여 DB 유출 시에도 토큰 복호화 및 탈취 위험 100% 차단!
 
 ---
 
@@ -142,11 +145,15 @@ Authorization: Bearer token_agent_AST-8A9F2K_9f8a7b6c5d4e3f2a1b
 * **통신 URL**: `https://<서버IP>/api/v1/agent/oids/`
 * **HTTP Method**: `GET`
 * **Header**: `Authorization: Bearer <agentToken>`
-* **설명**: 백엔드 `oid_lists` (`OidListMaster`) 단일 마스터 DB에 관리되는 제조사/모델별 26개 세부 SNMP OID 맵 구조를 다운로드하는 API.
+* **Query Parameters**:
+  * `sys_object_id` (1순위 추천): 로컬 장비의 SNMP sysObjectID (`1.3.6.1.2.1.1.2.0`) 응답 값 (예: `1.3.6.1.4.1.2988.1.1.2.1`)
+  * `vendor` (2순위): 제조사 명칭 (예: `Fujifilm`, `Canon`, `Ricoh`)
+  * `model` (2순위): 프린터 모델 명칭
+* **설명**: 백엔드 `oid_lists` (`OidListMaster`) 단일 마스터 DB에 관리되는 제조사/모델별 26개 세부 SNMP OID 맵 구조를 다운로드하는 API (`sys_object_id`로 0.5초 초고속 1순위 exact 매칭).
 
 #### • Request (JSON / Query)
 ```http
-GET /api/v1/agent/oids/?vendor=Fujifilm HTTP/1.1
+GET /api/v1/agent/oids/?sys_object_id=1.3.6.1.4.1.2988.1.1.2.1&vendor=Fujifilm HTTP/1.1
 Authorization: Bearer token_agent_AST-8A9F2K_9f8a7b6c5d4e3f2a1b
 ```
 
@@ -155,9 +162,11 @@ Authorization: Bearer token_agent_AST-8A9F2K_9f8a7b6c5d4e3f2a1b
 {
     "status": "success",
     "result": {
+        "sysObjectId": "1.3.6.1.4.1.2988.1.1.2.1",
         "vendor": "Fujifilm",
         "oidMapList": [
             {
+                "sysObjectId": "1.3.6.1.4.1.2988.1.1.2.1",
                 "manufacturer": "FUJIFILM",
                 "printerModel": "ApeosPort-VII C3373",
                 "oidSerialNo": "1.3.6.1.4.1.2988.1.1.2.1.1.0",

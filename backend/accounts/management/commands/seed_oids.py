@@ -39,6 +39,7 @@ class Command(BaseCommand):
                 "drum_k_max": "1.3.6.1.2.1.43.11.1.1.8.1.10",
             },
             {
+                "sys_object_id": "1.3.6.1.4.1.2988",
                 "manufacturer": "Fujifilm",
                 "printer_model": "ApeosPort / DocuCentre Series (Full OID Set)",
                 "serial_no": "1.3.6.1.4.1.2988.1.1.12.1.1.101",
