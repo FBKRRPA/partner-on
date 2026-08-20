@@ -1922,9 +1922,11 @@ class CRMCustomerListCreateView(APIView):
     permission_classes: list = []
 
     def get(self, request) -> Response:
-        workplace_id = request.headers.get("X-Workplace-Id")
+        workplace_id = request.headers.get("X-Workplace-Id") or request.query_params.get("workplace_id")
         customers = MonitoringCustomer.objects.filter(deleted_at__isnull=True)
-        if workplace_id and str(workplace_id).isdigit():
+        
+        # If explicit workplace_id filter provided and not 'all', filter by workplace
+        if workplace_id and str(workplace_id).isdigit() and int(workplace_id) > 0:
             customers = customers.filter(workplace_id=int(workplace_id))
 
         res_data = []

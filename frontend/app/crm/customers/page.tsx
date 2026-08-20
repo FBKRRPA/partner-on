@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AppHeader } from "../../../components/layout/AppHeader";
 import { AppFooter } from "../../../components/layout/AppFooter";
+import { getApiBaseUrl } from "../../../lib/auth-api";
 
 export interface ContactPersonDto {
   name: string;
@@ -135,22 +136,34 @@ export default function CrmCustomersPage() {
   });
 
   useEffect(() => {
-    // 1. Try Loading from Storage first so refreshed page keeps newly created customers
-    try {
-      const storedStr = sessionStorage.getItem("partneron.crm_customers") || localStorage.getItem("partneron.crm_customers");
-      if (storedStr) {
-        const storedList = JSON.parse(storedStr);
-        if (Array.isArray(storedList) && storedList.length > 0) {
-          setCustomers(storedList);
+    // 1. Live Fetch from Backend DB API (monitoring_customers DB Table)
+    fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`)
+      .then((res) => res.json())
+      .then((dbCustomers) => {
+        if (Array.isArray(dbCustomers) && dbCustomers.length > 0) {
+          setCustomers(dbCustomers);
         } else {
           setCustomers(DEMO_CUSTOMERS);
         }
-      } else {
-        setCustomers(DEMO_CUSTOMERS);
-      }
-    } catch (err) {
-      setCustomers(DEMO_CUSTOMERS);
-    }
+      })
+      .catch((err) => {
+        console.error("Backend DB fetch error, fallback to storage:", err);
+        try {
+          const storedStr = sessionStorage.getItem("partneron.crm_customers") || localStorage.getItem("partneron.crm_customers");
+          if (storedStr) {
+            const storedList = JSON.parse(storedStr);
+            if (Array.isArray(storedList) && storedList.length > 0) {
+              setCustomers(storedList);
+            } else {
+              setCustomers(DEMO_CUSTOMERS);
+            }
+          } else {
+            setCustomers(DEMO_CUSTOMERS);
+          }
+        } catch {
+          setCustomers(DEMO_CUSTOMERS);
+        }
+      });
 
     const token =
       sessionStorage.getItem("accessToken") ||
@@ -220,7 +233,7 @@ export default function CrmCustomersPage() {
 
     // Real Backend DB INSERT API Call to monitoring_customers table
     try {
-      await fetch("http://localhost:8000/api/v1/crm/customers/", {
+      await fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
