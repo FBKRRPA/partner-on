@@ -65,7 +65,7 @@ export default function ContractsPage() {
     if (!token) {
       alert("🔒 보안 경고: 로그인이 필요한 서비스입니다.\n\n인증 세션이 없어 로그인 페이지로 이동합니다.");
       if (typeof window !== "undefined") {
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
       return;
     }
