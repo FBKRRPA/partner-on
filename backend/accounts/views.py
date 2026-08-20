@@ -1914,6 +1914,20 @@ class CollectorCodeGenerateView(APIView):
         )
 
 
+def parse_customer_other_info(raw_info: str | None) -> dict:
+    """Helper to safely parse JSON payload or return empty dict for customer extra_data."""
+    if not raw_info:
+        return {}
+    try:
+        import json
+        info_str = raw_info.strip()
+        if info_str.startswith("{"):
+            return json.loads(info_str)
+    except Exception:
+        pass
+    return {}
+
+
 class CRMCustomerListCreateView(APIView):
     """
     CRM Customer Master Ledger REST API (monitoring_customers DB Table Persistence)
@@ -1931,22 +1945,14 @@ class CRMCustomerListCreateView(APIView):
         res_data = []
         for c in customers:
             has_contracts = MonitoringPrinter.objects.filter(customer_id=c.id).exists()
-            
-            extra_data = {}
-            if c.other_info:
-                try:
-                    import json
-                    if c.other_info.strip().startswith("{"):
-                        extra_data = json.loads(c.other_info)
-                except Exception:
-                    extra_data = {}
+            extra_data = parse_customer_other_info(c.other_info)
 
             # Robust fallback to DB model fields if not present in JSON
             office_type = extra_data.get("office_type") or "일반 사무실"
             location_base = extra_data.get("location_base") or "서울 본사"
             biz_no = extra_data.get("biz_no") or f"105-87-{c.id:05d}"
             grade = extra_data.get("grade") or "A"
-            company_scale = extra_data.get("company_scale") or f"{c.employee_count or 1-15}"
+            company_scale = extra_data.get("company_scale") or f"{c.employee_count or '1-15'}"
 
             contact1 = extra_data.get("contact1") or {}
             info_str = c.other_info or ""
@@ -1989,7 +1995,6 @@ class CRMCustomerListCreateView(APIView):
 
         cid = MonitoringCustomer.objects.count() + 101
         
-        # Store exact user submitted UI input fields as JSON in other_info
         user_input_payload = {
             "partner_employee": request.data.get("partner_employee", ""),
             "office_type": request.data.get("office_type", ""),
@@ -2032,7 +2037,6 @@ class CRMContractConversionView(APIView):
         customer_id = request.data.get("customer_id")
         customer_name = request.data.get("customer_name")
         contract_no = request.data.get("contract_no", "CNT-202608-01")
-        device_count = request.data.get("device_count", 2)
         note = request.data.get("note", "정식 계약 체결 및 수립")
 
         customer = None
@@ -2042,17 +2046,11 @@ class CRMContractConversionView(APIView):
             customer = MonitoringCustomer.objects.filter(name=customer_name).first()
 
         if customer:
-            # Upgrade other_info contract_status to '계약 고객'
-            try:
-                payload = json.loads(customer.other_info) if customer.other_info and customer.other_info.startswith("{") else {}
-            except Exception:
-                payload = {}
-
+            payload = parse_customer_other_info(customer.other_info)
             payload["contract_status"] = "계약 고객"
             customer.other_info = json.dumps(payload, ensure_ascii=False)
             customer.save()
 
-            # Create MonitoringPrinter Contract record in DB
             MonitoringPrinter.objects.create(
                 workplace=customer.workplace,
                 customer_id=customer.id,
@@ -2063,6 +2061,15 @@ class CRMContractConversionView(APIView):
                 state="active",
                 note=note,
             )
+
+        return Response(
+            {
+                "detail": f"[{customer_name or '고객사'}] 성공적으로 정식 계약 완료 고객으로 승격 및 계약 대장이 적재되었습니다.",
+                "status": "계약 고객",
+                "contract_no": contract_no,
+            },
+            status=status.HTTP_200_OK,
+        )
 
         return Response(
             {
