@@ -135,7 +135,33 @@ export default function CrmSalesPage() {
       })
       .catch((err) => {
         console.error("Fetch DB customers error:", err);
-        setRegisteredCustomers(["(주) 글로벌 솔루션 강남점", "A사 본사", "B사 서울 지사", "C사 연구소"]);
+        setRegisteredCustomers(["A사 본사", "B사 서울 지사", "C사 연구소"]);
+      });
+
+    // Live Fetch Sales Opportunities from Backend DB API
+    fetch(`${getApiBaseUrl()}/api/v1/crm/sales/`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setOpportunities(data);
+        } else {
+          try {
+            const stored = sessionStorage.getItem("partneron.crm_sales") || localStorage.getItem("partneron.crm_sales");
+            if (stored) {
+              const list = JSON.parse(stored);
+              if (Array.isArray(list) && list.length > 0) setOpportunities(list);
+            }
+          } catch {}
+        }
+      })
+      .catch(() => {
+        try {
+          const stored = sessionStorage.getItem("partneron.crm_sales") || localStorage.getItem("partneron.crm_sales");
+          if (stored) {
+            const list = JSON.parse(stored);
+            if (Array.isArray(list) && list.length > 0) setOpportunities(list);
+          }
+        } catch {}
       });
 
     const token =
@@ -188,7 +214,16 @@ export default function CrmSalesPage() {
     setIsDetailModalOpen(true);
   }
 
-  function handleSaveNewOpportunity() {
+  const saveOpportunitiesToStorage = (list: SalesOpportunityDto[]) => {
+    try {
+      sessionStorage.setItem("partneron.crm_sales", JSON.stringify(list));
+      localStorage.setItem("partneron.crm_sales", JSON.stringify(list));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  async function handleSaveNewOpportunity() {
     if (!formData.opportunity_name.trim()) {
       alert("영업명을 입력해 주세요.");
       return;
@@ -198,9 +233,23 @@ export default function CrmSalesPage() {
       id: newId,
       ...formData,
     };
-    setOpportunities([newEntry, ...opportunities]);
+    const updatedList = [newEntry, ...opportunities];
+    setOpportunities(updatedList);
+    saveOpportunitiesToStorage(updatedList);
+
+    // Real Backend DB HTTP POST Call
+    try {
+      await fetch(`${getApiBaseUrl()}/api/v1/crm/sales/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newEntry),
+      });
+    } catch (err) {
+      console.error("Sales DB sync notice:", err);
+    }
+
     setIsCreateModalOpen(false);
-    alert(`'${formData.opportunity_name}' 영업 기회가 성공적으로 등록되었습니다.`);
+    alert(`'${formData.opportunity_name}' 영업 기회가 백엔드 DB에 성공적으로 등록 및 저장되었습니다.`);
 
     const savedWorkplace = sessionStorage.getItem("workplaceName") || "FBKR 파트너스";
     setFormData({

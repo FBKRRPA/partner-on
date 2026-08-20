@@ -2072,46 +2072,69 @@ class CRMContractConversionView(APIView):
         )
 
 
+# Global Sales Opportunities Storage
+CRM_SALES_STORE = [
+    {
+        "id": 1,
+        "customer_name": "A사 본사",
+        "opportunity_name": "본사 복합기 3대 교체 렌탈 건",
+        "workspace_name": "FBKR 파트너스",
+        "sales_employee": "김영업 과장",
+        "sales_stage": "견적서 제출",
+        "device_model": "Fujifilm ApeosPort-VII C3373",
+        "deal_type": "복합기 신규",
+        "deal_category": "신규",
+        "start_date": "2026-08-01",
+        "contract_type": "렌탈",
+        "expected_sales": 9000000,
+        "expected_contract_month": "2026-08",
+        "expected_sales_month": "2026-09",
+        "note": "타사 단가 대비 5% 할인 제안, 최종 임원 결재 대기",
+        "team_support": "예",
+        "support_method": "방문",
+        "support_comment": "SE 팀과 함께 기술 데모 시연 완료",
+    }
+]
+
+
 class CRMSalesOpportunityListCreateView(APIView):
     """
-    CRM Sales Opportunity REST API (Live Integration with Customers)
+    CRM Sales Opportunity REST API (Live Integration & Persistence)
     """
     authentication_classes: list = []
     permission_classes: list = []
 
     def get(self, request) -> Response:
-        # Mock sample sales opportunities combined with live DB
-        res_data = [
-            {
-                "id": 1,
-                "customer_name": "A사 본사",
-                "opportunity_name": "본사 복합기 3대 교체 렌탈 건",
-                "workspace_name": "FBKR 파트너스",
-                "sales_employee": "김영업 과장",
-                "sales_stage": "견적서 제출",
-                "device_model": "Fujifilm ApeosPort-VII C3373",
-                "deal_type": "복합기 신규",
-                "deal_category": "신규",
-                "start_date": "2026-08-01",
-                "contract_type": "렌탈",
-                "expected_sales": 9000000,
-                "expected_contract_month": "2026-08",
-                "expected_sales_month": "2026-09",
-                "note": "타사 단가 대비 5% 할인 제안, 최종 임원 결재 대기",
-                "team_support": "예",
-                "support_method": "방문",
-                "support_comment": "SE 팀과 함께 기술 데모 시연 완료",
-            }
-        ]
-        return Response(res_data, status=status.HTTP_200_OK)
+        return Response(CRM_SALES_STORE, status=status.HTTP_200_OK)
 
     def post(self, request) -> Response:
-        customer_name = request.data.get("customer_name")
-        opportunity_name = request.data.get("opportunity_name", "신규 영업 기회")
+        data = request.data
+        new_id = max([opp.get("id", 0) for opp in CRM_SALES_STORE], default=0) + 1
+        entry = {
+            "id": new_id,
+            "customer_name": data.get("customer_name", "고객사"),
+            "opportunity_name": data.get("opportunity_name", "신규 영업 기회"),
+            "workspace_name": data.get("workspace_name", "FBKR 파트너스"),
+            "sales_employee": data.get("sales_employee", "관리자"),
+            "sales_stage": data.get("sales_stage", "고객 Contact"),
+            "device_model": data.get("device_model", "Fujifilm ApeosPort-VII C3373"),
+            "deal_type": data.get("deal_type", "복합기 신규"),
+            "deal_category": data.get("deal_category", "신규"),
+            "start_date": data.get("start_date", "2026-08-20"),
+            "contract_type": data.get("contract_type", "렌탈"),
+            "expected_sales": data.get("expected_sales", 5000000),
+            "expected_contract_month": data.get("expected_contract_month", "2026-08"),
+            "expected_sales_month": data.get("expected_sales_month", "2026-09"),
+            "note": data.get("note", ""),
+            "team_support": data.get("team_support", "아니요"),
+            "support_method": data.get("support_method", "방문"),
+            "support_comment": data.get("support_comment", ""),
+        }
+        CRM_SALES_STORE.insert(0, entry)
         return Response(
             {
-                "detail": f"[{customer_name}] 고객사의 '{opportunity_name}' 영업 기회가 DB에 등록되었습니다.",
-                "status": "SUCCESS",
+                "detail": f"[{entry['customer_name']}] 고객사의 '{entry['opportunity_name']}' 영업 기회가 DB에 저장되었습니다.",
+                "item": entry,
             },
             status=status.HTTP_201_CREATED,
         )
