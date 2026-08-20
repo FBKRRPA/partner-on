@@ -114,8 +114,27 @@ export default function CrmSalesPage() {
   ];
 
   useEffect(() => {
+    // 1. Strict Auth Router Guard: Check authentication token
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      sessionStorage.getItem("partneron.accessToken") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("partneron.accessToken") ||
+      "";
+
+    if (!token) {
+      alert("🔒 보안 경고: 로그인이 필요한 서비스입니다.\n\n인증 세션이 없어 로그인 페이지로 이동합니다.");
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth/login";
+      }
+      return;
+    }
+    setAccessToken(token);
+
     // Live Fetch all registered customers from Customer Master DB (/crm/customers)
-    fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`)
+    fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
