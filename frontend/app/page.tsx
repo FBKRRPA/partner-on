@@ -1,10 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { AppHeader } from "../components/layout/AppHeader";
 import { AppFooter } from "../components/layout/AppFooter";
 
 export default function HomePage() {
+  useEffect(() => {
+    // If authenticated user visits root URL (/), automatically redirect to /dashboard
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      sessionStorage.getItem("partneron.accessToken") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("partneron.accessToken") ||
+      "";
+
+    if (token) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/dashboard";
+      }
+    }
+  }, []);
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] font-sans text-slate-900 overflow-x-hidden selection:bg-[#01916D] selection:text-white flex flex-col justify-between">
       <div>
