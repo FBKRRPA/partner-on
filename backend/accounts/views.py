@@ -1931,7 +1931,7 @@ class CRMCustomerListCreateView(APIView):
 
         res_data = []
         for c in customers:
-            has_contracts = MonitoringPrinter.objects.filter(customer=c).exists()
+            has_contracts = MonitoringPrinter.objects.filter(customer_id=c.id).exists()
             res_data.append({
                 "id": c.id,
                 "partner_company": c.workplace.name if c.workplace else "FBKR 파트너스",
