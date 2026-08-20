@@ -135,8 +135,20 @@ export default function CrmCustomersPage() {
   });
 
   useEffect(() => {
-    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
-    if (isDemo) {
+    // 1. Try Loading from Storage first so refreshed page keeps newly created customers
+    try {
+      const storedStr = sessionStorage.getItem("partneron.crm_customers") || localStorage.getItem("partneron.crm_customers");
+      if (storedStr) {
+        const storedList = JSON.parse(storedStr);
+        if (Array.isArray(storedList) && storedList.length > 0) {
+          setCustomers(storedList);
+        } else {
+          setCustomers(DEMO_CUSTOMERS);
+        }
+      } else {
+        setCustomers(DEMO_CUSTOMERS);
+      }
+    } catch (err) {
       setCustomers(DEMO_CUSTOMERS);
     }
 
@@ -182,6 +194,16 @@ export default function CrmCustomersPage() {
     setIsDetailModalOpen(true);
   }
 
+  // Helper to persist customer list to storage
+  const saveCustomersToStorage = (updatedList: CustomerFullDto[]) => {
+    try {
+      sessionStorage.setItem("partneron.crm_customers", JSON.stringify(updatedList));
+      localStorage.setItem("partneron.crm_customers", JSON.stringify(updatedList));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   function handleSaveNewCustomer() {
     if (!formData.name.trim()) {
       alert("고객명을 입력해 주세요.");
@@ -192,7 +214,10 @@ export default function CrmCustomersPage() {
       id: newId,
       ...formData,
     };
-    setCustomers([newEntry, ...customers]);
+    const updatedList = [newEntry, ...customers];
+    setCustomers(updatedList);
+    saveCustomersToStorage(updatedList);
+
     setIsCreateModalOpen(false);
     alert(`'${formData.name}' 고객사가 성공적으로 등록되었습니다.`);
 
@@ -220,9 +245,10 @@ export default function CrmCustomersPage() {
       alert("고객명을 입력해 주세요.");
       return;
     }
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === editFormData.id ? editFormData : c))
-    );
+    const updatedList = customers.map((c) => (c.id === editFormData.id ? editFormData : c));
+    setCustomers(updatedList);
+    saveCustomersToStorage(updatedList);
+
     setSelectedCustomer(editFormData);
     setIsEditMode(false);
     alert(`'${editFormData.name}' 고객사 정보가 성공적으로 수정되었습니다.`);
@@ -249,9 +275,9 @@ export default function CrmCustomersPage() {
       contract_status: "계약 고객",
     };
 
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === selectedCustomer.id ? updatedCustomer : c))
-    );
+    const updatedList = customers.map((c) => (c.id === selectedCustomer.id ? updatedCustomer : c));
+    setCustomers(updatedList);
+    saveCustomersToStorage(updatedList);
     setSelectedCustomer(updatedCustomer);
     if (editFormData) {
       setEditFormData({ ...editFormData, contract_status: "계약 고객" });
