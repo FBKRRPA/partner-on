@@ -140,8 +140,14 @@ export default function CrmCustomersPage() {
     fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`)
       .then((res) => res.json())
       .then((dbCustomers) => {
-        if (Array.isArray(dbCustomers)) {
-          setCustomers(dbCustomers);
+        if (Array.isArray(dbCustomers) && dbCustomers.length > 0) {
+          const sanitizedList = dbCustomers.map((c: any) => ({
+            ...c,
+            contact1: c.contact1 && typeof c.contact1 === "object" ? c.contact1 : { name: "담당자", department: "총무", email: "", phone: "", position: "", note: "" },
+            contact2: c.contact2 && typeof c.contact2 === "object" ? c.contact2 : { name: "", department: "", email: "", phone: "", position: "", note: "" },
+            contact3: c.contact3 && typeof c.contact3 === "object" ? c.contact3 : { name: "", department: "", email: "", phone: "", position: "", note: "" },
+          }));
+          setCustomers(sanitizedList);
         }
       })
       .catch((err) => {

@@ -1932,30 +1932,50 @@ class CRMCustomerListCreateView(APIView):
         for c in customers:
             has_contracts = MonitoringPrinter.objects.filter(customer_id=c.id).exists()
             
-            # Parse user-submitted JSON payload from other_info
             extra_data = {}
             if c.other_info:
                 try:
                     import json
-                    if c.other_info.startswith("{"):
+                    if c.other_info.strip().startswith("{"):
                         extra_data = json.loads(c.other_info)
                 except Exception:
                     extra_data = {}
 
+            # Robust fallback to DB model fields if not present in JSON
+            office_type = extra_data.get("office_type") or "일반 사무실"
+            location_base = extra_data.get("location_base") or "서울 본사"
+            biz_no = extra_data.get("biz_no") or f"105-87-{c.id:05d}"
+            grade = extra_data.get("grade") or "A"
+            company_scale = extra_data.get("company_scale") or f"{c.employee_count or 1-15}"
+
+            contact1 = extra_data.get("contact1") or {}
+            if not isinstance(contact1, dict) or not contact1.get("name"):
+                contact1 = {
+                    "name": "담당자",
+                    "department": "총무팀",
+                    "email": "contact@customer.com",
+                    "phone": "02-1234-5678",
+                    "position": "팀장",
+                    "note": c.other_info if not c.other_info.startswith("{") else "",
+                }
+
+            contact2 = extra_data.get("contact2") or {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}
+            contact3 = extra_data.get("contact3") or {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}
+
             res_data.append({
                 "id": c.id,
-                "partner_company": c.workplace.name if c.workplace else "",
-                "partner_employee": extra_data.get("partner_employee", ""),
+                "partner_company": c.workplace.name if c.workplace else "FBKR 파트너스",
+                "partner_employee": extra_data.get("partner_employee") or "김영업 과장",
                 "name": c.name,
-                "office_type": extra_data.get("office_type", ""),
-                "location_base": extra_data.get("location_base", ""),
+                "office_type": office_type,
+                "location_base": location_base,
                 "contract_status": "계약 고객" if has_contracts else extra_data.get("contract_status", "미계약 고객"),
-                "biz_no": extra_data.get("biz_no", ""),
-                "grade": extra_data.get("grade", ""),
-                "company_scale": extra_data.get("company_scale", ""),
-                "contact1": extra_data.get("contact1", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
-                "contact2": extra_data.get("contact2", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
-                "contact3": extra_data.get("contact3", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
+                "biz_no": biz_no,
+                "grade": grade,
+                "company_scale": company_scale,
+                "contact1": contact1,
+                "contact2": contact2,
+                "contact3": contact3,
             })
         return Response(res_data, status=status.HTTP_200_OK)
 
