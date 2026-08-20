@@ -66,6 +66,19 @@ export default function ContractsPage() {
       if (cName) {
         setSearch(cName);
       }
+
+      // Dynamic Sync: Load CRM Converted Contracts from Session Storage
+      try {
+        const storedStr = sessionStorage.getItem("partneron.contracts") || localStorage.getItem("partneron.contracts");
+        if (storedStr) {
+          const customList: ContractItem[] = JSON.parse(storedStr);
+          if (Array.isArray(customList) && customList.length > 0) {
+            setContracts(customList);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
   }, []);
 

@@ -104,9 +104,17 @@ export default function CrmCustomersPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerFullDto | null>(null);
-
-  // Editable Form inside Detail Modal
   const [editFormData, setEditFormData] = useState<CustomerFullDto | null>(null);
+
+  // Convert to Contract Modal State
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [convertFormData, setConvertFormData] = useState({
+    contract_no: `CNT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}-01`,
+    period_months: 36,
+    monthly_fee: 300000,
+    device_count: 2,
+    note: "CRM 고객사 마스터 대장에서 정식 계약 수립 전환",
+  });
 
   const [customers, setCustomers] = useState<CustomerFullDto[]>([]);
 
@@ -220,12 +228,66 @@ export default function CrmCustomersPage() {
     alert(`'${editFormData.name}' 고객사 정보가 성공적으로 수정되었습니다.`);
   }
 
-  function handleDeleteCustomer(id: number, name: string) {
-    if (confirm(`정말로 '${name}' 고객사를 삭제하시겠습니까?`)) {
-      setCustomers((prev) => prev.filter((c) => c.id !== id));
-      setIsDetailModalOpen(false);
-      alert(`'${name}' 고객사가 삭제되었습니다.`);
+  function handleOpenConvertModal(cust: CustomerFullDto) {
+    setSelectedCustomer(cust);
+    setConvertFormData({
+      contract_no: `CNT-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(cust.id).padStart(2, "0")}`,
+      period_months: 36,
+      monthly_fee: 300000,
+      device_count: 2,
+      note: "CRM 고객사 마스터 대장에서 정식 계약 체결 및 수립",
+    });
+    setIsConvertModalOpen(true);
+  }
+
+  function handleConfirmContractConversion() {
+    if (!selectedCustomer) return;
+
+    // 1. Upgrade CRM Customer Status from "미계약 고객" -> "계약 고객"
+    const updatedCustomer: CustomerFullDto = {
+      ...selectedCustomer,
+      contract_status: "계약 고객",
+    };
+
+    setCustomers((prev) =>
+      prev.map((c) => (c.id === selectedCustomer.id ? updatedCustomer : c))
+    );
+    setSelectedCustomer(updatedCustomer);
+    if (editFormData) {
+      setEditFormData({ ...editFormData, contract_status: "계약 고객" });
     }
+
+    // 2. Add New Contract Record to localStorage session so /operations/basic/contracts instantly receives it
+    try {
+      const existingContractsStr = sessionStorage.getItem("partneron.contracts") || localStorage.getItem("partneron.contracts") || "[]";
+      const existingContracts = JSON.parse(existingContractsStr);
+      const newId = existingContracts.length > 0 ? Math.max(...existingContracts.map((c: any) => c.id || 0)) + 1 : 1;
+
+      const startDate = new Date().toISOString().split("T")[0];
+      const endDate = new Date(new Date().setFullYear(new Date().getFullYear() + 3)).toISOString().split("T")[0];
+
+      const newContractEntry = {
+        id: newId,
+        contract_no: convertFormData.contract_no,
+        customer_name: selectedCustomer.name,
+        period_months: convertFormData.period_months,
+        start_date: startDate,
+        end_date: endDate,
+        monthly_fee: convertFormData.monthly_fee,
+        device_count: convertFormData.device_count,
+        agent_status: "PENDING",
+        note: convertFormData.note,
+      };
+
+      const updatedContractsList = [newContractEntry, ...existingContracts];
+      sessionStorage.setItem("partneron.contracts", JSON.stringify(updatedContractsList));
+      localStorage.setItem("partneron.contracts", JSON.stringify(updatedContractsList));
+    } catch (err) {
+      console.error(err);
+    }
+
+    setIsConvertModalOpen(false);
+    alert(`🎉 '${selectedCustomer.name}' 고객사가 성공적으로 [계약 완료 고객]으로 전환되었습니다!\n\n[기준정보 관리 > 계약관리] 페이지에 계약 대장 및 렌탈 정보가 적재되었습니다.`);
   }
 
   const deptOptions = [
@@ -913,13 +975,21 @@ export default function CrmCustomersPage() {
 
             {/* Modal Actions Footer */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleDeleteCustomer(selectedCustomer.id, selectedCustomer.name)}
                   className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-[#E01E35] font-bold text-xs rounded-xl cursor-pointer transition-all"
                 >
                   고객사 삭제
                 </button>
+                {selectedCustomer.contract_status === "미계약 고객" && (
+                  <button
+                    onClick={() => handleOpenConvertModal(selectedCustomer)}
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs rounded-xl cursor-pointer transition-all shadow-sm"
+                  >
+                    📝 정식 계약 체결 및 수립 (계약 고객 승격)
+                  </button>
+                )}
               </div>
 
               <div className="flex gap-2">
@@ -958,6 +1028,101 @@ export default function CrmCustomersPage() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contract Conversion Popup Modal */}
+      {isConvertModalOpen && selectedCustomer && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">📝 정식 계약 체결 및 수립</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  '<strong className="text-[#01916D] font-bold">{selectedCustomer.name}</strong>' 고객사를 미계약에서 <strong className="text-amber-600 font-bold">[계약 완료 고객]</strong>으로 승격합니다.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsConvertModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">계약 번호</label>
+                <input
+                  type="text"
+                  value={convertFormData.contract_no}
+                  onChange={(e) => setConvertFormData({ ...convertFormData, contract_no: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">렌탈 약정 기간 (개월)</label>
+                  <select
+                    value={convertFormData.period_months}
+                    onChange={(e) => setConvertFormData({ ...convertFormData, period_months: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                  >
+                    <option value={12}>12개월 (1년)</option>
+                    <option value={24}>24개월 (2년)</option>
+                    <option value={36}>36개월 (3년 - 표준)</option>
+                    <option value={48}>48개월 (4년)</option>
+                    <option value={60}>60개월 (5년)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">월 약정 렌탈료 (원)</label>
+                  <input
+                    type="number"
+                    value={convertFormData.monthly_fee}
+                    onChange={(e) => setConvertFormData({ ...convertFormData, monthly_fee: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">복합기 설치 대수</label>
+                <input
+                  type="number"
+                  value={convertFormData.device_count}
+                  onChange={(e) => setConvertFormData({ ...convertFormData, device_count: Number(e.target.value) })}
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">계약 비고 / 특약사항</label>
+                <input
+                  type="text"
+                  value={convertFormData.note}
+                  onChange={(e) => setConvertFormData({ ...convertFormData, note: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2 mt-6">
+              <button
+                onClick={() => setIsConvertModalOpen(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmContractConversion}
+                className="px-5 py-2 bg-[#01916D] hover:bg-[#006449] text-white font-extrabold text-xs rounded-xl cursor-pointer shadow-md transition-all"
+              >
+                계약 승격 및 대장 수립 완료
+              </button>
             </div>
           </div>
         </div>
