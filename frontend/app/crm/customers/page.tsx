@@ -140,29 +140,12 @@ export default function CrmCustomersPage() {
     fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`)
       .then((res) => res.json())
       .then((dbCustomers) => {
-        if (Array.isArray(dbCustomers) && dbCustomers.length > 0) {
+        if (Array.isArray(dbCustomers)) {
           setCustomers(dbCustomers);
-        } else {
-          setCustomers(DEMO_CUSTOMERS);
         }
       })
       .catch((err) => {
-        console.error("Backend DB fetch error, fallback to storage:", err);
-        try {
-          const storedStr = sessionStorage.getItem("partneron.crm_customers") || localStorage.getItem("partneron.crm_customers");
-          if (storedStr) {
-            const storedList = JSON.parse(storedStr);
-            if (Array.isArray(storedList) && storedList.length > 0) {
-              setCustomers(storedList);
-            } else {
-              setCustomers(DEMO_CUSTOMERS);
-            }
-          } else {
-            setCustomers(DEMO_CUSTOMERS);
-          }
-        } catch {
-          setCustomers(DEMO_CUSTOMERS);
-        }
+        console.error("Backend DB fetch error:", err);
       });
 
     const token =
@@ -236,11 +219,7 @@ export default function CrmCustomersPage() {
       await fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          employee_count: 30,
-          other_info: `영업 등급: ${formData.grade} | 사업자번호: ${formData.biz_no} | 사무실: ${formData.office_type}`,
-        }),
+        body: JSON.stringify(formData),
       });
     } catch (err) {
       console.error("Backend DB sync notice:", err);

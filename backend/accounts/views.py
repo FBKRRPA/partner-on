@@ -1925,47 +1925,73 @@ class CRMCustomerListCreateView(APIView):
         workplace_id = request.headers.get("X-Workplace-Id") or request.query_params.get("workplace_id")
         customers = MonitoringCustomer.objects.filter(deleted_at__isnull=True)
         
-        # If explicit workplace_id filter provided and not 'all', filter by workplace
         if workplace_id and str(workplace_id).isdigit() and int(workplace_id) > 0:
             customers = customers.filter(workplace_id=int(workplace_id))
 
         res_data = []
         for c in customers:
             has_contracts = MonitoringPrinter.objects.filter(customer_id=c.id).exists()
+            
+            # Parse user-submitted JSON payload from other_info
+            extra_data = {}
+            if c.other_info:
+                try:
+                    import json
+                    if c.other_info.startswith("{"):
+                        extra_data = json.loads(c.other_info)
+                except Exception:
+                    extra_data = {}
+
             res_data.append({
                 "id": c.id,
-                "partner_company": c.workplace.name if c.workplace else "FBKR 파트너스",
-                "partner_employee": "김영업 과장",
+                "partner_company": c.workplace.name if c.workplace else "",
+                "partner_employee": extra_data.get("partner_employee", ""),
                 "name": c.name,
-                "office_type": "일반 사무실",
-                "location_base": "서울 본사",
-                "contract_status": "계약 고객" if has_contracts else "미계약 고객",
-                "biz_no": f"105-87-{c.id:05d}",
-                "grade": "A",
-                "company_scale": "31-50",
-                "contact1": {"name": "정수진", "department": "총무팀", "email": "contact@customer.com", "phone": "010-1234-5678", "position": "팀장", "note": c.other_info or ""},
-                "contact2": {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""},
-                "contact3": {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""},
+                "office_type": extra_data.get("office_type", ""),
+                "location_base": extra_data.get("location_base", ""),
+                "contract_status": "계약 고객" if has_contracts else extra_data.get("contract_status", "미계약 고객"),
+                "biz_no": extra_data.get("biz_no", ""),
+                "grade": extra_data.get("grade", ""),
+                "company_scale": extra_data.get("company_scale", ""),
+                "contact1": extra_data.get("contact1", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
+                "contact2": extra_data.get("contact2", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
+                "contact3": extra_data.get("contact3", {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}),
             })
         return Response(res_data, status=status.HTTP_200_OK)
 
     def post(self, request) -> Response:
-        workplace = Workplace.objects.first()
+        import json
+        workplace = request.user.workplace if hasattr(request, "user") and hasattr(request.user, "workplace") and request.user.workplace else Workplace.objects.first()
         name = str(request.data.get("name", "")).strip()
         if not name:
             return Response({"detail": "고객사명이 필요합니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         cid = MonitoringCustomer.objects.count() + 101
+        
+        # Store exact user submitted UI input fields as JSON in other_info
+        user_input_payload = {
+            "partner_employee": request.data.get("partner_employee", ""),
+            "office_type": request.data.get("office_type", ""),
+            "location_base": request.data.get("location_base", ""),
+            "contract_status": request.data.get("contract_status", "미계약 고객"),
+            "biz_no": request.data.get("biz_no", ""),
+            "grade": request.data.get("grade", ""),
+            "company_scale": request.data.get("company_scale", ""),
+            "contact1": request.data.get("contact1", {}),
+            "contact2": request.data.get("contact2", {}),
+            "contact3": request.data.get("contact3", {}),
+        }
+
         customer = MonitoringCustomer.objects.create(
             workplace=workplace,
             customer_id=cid,
             name=name,
-            employee_count=30,
-            other_info=str(request.data.get("other_info", "신규 등록 CRM 고객사")),
+            employee_count=request.data.get("employee_count", 0),
+            other_info=json.dumps(user_input_payload, ensure_ascii=False),
         )
         return Response(
             {
-                "detail": f"[{customer.name}] 고객사가 DB에 성공적으로 저장되었습니다.",
+                "detail": f"[{customer.name}] 고객사가 백엔드 DB에 정확하게 저장되었습니다.",
                 "id": customer.id,
                 "name": customer.name,
             },
