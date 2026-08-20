@@ -158,7 +158,9 @@ export default function CrmSalesPage() {
       });
 
     // Live Fetch Sales Opportunities from Backend DB API
-    fetch(`${getApiBaseUrl()}/api/v1/crm/sales/`)
+    fetch(`${getApiBaseUrl()}/api/v1/crm/sales/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -168,9 +170,13 @@ export default function CrmSalesPage() {
             const stored = sessionStorage.getItem("partneron.crm_sales") || localStorage.getItem("partneron.crm_sales");
             if (stored) {
               const list = JSON.parse(stored);
-              if (Array.isArray(list) && list.length > 0) setOpportunities(list);
+              if (Array.isArray(list) && list.length > 0) {
+                setOpportunities(list);
+                return;
+              }
             }
           } catch {}
+          setOpportunities(DEMO_SALES);
         }
       })
       .catch(() => {
@@ -178,9 +184,13 @@ export default function CrmSalesPage() {
           const stored = sessionStorage.getItem("partneron.crm_sales") || localStorage.getItem("partneron.crm_sales");
           if (stored) {
             const list = JSON.parse(stored);
-            if (Array.isArray(list) && list.length > 0) setOpportunities(list);
+            if (Array.isArray(list) && list.length > 0) {
+              setOpportunities(list);
+              return;
+            }
           }
         } catch {}
+        setOpportunities(DEMO_SALES);
       });
 
     const token =
@@ -219,11 +229,11 @@ export default function CrmSalesPage() {
     }));
   }, []);
 
-  const filteredOpportunities = opportunities.filter(
+  const filteredOpportunities = (opportunities || []).filter(
     (o) =>
-      o.opportunity_name.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-      o.device_model.toLowerCase().includes(search.toLowerCase())
+      (o.opportunity_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer_name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (o.device_model || "").toLowerCase().includes(search.toLowerCase())
   );
 
   function handleRowClick(o: SalesOpportunityDto) {
