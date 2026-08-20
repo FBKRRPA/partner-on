@@ -82,6 +82,8 @@ function LoginPageContent() {
     try {
       const result = await verify2FA(pendingEmail, otpCode);
       if (result.access && result.user) {
+        sessionStorage.removeItem("partneron_demo_mode");
+        localStorage.removeItem("partneron_demo_mode");
         sessionStorage.setItem("accessToken", result.access);
         sessionStorage.setItem("refreshToken", result.refresh || "");
         sessionStorage.setItem("user", JSON.stringify(result.user));
