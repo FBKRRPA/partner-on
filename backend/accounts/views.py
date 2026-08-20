@@ -2058,7 +2058,7 @@ class CRMContractConversionView(APIView):
                 customer_id=customer.id,
                 printer_model="ApeosPort-VII C3373 (계약 수립 장비)",
                 serial_no=f"FX-{customer.id:04d}-CNT",
-                contract_type="렌탈 계약",
+                contract_type=1,
                 ip="172.16.10.13",
                 state="active",
                 note=note,
