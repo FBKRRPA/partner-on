@@ -1949,6 +1949,7 @@ class CRMCustomerListCreateView(APIView):
             company_scale = extra_data.get("company_scale") or f"{c.employee_count or 1-15}"
 
             contact1 = extra_data.get("contact1") or {}
+            info_str = c.other_info or ""
             if not isinstance(contact1, dict) or not contact1.get("name"):
                 contact1 = {
                     "name": "담당자",
@@ -1956,7 +1957,7 @@ class CRMCustomerListCreateView(APIView):
                     "email": "contact@customer.com",
                     "phone": "02-1234-5678",
                     "position": "팀장",
-                    "note": c.other_info if not c.other_info.startswith("{") else "",
+                    "note": info_str if not info_str.startswith("{") else "",
                 }
 
             contact2 = extra_data.get("contact2") or {"name": "", "department": "", "email": "", "phone": "", "position": "", "note": ""}
