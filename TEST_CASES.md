@@ -236,6 +236,21 @@
   2. 트랙 B: DevB 개발자 `feature/ai-generated/devb-maint-record` ➔ `feature/refined/devb-maint-record` 브랜치에서 `DeviceMaintenanceRecord` 모델 구현 및 ADR 0002 작성.
   3. `develop` 브랜치 병합 시 `models.py` 충돌을 깨끗이 해소하고 마이그레이션 및 단위테스트 100% 통과.
 * **검증 결과**: 개발자별 독립 ADR 관리 및 4단계 브랜치 파이프라인 무결성 100% 검증 완료.
+
+### 106. [TC-106] [Refined] 1순위 과제: 2FA TOTP 비밀키 및 백업코드 Fernet 양방향 암호화 필드 적용
+* **발생 원인/배경**: 2FA TOTP 비밀키(`totp_secret`)와 백업 코드가 DB 덤프 시 평문 노출되는 보안 위험을 방지하기 위해 Fernet 양방향 암호화 적용 필요.
+* **조치 내용**:
+  1. `backend/config/settings.py`에 `FERNET_KEY` 대칭키 환경변수 등록 및 `requirements.txt`에 `cryptography` 패키지 추가.
+  2. `backend/accounts/fields.py`에 Django 커스텀 `EncryptedCharField` 구현 (자동 암/복호화).
+  3. `backend/accounts/models.py` 내 `User.totp_secret` 및 `User.backup_codes` 필드 타입 변경 및 DB 마이그레이션(`0022`) 적용.
+* **검증 결과**: DB 적재 시 Fernet 암호화(`gAAAAA...`) 및 인메모리 복호화 100% 정상 작동, 백엔드 테스트 `9/9 PASS` 통과.
+
+### 107. [TC-107] [Refined] 3순위 과제: auth_code 및 invite_code Rate Limit (ScopedRateThrottle) 429 차단 검증
+* **발생 원인/배경**: 8자리 수집기 코드(`AST-XXXXXX`) 및 초대 코드 무차별 대입(Brute-Force) 공격을 방지하기 위해 분당 요청 제한 필요.
+* **조치 내용**:
+  1. `backend/config/settings.py` 내 `DEFAULT_THROTTLE_RATES`에 `agent_auth: 5/minute`, `invite_verify: 5/minute` 스코프 등록.
+  2. `backend/accounts/views.py` 내 `AgentAuthExchangeView` 및 `SignUpWithInviteView`에 `ScopedRateThrottle` 적용.
+* **검증 결과**: 1~5회 연속 요청 후 6회째 시도 시 `429 Too Many Requests` 상태 코드 즉시 반환 및 차단 100% 검증, 백엔드 테스트 `9/9 PASS` 통과.
 * **조치 내용**: 임의의 대체 식별자 생성 로직을 제거하고, 현장 에이전트 SNMP 스캔 원본 데이터 그대로 `unregistered_printers` 테이블에 무결하게 보존.
 * **검증 결과**: 현장 SNMP 원본 데이터 100% 보존 및 백엔드 테스트 9/9 PASS.
 

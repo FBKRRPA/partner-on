@@ -13,6 +13,7 @@ from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -976,6 +977,8 @@ class SignUpWithInviteView(APIView):
     """
     authentication_classes: list = []
     permission_classes: list = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "invite_verify"
 
     def post(self, request) -> Response:
         serializer = SignUpWithInviteSerializer(data=request.data)
@@ -1021,6 +1024,8 @@ class AgentAuthView(APIView):
     """
     authentication_classes: list = []
     permission_classes: list = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "agent_auth"
 
     def post(self, request) -> Response:
         auth_code = str(request.data.get("auth_code", "")).strip()

@@ -47,6 +47,9 @@ class Workplace(models.Model):
         return self.name
 
 
+from .fields import EncryptedCharField
+
+
 class User(AbstractUser):
     class Role(models.TextChoices):
         HEADQUARTERS = "HEADQUARTERS", "본사 총괄 관리자"
@@ -63,12 +66,12 @@ class User(AbstractUser):
         Workplace, on_delete=models.PROTECT, null=True, blank=True, related_name="users"
     )
 
-    # 2FA Settings per user
+    # 2FA Settings per user (Fernet Encrypted)
     is_2fa_enabled = models.BooleanField(default=False)
-    totp_secret = models.CharField(max_length=64, blank=True, null=True)
+    totp_secret = EncryptedCharField(max_length=255, blank=True, null=True)
     otp_code = models.CharField(max_length=6, blank=True, null=True)
     otp_created_at = models.DateTimeField(blank=True, null=True)
-    backup_codes = models.JSONField(default=list, blank=True)
+    backup_codes = EncryptedCharField(max_length=500, blank=True, null=True)
 
     # Invitation Flow fields
     invite_code = models.CharField(max_length=32, blank=True, null=True, unique=True)

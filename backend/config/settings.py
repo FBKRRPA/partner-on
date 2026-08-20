@@ -28,6 +28,9 @@ except ImportError:
 # Security: Secret Key configuration with fallback for dev
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "development-only-change-me-secure-key-partneron")
 
+# Fernet Symmetric Encryption Key for 2FA TOTP secrets
+FERNET_KEY = os.environ.get("FERNET_KEY", "u27P8B9vS3_Q1Z4x5k7L8m9N0p1Q2r3S4t5U6v7W8x9=")
+
 DEBUG = True
 
 # Allow all hosts so IP-based access (e.g. 192.168.x.x) works seamlessly
@@ -118,6 +121,8 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_THROTTLE_RATES": {
         "login": "10/minute",
+        "agent_auth": "5/minute",
+        "invite_verify": "5/minute",
     },
 }
 
