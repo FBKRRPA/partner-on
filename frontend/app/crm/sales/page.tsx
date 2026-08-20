@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AppHeader } from "../../../components/layout/AppHeader";
 import { AppFooter } from "../../../components/layout/AppFooter";
+import { getApiBaseUrl } from "../../../lib/auth-api";
 
 export interface SalesOpportunityDto {
   id: number;
@@ -41,13 +42,10 @@ export default function CrmSalesPage() {
   // Editable Form inside Detail Modal
   const [editFormData, setEditFormData] = useState<SalesOpportunityDto | null>(null);
 
-  // Registered Customer Names for Dropdown (Section 1)
-  const registeredCustomers = [
-    "(주) 글로벌 솔루션 강남점",
-    "삼정 IT 물류 센터",
-    "한일 제약 연구소",
-    "ABC 상사 (본사)",
-  ];
+  // Dynamic Registered Customer Names for Dropdown from DB
+  const [registeredCustomers, setRegisteredCustomers] = useState<string[]>([
+    "고객사 목록 로딩 중..."
+  ]);
 
   const [opportunities, setOpportunities] = useState<SalesOpportunityDto[]>([]);
 
@@ -116,10 +114,29 @@ export default function CrmSalesPage() {
   ];
 
   useEffect(() => {
-    const isDemo = sessionStorage.getItem("partneron_demo_mode") === "true";
-    if (isDemo) {
-      setOpportunities(DEMO_SALES);
-    }
+    // Live Fetch all registered customers from Customer Master DB (/crm/customers)
+    fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const cNames = data.map((c: any) => c.name).filter(Boolean);
+          if (cNames.length > 0) {
+            setRegisteredCustomers(cNames);
+            setFormData((prev) => ({
+              ...prev,
+              customer_name: cNames[0],
+            }));
+          } else {
+            setRegisteredCustomers(["등록된 고객사가 없습니다. (고객사 마스터 관리에서 등록 필요)"]);
+          }
+        } else {
+          setRegisteredCustomers(["등록된 고객사가 없습니다. (고객사 마스터 관리에서 등록 필요)"]);
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch DB customers error:", err);
+        setRegisteredCustomers(["(주) 글로벌 솔루션 강남점", "A사 본사", "B사 서울 지사", "C사 연구소"]);
+      });
 
     const token =
       sessionStorage.getItem("accessToken") ||

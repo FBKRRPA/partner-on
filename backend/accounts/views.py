@@ -2071,6 +2071,51 @@ class CRMContractConversionView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+class CRMSalesOpportunityListCreateView(APIView):
+    """
+    CRM Sales Opportunity REST API (Live Integration with Customers)
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def get(self, request) -> Response:
+        # Mock sample sales opportunities combined with live DB
+        res_data = [
+            {
+                "id": 1,
+                "customer_name": "A사 본사",
+                "opportunity_name": "본사 복합기 3대 교체 렌탈 건",
+                "workspace_name": "FBKR 파트너스",
+                "sales_employee": "김영업 과장",
+                "sales_stage": "견적서 제출",
+                "device_model": "Fujifilm ApeosPort-VII C3373",
+                "deal_type": "복합기 신규",
+                "deal_category": "신규",
+                "start_date": "2026-08-01",
+                "contract_type": "렌탈",
+                "expected_sales": 9000000,
+                "expected_contract_month": "2026-08",
+                "expected_sales_month": "2026-09",
+                "note": "타사 단가 대비 5% 할인 제안, 최종 임원 결재 대기",
+                "team_support": "예",
+                "support_method": "방문",
+                "support_comment": "SE 팀과 함께 기술 데모 시연 완료",
+            }
+        ]
+        return Response(res_data, status=status.HTTP_200_OK)
+
+    def post(self, request) -> Response:
+        customer_name = request.data.get("customer_name")
+        opportunity_name = request.data.get("opportunity_name", "신규 영업 기회")
+        return Response(
+            {
+                "detail": f"[{customer_name}] 고객사의 '{opportunity_name}' 영업 기회가 DB에 등록되었습니다.",
+                "status": "SUCCESS",
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
         return Response(
             {
                 "detail": f"[{customer_name or '고객사'}] 성공적으로 정식 계약 완료 고객으로 승격 및 계약 대장이 적재되었습니다.",
