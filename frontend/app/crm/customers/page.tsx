@@ -181,13 +181,25 @@ export default function CrmCustomersPage() {
     }));
   }, []);
 
-  const filteredCustomers = customers.filter(
-    (c) =>
+  const [statusTab, setStatusTab] = useState<"ALL" | "UNCONTRACTED" | "CONTRACTED">("ALL");
+
+  const filteredCustomers = customers.filter((c) => {
+    const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.contact1.name.toLowerCase().includes(search.toLowerCase()) ||
       c.contact1.phone.includes(search) ||
-      c.biz_no.includes(search)
-  );
+      c.biz_no.includes(search);
+
+    if (!matchesSearch) return false;
+
+    if (statusTab === "UNCONTRACTED") {
+      return c.contract_status === "미계약 고객";
+    }
+    if (statusTab === "CONTRACTED") {
+      return c.contract_status === "계약 고객";
+    }
+    return true;
+  });
 
   function handleRowClick(cust: CustomerFullDto) {
     setSelectedCustomer(cust);
@@ -377,13 +389,47 @@ export default function CrmCustomersPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Customer Status Filter Tabs */}
+              <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+                <button
+                  onClick={() => setStatusTab("ALL")}
+                  className={`px-3 py-1.5 font-extrabold text-xs rounded-lg transition-all ${
+                    statusTab === "ALL"
+                      ? "bg-white text-slate-900 shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  전체 보기 ({customers.length})
+                </button>
+                <button
+                  onClick={() => setStatusTab("UNCONTRACTED")}
+                  className={`px-3 py-1.5 font-extrabold text-xs rounded-lg transition-all ${
+                    statusTab === "UNCONTRACTED"
+                      ? "bg-amber-500 text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  미계약/가계약 ({customers.filter((c) => c.contract_status === "미계약 고객").length})
+                </button>
+                <button
+                  onClick={() => setStatusTab("CONTRACTED")}
+                  className={`px-3 py-1.5 font-extrabold text-xs rounded-lg transition-all ${
+                    statusTab === "CONTRACTED"
+                      ? "bg-[#01916D] text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  계약 완료 고객 ({customers.filter((c) => c.contract_status === "계약 고객").length})
+                </button>
+              </div>
+
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="고객명 또는 담당자 검색"
-                className="w-full sm:w-64 px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D]"
+                className="w-full sm:w-56 px-4 py-2.5 bg-white border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-[#01916D]"
               />
               <button
                 onClick={() => setIsCreateModalOpen(true)}
