@@ -193,12 +193,6 @@ export default function CrmSalesPage() {
         setOpportunities(DEMO_SALES);
       });
 
-    const token =
-      sessionStorage.getItem("accessToken") ||
-      sessionStorage.getItem("partneron.accessToken") ||
-      "";
-    setAccessToken(token);
-
     let realName = sessionStorage.getItem("userName") || "";
     let realWorkplace = sessionStorage.getItem("workplaceName") || "";
 
