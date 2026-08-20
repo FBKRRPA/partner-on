@@ -9,6 +9,7 @@ from .views import (
     CollectorCustomerLookupView,
     CollectorListView,
     CRMCustomerListCreateView,
+    CRMContractConversionView,
     DeviceActionView,
     DeviceDetailView,
     DeviceListApprovalView,
@@ -56,6 +57,7 @@ urlpatterns = [
     
     # CRM Customer Master Ledger APIs
     path("crm/customers/", CRMCustomerListCreateView.as_view(), name="crm-customer-list-create"),
+    path("crm/customers/convert-to-contract/", CRMContractConversionView.as_view(), name="crm-customer-convert-to-contract"),
     
     # Workplace Printer Assets (Devices)
     path("workplace/printers/", PrinterAssetListCreateView.as_view(), name="printer-asset-list-create"),

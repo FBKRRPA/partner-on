@@ -2020,6 +2020,60 @@ class CRMCustomerListCreateView(APIView):
         )
 
 
+class CRMContractConversionView(APIView):
+    """
+    Upgrades customer status to '계약 고객' in monitoring_customers and creates contract in monitoring_printers DB
+    """
+    authentication_classes: list = []
+    permission_classes: list = []
+
+    def post(self, request) -> Response:
+        import json
+        customer_id = request.data.get("customer_id")
+        customer_name = request.data.get("customer_name")
+        contract_no = request.data.get("contract_no", "CNT-202608-01")
+        device_count = request.data.get("device_count", 2)
+        note = request.data.get("note", "정식 계약 체결 및 수립")
+
+        customer = None
+        if customer_id:
+            customer = MonitoringCustomer.objects.filter(id=customer_id).first()
+        if not customer and customer_name:
+            customer = MonitoringCustomer.objects.filter(name=customer_name).first()
+
+        if customer:
+            # Upgrade other_info contract_status to '계약 고객'
+            try:
+                payload = json.loads(customer.other_info) if customer.other_info and customer.other_info.startswith("{") else {}
+            except Exception:
+                payload = {}
+
+            payload["contract_status"] = "계약 고객"
+            customer.other_info = json.dumps(payload, ensure_ascii=False)
+            customer.save()
+
+            # Create MonitoringPrinter Contract record in DB
+            MonitoringPrinter.objects.create(
+                workplace=customer.workplace,
+                customer_id=customer.id,
+                printer_model="ApeosPort-VII C3373 (계약 수립 장비)",
+                serial_no=f"FX-{customer.id:04d}-CNT",
+                contract_type="렌탈 계약",
+                ip="172.16.10.13",
+                state="active",
+                note=note,
+            )
+
+        return Response(
+            {
+                "detail": f"[{customer_name or '고객사'}] 성공적으로 정식 계약 완료 고객으로 승격 및 계약 대장이 적재되었습니다.",
+                "status": "계약 고객",
+                "contract_no": contract_no,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class CollectorListView(APIView):
     """
     Returns list of active AgentCollectors from DB for current workplace

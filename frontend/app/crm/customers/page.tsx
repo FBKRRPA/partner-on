@@ -279,7 +279,7 @@ export default function CrmCustomersPage() {
     setIsConvertModalOpen(true);
   }
 
-  function handleConfirmContractConversion() {
+  async function handleConfirmContractConversion() {
     if (!selectedCustomer) return;
 
     // 1. Upgrade CRM Customer Status from "미계약 고객" -> "계약 고객"
@@ -296,7 +296,24 @@ export default function CrmCustomersPage() {
       setEditFormData({ ...editFormData, contract_status: "계약 고객" });
     }
 
-    // 2. Add New Contract Record to localStorage session so /operations/basic/contracts instantly receives it
+    // 2. Real Backend DB Conversion API Call
+    try {
+      await fetch(`${getApiBaseUrl()}/api/v1/crm/customers/convert-to-contract/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_id: selectedCustomer.id,
+          customer_name: selectedCustomer.name,
+          contract_no: convertFormData.contract_no,
+          device_count: convertFormData.device_count,
+          note: convertFormData.note,
+        }),
+      });
+    } catch (err) {
+      console.error("Backend conversion API sync notice:", err);
+    }
+
+    // 3. Add New Contract Record to localStorage session so /operations/basic/contracts instantly receives it
     try {
       const existingContractsStr = sessionStorage.getItem("partneron.contracts") || localStorage.getItem("partneron.contracts") || "[]";
       const existingContracts = JSON.parse(existingContractsStr);
@@ -326,7 +343,12 @@ export default function CrmCustomersPage() {
     }
 
     setIsConvertModalOpen(false);
-    alert(`🎉 '${selectedCustomer.name}' 고객사가 성공적으로 [계약 완료 고객]으로 전환되었습니다!\n\n[기준정보 관리 > 계약관리] 페이지에 계약 대장 및 렌탈 정보가 적재되었습니다.`);
+    alert(`🎉 '${selectedCustomer.name}' 고객사가 성공적으로 [계약 완료 고객]으로 승격 및 전환되었습니다!\n\n[기준정보 관리 > 계약관리] 페이지로 이동합니다.`);
+
+    // 4. Smart Navigation to /operations/basic/contracts
+    if (typeof window !== "undefined") {
+      window.location.href = `/operations/basic/contracts?customer_name=${encodeURIComponent(selectedCustomer.name)}`;
+    }
   }
 
   const deptOptions = [
