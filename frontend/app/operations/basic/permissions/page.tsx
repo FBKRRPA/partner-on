@@ -28,7 +28,7 @@ const MENU_LIST: MenuDefinition[] = [
   { key: "crm_members", group: "2. CRM", name: "구성원관리", path: "/crm/members" },
 
   // 3. 기초정보
-  { key: "basic_dashboard", group: "3. 기초정보", name: "대시보드", path: "/operations/basic/dashboard" },
+  { key: "basic_dashboard", group: "3. 기초정보", name: "대시보드", path: "/dashboard" },
   { key: "basic_workplaces", group: "3. 기초정보", name: "관리 사업자", path: "/operations/basic/workplaces" },
   { key: "basic_warehouses", group: "3. 기초정보", name: "창고", path: "/operations/basic/warehouses" },
   { key: "basic_models", group: "3. 기초정보", name: "사용자 정의 모델", path: "/operations/basic/models" },

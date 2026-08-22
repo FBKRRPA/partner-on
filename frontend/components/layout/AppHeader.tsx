@@ -146,7 +146,7 @@ export function AppHeader({ workplaceName, onLogout, isLanding = false }: AppHea
     {
       name: "기초정보",
       children: [
-        { name: "대시보드", href: "/operations/basic/dashboard", key: "basic_dashboard" },
+        { name: "대시보드", href: "/dashboard", key: "basic_dashboard" },
         { name: "관리 사업자", href: "/operations/basic/workplaces", key: "basic_workplaces" },
         { name: "창고", href: "/operations/basic/warehouses", key: "basic_warehouses" },
         { name: "사용자 정의 모델", href: "/operations/basic/models", key: "basic_models" },
