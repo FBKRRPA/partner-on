@@ -2024,6 +2024,25 @@ class CRMCustomerListCreateView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+    def delete(self, request) -> Response:
+        from django.utils import timezone
+        customer_id = request.data.get("customer_id") or request.query_params.get("customer_id")
+        customer = None
+        if customer_id:
+            customer = MonitoringCustomer.objects.filter(id=customer_id, deleted_at__isnull=True).first()
+        
+        if customer:
+            customer.deleted_at = timezone.now()
+            customer.save()
+            return Response(
+                {"detail": f"[{customer.name}] 고객사가 백엔드 DB에서 성공적으로 삭제 처리되었습니다."},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"detail": "존재하지 않거나 이미 삭제된 고객사입니다."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
 
 class CRMContractConversionView(APIView):
     """

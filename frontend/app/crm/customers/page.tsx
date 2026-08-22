@@ -378,6 +378,40 @@ export default function CrmCustomersPage() {
     }
   }
 
+  async function handleDeleteCustomer(id: number, name: string) {
+    if (!confirm(`'${name}' 고객사를 정말 삭제하시겠습니까?\n삭제 처리 후 고객사 마스터 대장에서 즉시 제거됩니다.`)) {
+      return;
+    }
+
+    // 1. Update Frontend Local State & Storage
+    const updatedList = customers.filter((c) => c.id !== id);
+    setCustomers(updatedList);
+    saveCustomersToStorage(updatedList);
+    setIsDetailModalOpen(false);
+
+    // 2. Real Backend DB DELETE REST API Call
+    try {
+      const token =
+        sessionStorage.getItem("accessToken") ||
+        sessionStorage.getItem("partneron.accessToken") ||
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("partneron.accessToken") ||
+        "";
+
+      await fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ customer_id: id }),
+      });
+      alert(`'${name}' 고객사가 성공적으로 백엔드 DB에서 삭제되었습니다.`);
+    } catch (err) {
+      console.error("Backend customer delete notice:", err);
+    }
+  }
+
   const deptOptions = [
     "총무", "구매", "회계", "경리", "IT/전산", "인사", "기획", "CS", "영업", "마케팅", "R&D", "디자인", "물류", "기타"
   ];
