@@ -2034,8 +2034,19 @@ class CRMCustomerListCreateView(APIView):
         if customer:
             customer.deleted_at = timezone.now()
             customer.save()
+
+            # Cascading Delete: remove associated sales opportunities from CRM_SALES_STORE
+            global CRM_SALES_STORE
+            try:
+                CRM_SALES_STORE = [
+                    opp for opp in CRM_SALES_STORE
+                    if opp.get("customer_name") != customer.name
+                ]
+            except Exception:
+                pass
+
             return Response(
-                {"detail": f"[{customer.name}] 고객사가 백엔드 DB에서 성공적으로 삭제 처리되었습니다."},
+                {"detail": f"[{customer.name}] 고객사 및 연관된 영업 기회 레코드가 연쇄 삭제 처리되었습니다."},
                 status=status.HTTP_200_OK,
             )
         return Response(

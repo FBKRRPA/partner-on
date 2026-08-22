@@ -383,10 +383,24 @@ export default function CrmCustomersPage() {
       return;
     }
 
-    // 1. Update Frontend Local State & Storage
+    // 1. Update Frontend Customer Master State & Storage
     const updatedList = customers.filter((c) => c.id !== id);
     setCustomers(updatedList);
     saveCustomersToStorage(updatedList);
+
+    // 2. Cascading Delete: Clean up associated sales opportunities in Session & Local Storage
+    try {
+      const rawSales = sessionStorage.getItem("partneron.crm_sales") || localStorage.getItem("partneron.crm_sales");
+      if (rawSales) {
+        const salesList = JSON.parse(rawSales);
+        const cleanedSales = salesList.filter((s: any) => s.customer_name !== name);
+        sessionStorage.setItem("partneron.crm_sales", JSON.stringify(cleanedSales));
+        localStorage.setItem("partneron.crm_sales", JSON.stringify(cleanedSales));
+      }
+    } catch (e) {
+      console.error("Sales storage cascading delete notice:", e);
+    }
+
     setIsDetailModalOpen(false);
 
     // 2. Real Backend DB DELETE REST API Call
