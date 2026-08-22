@@ -2025,7 +2025,6 @@ class CRMCustomerListCreateView(APIView):
         )
 
     def delete(self, request) -> Response:
-        from django.utils import timezone
         customer_id = request.data.get("customer_id") or request.query_params.get("customer_id")
         customer = None
         if customer_id:

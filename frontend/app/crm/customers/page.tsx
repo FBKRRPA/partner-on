@@ -135,14 +135,21 @@ export default function CrmCustomersPage() {
     contact3: { name: "", department: "기타", email: "", phone: "", position: "", note: "" },
   });
 
-  useEffect(() => {
-    // 1. Strict Auth Router Guard: Check authentication token
-    const token =
+  // Helper to retrieve auth token from session/local storage
+  const getStoredAuthToken = (): string => {
+    if (typeof window === "undefined") return "";
+    return (
       sessionStorage.getItem("accessToken") ||
       sessionStorage.getItem("partneron.accessToken") ||
       localStorage.getItem("accessToken") ||
       localStorage.getItem("partneron.accessToken") ||
-      "";
+      ""
+    );
+  };
+
+  useEffect(() => {
+    // 1. Strict Auth Router Guard: Check authentication token
+    const token = getStoredAuthToken();
 
     if (!token) {
       alert("🔒 보안 경고: 로그인이 필요한 서비스입니다.\n\n인증 세션이 없어 로그인 페이지로 이동합니다.");
@@ -403,14 +410,9 @@ export default function CrmCustomersPage() {
 
     setIsDetailModalOpen(false);
 
-    // 2. Real Backend DB DELETE REST API Call
+    // 3. Real Backend DB DELETE REST API Call
     try {
-      const token =
-        sessionStorage.getItem("accessToken") ||
-        sessionStorage.getItem("partneron.accessToken") ||
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("partneron.accessToken") ||
-        "";
+      const token = getStoredAuthToken();
 
       await fetch(`${getApiBaseUrl()}/api/v1/crm/customers/`, {
         method: "DELETE",
