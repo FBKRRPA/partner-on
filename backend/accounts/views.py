@@ -1936,11 +1936,25 @@ class CRMCustomerListCreateView(APIView):
     permission_classes: list = []
 
     def get(self, request) -> Response:
-        workplace_id = request.headers.get("X-Workplace-Id") or request.query_params.get("workplace_id")
         customers = MonitoringCustomer.objects.filter(deleted_at__isnull=True)
-        
-        if workplace_id and str(workplace_id).isdigit() and int(workplace_id) > 0:
-            customers = customers.filter(workplace_id=int(workplace_id))
+
+        # 3-Tier B2B Multi-Tenancy Data Isolation Boundary
+        is_hq = hasattr(request, "user") and request.user.is_authenticated and (request.user.is_headquarters() or request.user.is_superuser)
+        if is_hq:
+            # Manufacturer / Headquarters Admin: Can access all partner data or filter by specific workplace
+            workplace_id = request.headers.get("X-Workplace-Id") or request.query_params.get("workplace_id")
+            if workplace_id and str(workplace_id).isdigit() and int(workplace_id) > 0:
+                customers = customers.filter(workplace_id=int(workplace_id))
+        else:
+            # Partner User: Strictly isolated to their own workplace_id (Cross-partner leakage blocked)
+            user_wp_id = getattr(request.user, "workplace_id", None) if hasattr(request, "user") and request.user.is_authenticated else None
+            if not user_wp_id:
+                hdr_wp = request.headers.get("X-Workplace-Id") or request.query_params.get("workplace_id")
+                if hdr_wp and str(hdr_wp).isdigit() and int(hdr_wp) > 0:
+                    user_wp_id = int(hdr_wp)
+
+            if user_wp_id:
+                customers = customers.filter(workplace_id=user_wp_id)
 
         res_data = []
         for c in customers:
